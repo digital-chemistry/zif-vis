@@ -29,7 +29,9 @@ function blendPhaseColor(p) {
   const total = entries.reduce((sum, [, value]) => sum + value, 0);
   if (total <= 0) return PHASE_COLORS.unknown || "#8B8B8B";
 
-  let r = 0, g = 0, b = 0;
+  let r = 0;
+  let g = 0;
+  let b = 0;
 
   for (const [key, value] of entries) {
     const hex = PHASE_COLORS[key] || PHASE_COLORS.unknown || "#8B8B8B";
@@ -44,6 +46,36 @@ function blendPhaseColor(p) {
 
   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 }
+
+function formatHoverLine(label, value) {
+  return `<span style="color:#7a8594;">${escapeHtml(label)}</span> ${escapeHtml(value)}`;
+}
+
+function buildPointHoverText(p) {
+  const composition =
+    `M ${formatValShort(p.metal, 1)}%  •  ` +
+    `L ${formatValShort(p.ligand, 1)}%  •  ` +
+    `BSA ${formatValShort(p.bsa, 1)}%`;
+  const layer = `${formatValShort(p.concentration, 1)} mg mL^-1`;
+  const phase = displayPhase(p.phase || p.primary_phase || "N/A");
+  const wash = p.washing || p.wash || "N/A";
+  const ee = numericOrNull(p.ee);
+
+  return (
+    `<span style="font-size:14px;"><b>${escapeHtml(p.id)}</b></span><br>` +
+    `<span style="color:#20242a;">${escapeHtml(composition)}</span><br>` +
+    `${formatHoverLine("Layer", layer)}<br>` +
+    `${formatHoverLine("Wash", wash)}<br>` +
+    `${formatHoverLine("Phase", phase)}<br>` +
+    `${formatHoverLine("EE", ee == null ? "N/A" : formatValShort(ee, 2))}`
+  );
+}
+
+const hoverLabelStyle = {
+  bgcolor: "rgba(255,255,255,0.96)",
+  bordercolor: "#d9dde3",
+  font: { color: "#20242a", size: 13 }
+};
 
 function markerForSearchPosition2D(searchPosition, layer) {
   if (!searchPosition) return null;
@@ -64,7 +96,17 @@ function markerForSearchPosition2D(searchPosition, layer) {
     c: [Number(searchPosition.bsa)],
     text: ["You are here"],
     textposition: "top center",
-    hovertemplate: "You are here<extra></extra>",
+    hovertemplate:
+      `You are here<br>` +
+      `Metal: ${formatValShort(searchPosition.metal, 1)} %<br>` +
+      `Ligand: ${formatValShort(searchPosition.ligand, 1)} %<br>` +
+      `BSA: ${formatValShort(searchPosition.bsa, 1)} %<br>` +
+      `Concentration: ${formatValShort(searchPosition.concentration, 1)} mg mL^-1<extra></extra>`,
+    hoverlabel: {
+      bgcolor: "rgba(255,255,255,0.96)",
+      bordercolor: "#111111",
+      font: { color: "#20242a", size: 13 }
+    },
     marker: {
       size: 14,
       color: "#111111",
@@ -99,7 +141,17 @@ function markerForSearchPosition2DFallback(searchPosition, layer) {
     y: [y],
     text: ["You are here"],
     textposition: "top center",
-    hovertemplate: "You are here<extra></extra>",
+    hovertemplate:
+      `You are here<br>` +
+      `Metal: ${formatValShort(metal, 1)} %<br>` +
+      `Ligand: ${formatValShort(ligand, 1)} %<br>` +
+      `BSA: ${formatValShort(bsa, 1)} %<br>` +
+      `Concentration: ${formatValShort(searchPosition.concentration, 1)} mg mL^-1<extra></extra>`,
+    hoverlabel: {
+      bgcolor: "rgba(255,255,255,0.96)",
+      bordercolor: "#111111",
+      font: { color: "#20242a", size: 13 }
+    },
     marker: {
       size: 14,
       color: "#111111",
@@ -114,7 +166,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
   if (!plotDiv) return;
 
   const layerFocus = $("layerFocus")?.value || "";
-  const availableLayers = [...new Set(points.map(p => Number(p.concentration)).filter(v => Number.isFinite(v)))]
+  const availableLayers = [...new Set(points.map((p) => Number(p.concentration)).filter((v) => Number.isFinite(v)))]
     .sort((a, b) => b - a);
 
   if (!availableLayers.length) {
@@ -123,14 +175,14 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
   }
 
   const layer = layerFocus ? Number(layerFocus) : availableLayers[0];
-  const layerPoints = points.filter(p => Number(p.concentration) === layer);
+  const layerPoints = points.filter((p) => Number(p.concentration) === layer);
 
   if (!layerPoints.length) {
     plotDiv.innerHTML = `<div style="padding:24px;color:#777;">No points found for this layer.</div>`;
     return;
   }
 
-  const realTernary = layerPoints.every(p =>
+  const realTernary = layerPoints.every((p) =>
     Number.isFinite(Number(p.metal)) &&
     Number.isFinite(Number(p.ligand)) &&
     Number.isFinite(Number(p.bsa))
@@ -146,21 +198,21 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
   let colorbar = undefined;
 
   if (colourBy === "phase") {
-    markerColor = layerPoints.map(p => {
+    markerColor = layerPoints.map((p) => {
       const key = normalisePhase(p.phase);
       return PHASE_COLORS[key] || "#111111";
     });
     colorscale = undefined;
   } else if (colourBy === "ee") {
-    markerColor = layerPoints.map(p => numericOrNull(p.ee));
+    markerColor = layerPoints.map((p) => numericOrNull(p.ee));
     showscale = true;
     colorbar = { title: "EE%" };
   } else if (colourBy === "crystallinity") {
-    markerColor = layerPoints.map(p => numericOrNull(p.crystallinity));
+    markerColor = layerPoints.map((p) => numericOrNull(p.crystallinity));
     showscale = true;
     colorbar = { title: "Crystallinity" };
   } else if (colourBy === "protein_ratio") {
-    markerColor = layerPoints.map(p => numericOrNull(p.protein_ratio));
+    markerColor = layerPoints.map((p) => numericOrNull(p.protein_ratio));
     showscale = true;
     colorbar = { title: "Protein ratio" };
   }
@@ -168,21 +220,13 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
   const baseTrace = {
     type: "scatterternary",
     mode: "markers",
-    a: layerPoints.map(p => Number(p.metal)),
-    b: layerPoints.map(p => Number(p.ligand)),
-    c: layerPoints.map(p => Number(p.bsa)),
-    customdata: layerPoints.map(p => p.id),
-    text: layerPoints.map(p =>
-      `<b>${escapeHtml(p.id)}</b><br>` +
-      `Primary phase: ${escapeHtml(displayPhase(p.phase))}<br>` +
-      `Detected phases: ${escapeHtml(p.detected_phases || "N/A")}<br>` +
-      `Washing: ${escapeHtml(p.washing || p.wash || "N/A")}<br>` +
-      `Conc: ${formatValShort(p.concentration)}<br>` +
-      `EE: ${formatValShort(p.ee)}<br>` +
-      `Crystallinity: ${formatValShort(p.crystallinity)}<br>` +
-      `Protein ratio: ${formatValShort(p.protein_ratio)}`
-    ),
+    a: layerPoints.map((p) => Number(p.metal)),
+    b: layerPoints.map((p) => Number(p.ligand)),
+    c: layerPoints.map((p) => Number(p.bsa)),
+    customdata: layerPoints.map((p) => p.id),
+    text: layerPoints.map(buildPointHoverText),
     hovertemplate: "%{text}<extra></extra>",
+    hoverlabel: hoverLabelStyle,
     marker: {
       size: SAMPLE_MARKER_SIZE_2D,
       opacity: 0.95,
@@ -195,23 +239,15 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
   const coreTrace = {
     type: "scatterternary",
     mode: "markers",
-    a: layerPoints.map(p => Number(p.metal)),
-    b: layerPoints.map(p => Number(p.ligand)),
-    c: layerPoints.map(p => Number(p.bsa)),
-    customdata: layerPoints.map(p => p.id),
-    text: layerPoints.map(p =>
-      `<b>${escapeHtml(p.id)}</b><br>` +
-      `Primary phase: ${escapeHtml(displayPhase(p.phase))}<br>` +
-      `Detected phases: ${escapeHtml(p.detected_phases || "N/A")}<br>` +
-      `Washing: ${escapeHtml(p.washing || p.wash || "N/A")}<br>` +
-      `Conc: ${formatValShort(p.concentration)}<br>` +
-      `EE: ${formatValShort(p.ee)}<br>` +
-      `Crystallinity: ${formatValShort(p.crystallinity)}<br>` +
-      `Protein ratio: ${formatValShort(p.protein_ratio)}`
-    ),
+    a: layerPoints.map((p) => Number(p.metal)),
+    b: layerPoints.map((p) => Number(p.ligand)),
+    c: layerPoints.map((p) => Number(p.bsa)),
+    customdata: layerPoints.map((p) => p.id),
+    text: layerPoints.map(buildPointHoverText),
     hovertemplate: "%{text}<extra></extra>",
+    hoverlabel: hoverLabelStyle,
     marker: {
-      size: layerPoints.map(p => crystallinityToCoreSize2D(p.crystallinity)),
+      size: layerPoints.map((p) => crystallinityToCoreSize2D(p.crystallinity)),
       opacity: 0.95,
       color: colourBy === "phase"
         ? layerPoints.map(blendPhaseColor)
@@ -289,21 +325,21 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
   let colorbar = undefined;
 
   if (colourBy === "phase") {
-    markerColor = layerPoints.map(p => {
+    markerColor = layerPoints.map((p) => {
       const key = normalisePhase(p.phase);
       return PHASE_COLORS[key] || "#111111";
     });
     colorscale = undefined;
   } else if (colourBy === "ee") {
-    markerColor = layerPoints.map(p => numericOrNull(p.ee));
+    markerColor = layerPoints.map((p) => numericOrNull(p.ee));
     showscale = true;
     colorbar = { title: "EE%" };
   } else if (colourBy === "crystallinity") {
-    markerColor = layerPoints.map(p => numericOrNull(p.crystallinity));
+    markerColor = layerPoints.map((p) => numericOrNull(p.crystallinity));
     showscale = true;
     colorbar = { title: "Crystallinity" };
   } else if (colourBy === "protein_ratio") {
-    markerColor = layerPoints.map(p => numericOrNull(p.protein_ratio));
+    markerColor = layerPoints.map((p) => numericOrNull(p.protein_ratio));
     showscale = true;
     colorbar = { title: "Protein ratio" };
   }
@@ -311,17 +347,12 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
   const baseTrace = {
     type: "scatter",
     mode: "markers",
-    x: layerPoints.map(p => Number(p.x)),
-    y: layerPoints.map(p => Number(p.y)),
-    customdata: layerPoints.map(p => p.id),
-    text: layerPoints.map(p =>
-      `<b>${escapeHtml(p.id)}</b><br>` +
-      `Primary phase: ${escapeHtml(displayPhase(p.phase))}<br>` +
-      `Detected phases: ${escapeHtml(p.detected_phases || "N/A")}<br>` +
-      `Washing: ${escapeHtml(p.washing || p.wash || "N/A")}<br>` +
-      `Conc: ${formatValShort(p.concentration)}`
-    ),
+    x: layerPoints.map((p) => Number(p.x)),
+    y: layerPoints.map((p) => Number(p.y)),
+    customdata: layerPoints.map((p) => p.id),
+    text: layerPoints.map(buildPointHoverText),
     hovertemplate: "%{text}<extra></extra>",
+    hoverlabel: hoverLabelStyle,
     marker: {
       size: SAMPLE_MARKER_SIZE_2D,
       opacity: 0.95,
@@ -334,19 +365,14 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
   const coreTrace = {
     type: "scatter",
     mode: "markers",
-    x: layerPoints.map(p => Number(p.x)),
-    y: layerPoints.map(p => Number(p.y)),
-    customdata: layerPoints.map(p => p.id),
-    text: layerPoints.map(p =>
-      `<b>${escapeHtml(p.id)}</b><br>` +
-      `Primary phase: ${escapeHtml(displayPhase(p.phase))}<br>` +
-      `Detected phases: ${escapeHtml(p.detected_phases || "N/A")}<br>` +
-      `Washing: ${escapeHtml(p.washing || p.wash || "N/A")}<br>` +
-      `Conc: ${formatValShort(p.concentration)}`
-    ),
+    x: layerPoints.map((p) => Number(p.x)),
+    y: layerPoints.map((p) => Number(p.y)),
+    customdata: layerPoints.map((p) => p.id),
+    text: layerPoints.map(buildPointHoverText),
     hovertemplate: "%{text}<extra></extra>",
+    hoverlabel: hoverLabelStyle,
     marker: {
-      size: layerPoints.map(p => crystallinityToCoreSize2D(p.crystallinity)),
+      size: layerPoints.map((p) => crystallinityToCoreSize2D(p.crystallinity)),
       opacity: 0.95,
       color: colourBy === "phase"
         ? layerPoints.map(blendPhaseColor)

@@ -43,7 +43,9 @@ function blendPhaseColor(p) {
   const total = entries.reduce((sum, [, value]) => sum + value, 0);
   if (total <= 0) return PHASE_COLORS.unknown || "#8B8B8B";
 
-  let r = 0, g = 0, b = 0;
+  let r = 0;
+  let g = 0;
+  let b = 0;
 
   for (const [key, value] of entries) {
     const hex = PHASE_COLORS[key] || PHASE_COLORS.unknown || "#8B8B8B";
@@ -66,30 +68,11 @@ function formatMeanPm(mean, err, digits = 2) {
   if (m == null) return "N/A";
   if (e == null) return formatValShort(m, digits);
 
-  return `${formatValShort(m, digits)} ± ${formatValShort(e, digits)}`;
+  return `${formatValShort(m, digits)} +/- ${formatValShort(e, digits)}`;
 }
 
-function summarizeMaterial(p) {
-  const phaseComp = p.phase_composition || {};
-  const entries = Object.entries(phaseComp)
-    .map(([name, obj]) => {
-      const mean = Number(obj?.mean ?? obj);
-      const std = numericOrNull(obj?.std);
-      return [name, mean, std];
-    })
-    .filter(([, mean]) => Number.isFinite(mean) && mean > 0)
-    .sort((a, b) => b[1] - a[1]);
-
-  if (!entries.length) return "No crystalline phase assignment";
-
-  return entries
-    .slice(0, 2)
-    .map(([name, mean, std]) => {
-      const pct = mean * 100;
-      const pctStd = std == null ? null : std * 100;
-      return `${name}: ${formatMeanPm(pct, pctStd, 1)}% of crystalline part`;
-    })
-    .join("; ");
+function formatHoverLine(label, value) {
+  return `<span style="color:#7a8594;">${escapeHtml(label)}</span> ${escapeHtml(value)}`;
 }
 
 function buildHoverText(p) {
@@ -98,27 +81,22 @@ function buildHoverText(p) {
   const b = Number(p.bsa);
   const conc = Number(p.concentration);
   const wash = String(p.washing || p.wash || "N/A");
+  const phase = String(p.primary_phase || p.phase || "N/A");
 
   const eeMean = numericOrNull(p.ee);
   const eeErr = numericOrNull(p.ee_error ?? p.error_bar ?? p.ee_std);
 
-  const crystMean = numericOrNull(p.crystallinity);
-  const crystStd = numericOrNull(p.crystallinity_std);
-
-  const amorphMean = numericOrNull(p.amorphousness);
-  const amorphStd = numericOrNull(p.amorphousness_std);
+  const composition = `M ${formatValShort(m, 1)}%  •  L ${formatValShort(l, 1)}%  •  BSA ${formatValShort(b, 1)}%`;
+  const concentrationLabel = `${formatValShort(conc, 1)} mg mL^-1`;
+  const eeLabel = eeMean == null ? "N/A" : formatMeanPm(eeMean, eeErr, 2);
 
   return (
-    `<b>${escapeHtml(p.id)}</b><br>` +
-    `Metal: ${formatValShort(m, 1)} %<br>` +
-    `Ligand: ${formatValShort(l, 1)} %<br>` +
-    `BSA: ${formatValShort(b, 1)} %<br>` +
-    `Concentration: ${formatValShort(conc, 1)} mg mL⁻¹<br>` +
-    `Wash: ${escapeHtml(wash)}<br>` +
-    `EE: ${formatMeanPm(eeMean, eeErr, 2)}<br>` +
-    `Crystalline fraction: ${formatMeanPm(crystMean, crystStd, 3)}<br>` +
-    `Amorphous fraction: ${formatMeanPm(amorphMean, amorphStd, 3)}<br>` +
-    `Material summary: ${escapeHtml(summarizeMaterial(p))}`
+    `<span style="font-size:14px;"><b>${escapeHtml(p.id)}</b></span><br>` +
+    `<span style="color:#20242a;">${escapeHtml(composition)}</span><br>` +
+    `${formatHoverLine("Layer", concentrationLabel)}<br>` +
+    `${formatHoverLine("Wash", wash)}<br>` +
+    `${formatHoverLine("Phase", phase)}<br>` +
+    `${formatHoverLine("EE", eeLabel)}`
   );
 }
 
@@ -170,6 +148,12 @@ function getMarkerStyle(points, colourBy) {
   };
 }
 
+const hoverLabelStyle = {
+  bgcolor: "rgba(255,255,255,0.96)",
+  bordercolor: "#d9dde3",
+  font: { color: "#20242a", size: 13 }
+};
+
 export function buildPointTraces(points, concToZ, colourBy) {
   const markerStyle = getMarkerStyle(points, colourBy);
 
@@ -188,6 +172,7 @@ export function buildPointTraces(points, concToZ, colourBy) {
     customdata: ids,
     text: texts,
     hovertemplate: "%{text}<extra></extra>",
+    hoverlabel: hoverLabelStyle,
     marker: {
       size: SAMPLE_MARKER_SIZE_3D * get3DMarkerScale(),
       opacity: 0.95,
@@ -206,6 +191,7 @@ export function buildPointTraces(points, concToZ, colourBy) {
     customdata: ids,
     text: texts,
     hovertemplate: "%{text}<extra></extra>",
+    hoverlabel: hoverLabelStyle,
     marker: {
       size: points.map((p) => crystallinityToCoreSize3D(p.crystallinity)),
       opacity: 0.95,
@@ -256,7 +242,12 @@ export function markerForSearchPosition3D(searchPosition, concToZ) {
       `Metal: ${formatValShort(metal, 1)} %<br>` +
       `Ligand: ${formatValShort(ligand, 1)} %<br>` +
       `BSA: ${formatValShort(bsa, 1)} %<br>` +
-      `Concentration: ${formatValShort(concentration, 1)} mg mL⁻¹<extra></extra>`,
+      `Concentration: ${formatValShort(concentration, 1)} mg mL^-1<extra></extra>`,
+    hoverlabel: {
+      bgcolor: "rgba(255,255,255,0.96)",
+      bordercolor: "#111111",
+      font: { color: "#20242a", size: 13 }
+    },
     marker: {
       size: 9 * get3DSearchMarkerScale(),
       color: "#111111",
