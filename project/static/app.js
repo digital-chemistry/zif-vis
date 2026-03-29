@@ -25,9 +25,8 @@ function wireControls() {
     "crystBalance",
     "proteinThreshold",
     "eeThreshold",
-    "posMetal",
-    "posLigand",
-    "posBsa",
+    "colourBy",
+    "washing",
     "posConcentration"
   ].forEach((id) => {
     const el = $(id);
@@ -35,28 +34,49 @@ function wireControls() {
 
     const evt = el.tagName === "SELECT" ? "change" : "input";
     el.addEventListener(evt, () => {
-      if (id === "posMetal" || id === "posLigand" || id === "posBsa") {
-        autoFillPosition(id);
-      }
       updateDerivedReadouts();
       updateViewControls();
+      toggleModeDependentCards();
       applyFiltersAndRender();
     });
   });
 
-  document.querySelectorAll('input[name="colourBy"]').forEach((el) => {
-    el.addEventListener("change", applyFiltersAndRender);
+  ["posMetal", "posLigand", "posBsa"].forEach((id) => {
+    const el = $(id);
+    if (!el) return;
+
+    el.addEventListener("input", () => {
+      clearAutoFlags();
+      validatePositionInputs();
+      updatePositionNote();
+      applyFiltersAndRender();
+    });
+
+    el.addEventListener("change", () => {
+      clearAutoFlags();
+      autoFillPosition(id);
+      updateDerivedReadouts();
+      applyFiltersAndRender();
+    });
+  });
+
+  $("clearCompositionBtn")?.addEventListener("click", () => {
+    ["posMetal", "posLigand", "posBsa", "posConcentration"].forEach((id) => {
+      const el = $(id);
+      if (el) el.value = "";
+    });
+    clearAutoFlags();
+    validatePositionInputs();
+    updatePositionNote();
+    applyFiltersAndRender();
   });
 
   document.querySelectorAll('input[name="viewMode"]').forEach((el) => {
     el.addEventListener("change", () => {
       updateViewControls();
+      toggleModeDependentCards();
       applyFiltersAndRender();
     });
-  });
-
-  document.querySelectorAll('input[name="washing"]').forEach((el) => {
-    el.addEventListener("change", applyFiltersAndRender);
   });
 }
 
@@ -73,6 +93,7 @@ async function loadPoints() {
 
     updateDerivedReadouts();
     updateViewControls();
+    toggleModeDependentCards();
     applyFiltersAndRender();
   } catch (err) {
     console.error("loadPoints failed:", err);
@@ -148,7 +169,7 @@ function buildPhaseFilters() {
 
   wrap.innerHTML = phaseNames.map((phase) => `
     <div class="phase-filter-row">
-      <label class="simple-check phase-check-label">
+      <label class="simple-check">
         <input type="checkbox" class="phase-check" data-phase="${phase}">
         <span>${phase}</span>
       </label>
@@ -219,14 +240,22 @@ function setPositionFieldError(id, hasError) {
   el.style.background = hasError ? "#fff4f1" : "";
 }
 
+function clearAutoFlags() {
+  ["posMetal", "posLigand", "posBsa"].forEach((id) => {
+    $(id)?.classList.remove("is-auto");
+  });
+}
+
+function markAutoField(id) {
+  $(id)?.classList.add("is-auto");
+}
+
 function validatePositionInputs() {
   const ids = ["posMetal", "posLigand", "posBsa"];
   const values = ids.map(id => readPositionNumber(id));
 
-  // reset styling first
   ids.forEach(id => setPositionFieldError(id, false));
 
-  // individual field range check
   let hasRangeError = false;
   values.forEach((v, i) => {
     if (v !== null && (v < 0 || v > 100)) {
@@ -237,7 +266,6 @@ function validatePositionInputs() {
 
   const filled = values.filter(v => v !== null);
 
-  // only validate sum if all 3 are filled
   let hasSumError = false;
   if (filled.length === 3) {
     const sum = values[0] + values[1] + values[2];
@@ -251,30 +279,28 @@ function validatePositionInputs() {
     values,
     hasRangeError,
     hasSumError,
-    isValid:
-      !hasRangeError &&
-      !hasSumError
+    isValid: !hasRangeError && !hasSumError
   };
 }
 
-function autoFillPosition(changedId = null) {
+function autoFillPosition() {
   const ids = ["posMetal", "posLigand", "posBsa"];
   const values = ids.map(id => readPositionNumber(id));
 
-  // Only auto-fill when exactly two fields are filled.
-  // If all three are filled, do nothing and let validation handle it.
   const filledIdx = values
     .map((v, i) => (v === null ? null : i))
     .filter(i => i !== null);
 
   if (filledIdx.length !== 2) {
     validatePositionInputs();
+    updatePositionNote();
     return;
   }
 
   const missingIdx = values.findIndex(v => v === null);
   if (missingIdx === -1) {
     validatePositionInputs();
+    updatePositionNote();
     return;
   }
 
@@ -284,51 +310,29 @@ function autoFillPosition(changedId = null) {
 
   if (a === null || b === null) {
     validatePositionInputs();
+    updatePositionNote();
     return;
   }
 
   const missingValue = 100 - a - b;
 
-  // Do not auto-fill impossible values.
   if (missingValue < 0 || missingValue > 100) {
     validatePositionInputs();
+    updatePositionNote();
     return;
   }
 
-  const target = $(ids[missingIdx]);
+  const targetId = ids[missingIdx];
+  const target = $(targetId);
   if (!target) {
     validatePositionInputs();
+    updatePositionNote();
     return;
   }
 
   target.value = formatValShort(missingValue, 1);
+  markAutoField(targetId);
   validatePositionInputs();
-}
-
-function updateDerivedReadouts() {
-  const cryst = Number($("crystBalance")?.value ?? 0);
-  const protein = Number($("proteinThreshold")?.value ?? 0);
-  const ee = Number($("eeThreshold")?.value ?? 0);
-  const spacing = Number($("spacingScale")?.value ?? 0.2);
-
-  const crystOut = $("crystBalanceVal");
-  const proteinOut = $("proteinThresholdVal");
-  const eeOut = $("eeThresholdVal");
-  const spacingOut = $("spacingScaleVal");
-
-  if (crystOut) {
-    if (cryst === 0) {
-      crystOut.textContent = "Any";
-    } else {
-      crystOut.textContent = `${cryst}% crystalline / ${100 - cryst}% amorphous`;
-    }
-  }
-
-  if (proteinOut) proteinOut.textContent = `≥ ${formatValShort(protein, 3)}`;
-  if (eeOut) eeOut.textContent = `≥ ${formatValShort(ee, 1)}`;
-  if (spacingOut) spacingOut.textContent = formatValShort(spacing, 2);
-
-  updatePhaseReadouts();
   updatePositionNote();
 }
 
@@ -365,28 +369,49 @@ function updatePositionNote() {
   note.style.color = "";
 }
 
+function updateDerivedReadouts() {
+  const cryst = Number($("crystBalance")?.value ?? 0);
+  const protein = Number($("proteinThreshold")?.value ?? 0);
+  const ee = Number($("eeThreshold")?.value ?? 0);
+  const spacing = Number($("spacingScale")?.value ?? 0.2);
+
+  const crystOut = $("crystBalanceVal");
+  const proteinOut = $("proteinThresholdVal");
+  const eeOut = $("eeThresholdVal");
+  const spacingOut = $("spacingScaleVal");
+
+  if (crystOut) crystOut.textContent = cryst === 0 ? "Any" : `≥ ${cryst}%`;
+  if (proteinOut) proteinOut.textContent = formatValShort(protein, 3);
+  if (eeOut) eeOut.textContent = formatValShort(ee, 1);
+  if (spacingOut) spacingOut.textContent = formatValShort(spacing, 2);
+
+  updatePositionNote();
+}
+
+function toggleModeDependentCards() {
+  const mode = document.querySelector('input[name="viewMode"]:checked')?.value || "3d";
+  const spacingCard = $("spacingCard");
+  if (spacingCard) spacingCard.style.display = mode === "3d" ? "flex" : "none";
+}
+
 function applyFiltersAndRender() {
   const filters = readFiltersFromDom();
   const filtered = filterPoints(allPoints, filters);
-  renderPlot(filtered, filters);
-}
 
-function renderPlot(points, filters) {
   if (filters.mode === "2d") {
-    renderPlot2D(points, filters.colourBy, loadInspector, filters.searchPosition);
+    renderPlot2D(filtered, filters.colourBy, handlePointClick, filters.searchPosition);
   } else {
-    const plotDiv = $("plot");
-    if (plotDiv?._fullLayout?.scene?.camera) {
-      currentCamera = plotDiv._fullLayout.scene.camera;
-    }
-
     renderPlot3D(
-      points,
+      filtered,
       filters.colourBy,
       currentCamera,
       (camera) => { currentCamera = camera; },
-      loadInspector,
+      handlePointClick,
       filters.searchPosition
     );
   }
+}
+
+async function handlePointClick(sampleId) {
+  await loadInspector(sampleId);
 }

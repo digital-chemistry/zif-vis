@@ -38,11 +38,7 @@ function getPositionMarker() {
   const c = Number(concentration);
 
   if (![m, l, b, c].every(Number.isFinite)) return null;
-
-  // hard range validation
   if ([m, l, b].some(v => v < 0 || v > 100)) return null;
-
-  // sum must be 100
   if (Math.abs((m + l + b) - 100) > 0.25) return null;
 
   return { metal: m, ligand: l, bsa: b, concentration: c };
@@ -50,8 +46,8 @@ function getPositionMarker() {
 
 export function readFiltersFromDom() {
   const mode = getCheckedRadio("viewMode", "3d");
-  const washing = getCheckedRadio("washing", "all");
-  const colourBy = getCheckedRadio("colourBy", "phase");
+  const washing = $("washing")?.value || "all";
+  const colourBy = $("colourBy")?.value || "phase";
 
   return {
     mode,
@@ -85,8 +81,9 @@ export function filterPoints(points, filters) {
     if (Number.isFinite(ee) && ee < filters.eeThreshold) return false;
 
     for (const [phase, minFrac] of Object.entries(filters.phaseThresholds)) {
-      const pointFrac = Number(phaseComp?.[phase]?.mean ?? 0);
-      if (pointFrac < minFrac) return false;
+      const obj = phaseComp?.[phase];
+      const frac = Number(obj?.mean ?? obj ?? 0);
+      if (!Number.isFinite(frac) || frac < minFrac) return false;
     }
 
     return true;

@@ -13,10 +13,16 @@ export const PHASE_COLORS = {
 };
 
 export const PHASE_LABELS = {
-  u13: "Unclassified",
   am: "Amorphous",
   sod: "Sodalite",
-  dia: "Diamondoid"
+  dia: "Diamondoid",
+  u12: "U12",
+  u13: "Unclassified",
+  "zif-c": "ZIF-C",
+  "zif-ec-1": "ZIF-EC-1",
+  "zif-l": "ZIF-L",
+  mixed: "Mixed",
+  unknown: "Unknown"
 };
 
 export const BASE_LAYER_Z = {
