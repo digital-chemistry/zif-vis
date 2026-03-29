@@ -53,8 +53,8 @@ function formatHoverLine(label, value) {
 
 function buildPointHoverText(p) {
   const composition =
-    `M ${formatValShort(p.metal, 1)}%  •  ` +
-    `L ${formatValShort(p.ligand, 1)}%  •  ` +
+    `M ${formatValShort(p.metal, 1)}% | ` +
+    `L ${formatValShort(p.ligand, 1)}% | ` +
     `BSA ${formatValShort(p.bsa, 1)}%`;
   const layer = `${formatValShort(p.concentration, 1)} mg mL^-1`;
   const phase = displayPhase(p.phase || p.primary_phase || "N/A");
@@ -206,7 +206,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
   } else if (colourBy === "ee") {
     markerColor = layerPoints.map((p) => numericOrNull(p.ee));
     showscale = true;
-    colorbar = { title: "EE%" };
+    colorbar = { title: "Encapsulation efficiency" };
   } else if (colourBy === "crystallinity") {
     markerColor = layerPoints.map((p) => numericOrNull(p.crystallinity));
     showscale = true;
@@ -214,8 +214,10 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
   } else if (colourBy === "protein_ratio") {
     markerColor = layerPoints.map((p) => numericOrNull(p.protein_ratio));
     showscale = true;
-    colorbar = { title: "Protein ratio" };
+    colorbar = { title: "Estimated ATR ratio" };
   }
+
+  const isPhaseView = colourBy === "phase";
 
   const baseTrace = {
     type: "scatterternary",
@@ -236,7 +238,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
     showlegend: false
   };
 
-  const coreTrace = {
+  const colorTrace = {
     type: "scatterternary",
     mode: "markers",
     a: layerPoints.map((p) => Number(p.metal)),
@@ -247,23 +249,24 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
     hovertemplate: "%{text}<extra></extra>",
     hoverlabel: hoverLabelStyle,
     marker: {
-      size: layerPoints.map((p) => crystallinityToCoreSize2D(p.crystallinity)),
+      size: isPhaseView
+        ? layerPoints.map((p) => crystallinityToCoreSize2D(p.crystallinity))
+        : SAMPLE_MARKER_SIZE_2D,
       opacity: 0.95,
-      color: colourBy === "phase"
+      color: isPhaseView
         ? layerPoints.map(blendPhaseColor)
         : markerColor,
-      colorscale: colourBy === "phase" ? undefined : colorscale,
-      showscale: colourBy === "phase" ? false : showscale,
-      colorbar: colourBy === "phase" ? undefined : colorbar,
-      line: { width: 0 }
+      colorscale: isPhaseView ? undefined : colorscale,
+      showscale: isPhaseView ? false : showscale,
+      colorbar: isPhaseView ? undefined : colorbar,
+      line: { width: isPhaseView ? 0 : 0.3, color: "rgba(50,50,50,0.20)" }
     },
     showlegend: false
   };
 
   const searchTrace = markerForSearchPosition2D(searchPosition, layer);
-  const traces = searchTrace
-    ? [baseTrace, coreTrace, searchTrace]
-    : [baseTrace, coreTrace];
+  const pointTraces = isPhaseView ? [baseTrace, colorTrace] : [colorTrace];
+  const traces = searchTrace ? [...pointTraces, searchTrace] : pointTraces;
 
   const layout = {
     margin: { l: 40, r: 40, t: 40, b: 40 },
@@ -333,7 +336,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
   } else if (colourBy === "ee") {
     markerColor = layerPoints.map((p) => numericOrNull(p.ee));
     showscale = true;
-    colorbar = { title: "EE%" };
+    colorbar = { title: "Encapsulation efficiency" };
   } else if (colourBy === "crystallinity") {
     markerColor = layerPoints.map((p) => numericOrNull(p.crystallinity));
     showscale = true;
@@ -341,8 +344,10 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
   } else if (colourBy === "protein_ratio") {
     markerColor = layerPoints.map((p) => numericOrNull(p.protein_ratio));
     showscale = true;
-    colorbar = { title: "Protein ratio" };
+    colorbar = { title: "Estimated ATR ratio" };
   }
+
+  const isPhaseView = colourBy === "phase";
 
   const baseTrace = {
     type: "scatter",
@@ -362,7 +367,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
     showlegend: false
   };
 
-  const coreTrace = {
+  const colorTrace = {
     type: "scatter",
     mode: "markers",
     x: layerPoints.map((p) => Number(p.x)),
@@ -372,23 +377,24 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
     hovertemplate: "%{text}<extra></extra>",
     hoverlabel: hoverLabelStyle,
     marker: {
-      size: layerPoints.map((p) => crystallinityToCoreSize2D(p.crystallinity)),
+      size: isPhaseView
+        ? layerPoints.map((p) => crystallinityToCoreSize2D(p.crystallinity))
+        : SAMPLE_MARKER_SIZE_2D,
       opacity: 0.95,
-      color: colourBy === "phase"
+      color: isPhaseView
         ? layerPoints.map(blendPhaseColor)
         : markerColor,
-      colorscale: colourBy === "phase" ? undefined : colorscale,
-      showscale: colourBy === "phase" ? false : showscale,
-      colorbar: colourBy === "phase" ? undefined : colorbar,
-      line: { width: 0 }
+      colorscale: isPhaseView ? undefined : colorscale,
+      showscale: isPhaseView ? false : showscale,
+      colorbar: isPhaseView ? undefined : colorbar,
+      line: { width: isPhaseView ? 0 : 0.3, color: "rgba(50,50,50,0.20)" }
     },
     showlegend: false
   };
 
   const searchTrace = markerForSearchPosition2DFallback(searchPosition, layer);
-  const traces = searchTrace
-    ? [baseTrace, coreTrace, searchTrace]
-    : [baseTrace, coreTrace];
+  const pointTraces = isPhaseView ? [baseTrace, colorTrace] : [colorTrace];
+  const traces = searchTrace ? [...pointTraces, searchTrace] : pointTraces;
 
   const layout = {
     margin: { l: 40, r: 40, t: 40, b: 40 },

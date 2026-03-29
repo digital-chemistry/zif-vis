@@ -86,7 +86,7 @@ function buildHoverText(p) {
   const eeMean = numericOrNull(p.ee);
   const eeErr = numericOrNull(p.ee_error ?? p.error_bar ?? p.ee_std);
 
-  const composition = `M ${formatValShort(m, 1)}%  •  L ${formatValShort(l, 1)}%  •  BSA ${formatValShort(b, 1)}%`;
+  const composition = `M ${formatValShort(m, 1)}% | L ${formatValShort(l, 1)}% | BSA ${formatValShort(b, 1)}%`;
   const concentrationLabel = `${formatValShort(conc, 1)} mg mL^-1`;
   const eeLabel = eeMean == null ? "N/A" : formatMeanPm(eeMean, eeErr, 2);
 
@@ -118,7 +118,7 @@ function getMarkerStyle(points, colourBy) {
       color: points.map((p) => numericOrNull(p.ee)),
       colorscale: "RdBu",
       showscale: true,
-      colorbar: { title: "EE%" }
+      colorbar: { title: "Encapsulation efficiency" }
     };
   }
 
@@ -136,7 +136,7 @@ function getMarkerStyle(points, colourBy) {
       color: points.map((p) => numericOrNull(p.protein_ratio)),
       colorscale: "RdBu",
       showscale: true,
-      colorbar: { title: "Estimated ratio" }
+      colorbar: { title: "Estimated ATR ratio" }
     };
   }
 
@@ -156,6 +156,7 @@ const hoverLabelStyle = {
 
 export function buildPointTraces(points, concToZ, colourBy) {
   const markerStyle = getMarkerStyle(points, colourBy);
+  const isPhaseView = colourBy === "phase";
 
   const xs = points.map((p) => ternaryXYFromPoint(p).x);
   const ys = points.map((p) => ternaryXYFromPoint(p).y);
@@ -182,7 +183,7 @@ export function buildPointTraces(points, concToZ, colourBy) {
     showlegend: false
   };
 
-  const coreTrace = {
+  const colorTrace = {
     type: "scatter3d",
     mode: "markers",
     x: xs,
@@ -193,20 +194,22 @@ export function buildPointTraces(points, concToZ, colourBy) {
     hovertemplate: "%{text}<extra></extra>",
     hoverlabel: hoverLabelStyle,
     marker: {
-      size: points.map((p) => crystallinityToCoreSize3D(p.crystallinity)),
+      size: isPhaseView
+        ? points.map((p) => crystallinityToCoreSize3D(p.crystallinity))
+        : SAMPLE_MARKER_SIZE_3D * get3DMarkerScale(),
       opacity: 0.95,
-      color: colourBy === "phase"
+      color: isPhaseView
         ? points.map(blendPhaseColor)
         : markerStyle.color,
-      colorscale: colourBy === "phase" ? undefined : markerStyle.colorscale,
-      showscale: colourBy === "phase" ? false : markerStyle.showscale,
-      colorbar: colourBy === "phase" ? undefined : markerStyle.colorbar,
-      line: { width: 0 }
+      colorscale: isPhaseView ? undefined : markerStyle.colorscale,
+      showscale: isPhaseView ? false : markerStyle.showscale,
+      colorbar: isPhaseView ? undefined : markerStyle.colorbar,
+      line: { width: isPhaseView ? 0 : 0.25, color: "rgba(70,70,70,0.18)" }
     },
     showlegend: false
   };
 
-  return [baseTrace, coreTrace];
+  return isPhaseView ? [baseTrace, colorTrace] : [colorTrace];
 }
 
 export function markerForSearchPosition3D(searchPosition, concToZ) {
