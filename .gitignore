@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+myenv/
+venv/
+.venv/
+env/
+
+# Flask / local runtime
+instance/
+.flaskenv
+.env
+
+old/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test / cache / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# Optional: large local data folders you do not want in git
+# Uncomment if needed
+project/ATR_xy/
+project/XRD_xy/
+project/images/
+
+# Optional: temporary exported files
+*.csv
+*.xlsx
+*.xy
+*.png
+
