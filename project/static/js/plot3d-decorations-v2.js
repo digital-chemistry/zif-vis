@@ -203,6 +203,31 @@ export function buildTriangleGrid(orderedLayers, concToZ) {
   };
 }
 
+export function buildInterlayerGuides3D(orderedLayers, concToZ) {
+  if (orderedLayers.length < 2) return [];
+
+  const anchors = [
+    TRIANGLE.A,
+    TRIANGLE.B,
+    TRIANGLE.C,
+    midpoint(TRIANGLE.A, TRIANGLE.B),
+    midpoint(TRIANGLE.A, TRIANGLE.C),
+    midpoint(TRIANGLE.B, TRIANGLE.C),
+    ternaryPoint(1, 1, 1),
+  ];
+
+  return anchors.map((anchor) => ({
+    type: "scatter3d",
+    mode: "lines",
+    x: orderedLayers.map(() => anchor.x),
+    y: orderedLayers.map(() => anchor.y),
+    z: orderedLayers.map((layer) => concToZ.get(layer)),
+    hoverinfo: "skip",
+    showlegend: false,
+    line: { color: "rgba(38, 47, 59, 0.14)", width: 2 }
+  }));
+}
+
 export function buildLayerLabels3D(orderedLayers, concToZ) {
   const x = [];
   const y = [];

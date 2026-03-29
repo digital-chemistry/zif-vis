@@ -57,6 +57,20 @@
       </div>
     </div>
 
+    <div class="control-block" id="interlayerGuideCard">
+      <div class="control-label label-with-help">
+        <span>Inter-layer guides</span>
+        <span class="info-tip" tabindex="0">
+          <span class="info-tip-button">?</span>
+          <span class="info-tip-popover">Show subtle guide lines between concentration layers to help read the stacked structure in 3D.</span>
+        </span>
+      </div>
+      <label class="simple-check">
+        <input type="checkbox" id="showInterlayerGuides">
+        <span>Show guides between layers</span>
+      </label>
+    </div>
+
     <div class="control-block">
       <div class="control-label icon-label label-with-help">
         <span class="icon-label">
@@ -90,7 +104,7 @@
         </span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">Change the marker coloring to emphasize phase identity, crystallinity, encapsulation efficiency, ATR-derived estimated ratio, or the uncertainty in EE and crystallinity assignment.</span>
+          <span class="info-tip-popover">Change the marker coloring to emphasize phase identity, phase-presence probability, crystallinity, encapsulation efficiency, ATR-derived estimated ratio, or the uncertainty in EE and crystallinity assignment. Predicted phase probability views indicate the likelihood of finding that phase contribution there, not necessarily a phase-pure material.</span>
         </span>
       </label>
       <select id="colourBy">

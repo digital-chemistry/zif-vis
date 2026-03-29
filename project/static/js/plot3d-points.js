@@ -148,7 +148,7 @@ function buildHoverText(p) {
   const concentrationLabel = `${formatValShort(conc, 1)} mg mL^-1`;
   const eeLabel = eeMean == null ? "N/A" : formatMeanPm(eeMean, eeErr, 2);
   const sourceLabel = p.is_predicted
-    ? `Predicted grid · ${escapeHtml(p.trust_band || "prototype")}`
+    ? `Predicted grid | ${escapeHtml(p.trust_band || "prototype")}`
     : "Measured sample";
 
   return (
@@ -171,7 +171,9 @@ function getMarkerStyle(points, colourBy) {
       }),
       colorscale: undefined,
       showscale: false,
-      colorbar: undefined
+      colorbar: undefined,
+      cmin: undefined,
+      cmax: undefined
     };
   }
 
@@ -181,7 +183,9 @@ function getMarkerStyle(points, colourBy) {
       color: points.map((p) => scalarValueForMode(p, colourBy)),
       colorscale: WARM_SCALAR_SCALE,
       showscale: true,
-      colorbar: { title: phaseMode.title }
+      colorbar: { title: phaseMode.title },
+      cmin: 0,
+      cmax: 1
     };
   }
 
@@ -190,7 +194,9 @@ function getMarkerStyle(points, colourBy) {
       color: points.map((p) => numericOrNull(p.ee)),
       colorscale: WARM_SCALAR_SCALE,
       showscale: true,
-      colorbar: { title: "Encapsulation efficiency" }
+      colorbar: { title: "Encapsulation efficiency" },
+      cmin: undefined,
+      cmax: undefined
     };
   }
 
@@ -199,7 +205,9 @@ function getMarkerStyle(points, colourBy) {
       color: points.map((p) => numericOrNull(p.ee_error ?? p.ee_std)),
       colorscale: WARM_SCALAR_SCALE,
       showscale: true,
-      colorbar: { title: "EE standard deviation" }
+      colorbar: { title: "EE standard deviation" },
+      cmin: 0,
+      cmax: undefined
     };
   }
 
@@ -208,7 +216,9 @@ function getMarkerStyle(points, colourBy) {
       color: points.map((p) => numericOrNull(p.crystallinity)),
       colorscale: WARM_SCALAR_SCALE,
       showscale: true,
-      colorbar: { title: "Crystalline fraction" }
+      colorbar: { title: "Crystalline fraction" },
+      cmin: 0,
+      cmax: 1
     };
   }
 
@@ -223,7 +233,9 @@ function getMarkerStyle(points, colourBy) {
       ),
       colorscale: WARM_SCALAR_SCALE,
       showscale: true,
-      colorbar: { title: "Crystallinity standard deviation" }
+      colorbar: { title: "Crystallinity standard deviation" },
+      cmin: 0,
+      cmax: 1
     };
   }
 
@@ -232,7 +244,9 @@ function getMarkerStyle(points, colourBy) {
       color: points.map((p) => numericOrNull(p.protein_ratio)),
       colorscale: WARM_SCALAR_SCALE,
       showscale: true,
-      colorbar: { title: "Estimated ATR ratio" }
+      colorbar: { title: "Estimated ATR ratio" },
+      cmin: 0,
+      cmax: 1
     };
   }
 
@@ -240,7 +254,9 @@ function getMarkerStyle(points, colourBy) {
     color: "#7e7e7e",
     colorscale: undefined,
     showscale: false,
-    colorbar: undefined
+    colorbar: undefined,
+    cmin: undefined,
+    cmax: undefined
   };
 }
 
@@ -301,6 +317,8 @@ export function buildPointTraces(points, concToZ, colourBy) {
       colorscale: isPhaseView ? undefined : markerStyle.colorscale,
       showscale: isPhaseView ? false : markerStyle.showscale,
       colorbar: isPhaseView ? undefined : markerStyle.colorbar,
+      cmin: isPhaseView ? undefined : markerStyle.cmin,
+      cmax: isPhaseView ? undefined : markerStyle.cmax,
       line: { width: isPhaseView ? 0 : 0.25, color: "rgba(70,70,70,0.18)" }
     },
     showlegend: false

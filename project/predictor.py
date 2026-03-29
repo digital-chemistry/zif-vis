@@ -103,6 +103,38 @@ class CompositionPredictor:
                 if row.get("concentration") is not None
             }
         )
+        self.component_bounds = {
+            "metal_pct": (
+                float(min(row["metal_pct"] for row in usable)),
+                float(max(row["metal_pct"] for row in usable)),
+            ),
+            "ligand_pct": (
+                float(min(row["ligand_pct"] for row in usable)),
+                float(max(row["ligand_pct"] for row in usable)),
+            ),
+            "bsa_pct": (
+                float(min(row["bsa_pct"] for row in usable)),
+                float(max(row["bsa_pct"] for row in usable)),
+            ),
+            "concentration": (
+                float(min(row["concentration"] for row in usable)),
+                float(max(row["concentration"] for row in usable)),
+            ),
+        }
+
+    def is_within_supported_domain(
+        self,
+        metal_pct: float,
+        ligand_pct: float,
+        bsa_pct: float,
+        concentration: float,
+    ) -> bool:
+        return (
+            self.component_bounds["metal_pct"][0] <= metal_pct <= self.component_bounds["metal_pct"][1]
+            and self.component_bounds["ligand_pct"][0] <= ligand_pct <= self.component_bounds["ligand_pct"][1]
+            and self.component_bounds["bsa_pct"][0] <= bsa_pct <= self.component_bounds["bsa_pct"][1]
+            and self.component_bounds["concentration"][0] <= concentration <= self.component_bounds["concentration"][1]
+        )
 
     def _scale_query(self, metal_pct: float, ligand_pct: float, bsa_pct: float, concentration: float, wash: str) -> np.ndarray:
         wash_code = 1.0 if normalise_wash(wash) == "ethanol" else 0.0
@@ -139,6 +171,11 @@ class CompositionPredictor:
         return float(np.dot(np.array(numeric, dtype=float), masked_weights))
 
     def predict(self, metal_pct: float, ligand_pct: float, bsa_pct: float, concentration: float, wash: str) -> dict:
+        if not self.is_within_supported_domain(metal_pct, ligand_pct, bsa_pct, concentration):
+            raise ValueError(
+                "Prediction outside the experimentally supported composition domain is disabled."
+            )
+
         query_scaled = self._scale_query(metal_pct, ligand_pct, bsa_pct, concentration, wash)
         order, distances, weights = self._neighbor_weights(query_scaled)
         neighbors = [self.points[i] for i in order]
@@ -219,6 +256,14 @@ class CompositionPredictor:
                         continue
 
                     bsa_pct = max(0.0, bsa_pct)
+                    if not self.is_within_supported_domain(
+                        metal_pct=metal_pct,
+                        ligand_pct=ligand_pct,
+                        bsa_pct=bsa_pct,
+                        concentration=float(concentration),
+                    ):
+                        continue
+
                     prediction = self.predict(
                         metal_pct=metal_pct,
                         ligand_pct=ligand_pct,

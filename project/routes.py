@@ -103,13 +103,16 @@ def register_routes(app, points, point_details, experiment_details, predictor, b
             return jsonify({"error": "Metal + Ligand + BSA must equal 100."}), 400
 
         wash = payload.get("wash") or "ethanol"
-        prediction = predictor.predict(
-            metal_pct=metal_pct,
-            ligand_pct=ligand_pct,
-            bsa_pct=bsa_pct,
-            concentration=concentration,
-            wash=wash,
-        )
+        try:
+            prediction = predictor.predict(
+                metal_pct=metal_pct,
+                ligand_pct=ligand_pct,
+                bsa_pct=bsa_pct,
+                concentration=concentration,
+                wash=wash,
+            )
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 422
         return jsonify(prediction)
 
     @app.route("/api/prediction-grid")

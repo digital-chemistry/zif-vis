@@ -71,6 +71,23 @@ function scalarValueForMode(point, colourBy) {
   return null;
 }
 
+function scalarBoundsForMode(colourBy) {
+  if (
+    PHASE_PROBABILITY_MODES[colourBy] ||
+    colourBy === "crystallinity" ||
+    colourBy === "crystallinity_uncertainty" ||
+    colourBy === "protein_ratio"
+  ) {
+    return { cmin: 0, cmax: 1 };
+  }
+
+  if (colourBy === "ee_error") {
+    return { cmin: 0, cmax: undefined };
+  }
+
+  return { cmin: undefined, cmax: undefined };
+}
+
 function crystallinityToCoreSize2D(c) {
   const v = Math.max(0, Math.min(1, Number(c) || 0));
   return CRYSTAL_CORE_MIN_SIZE_2D + (SAMPLE_MARKER_SIZE_2D - CRYSTAL_CORE_MIN_SIZE_2D) * Math.sqrt(v);
@@ -367,6 +384,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
 
   const isPhaseView = colourBy === "phase";
   const amorphousBaseOpacity = getAmorphousBaseOpacity();
+  const scalarBounds = scalarBoundsForMode(colourBy);
 
   const baseTrace = {
     type: "scatterternary",
@@ -408,6 +426,8 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
       colorscale: isPhaseView ? undefined : colorscale,
       showscale: isPhaseView ? false : showscale,
       colorbar: isPhaseView ? undefined : colorbar,
+      cmin: isPhaseView ? undefined : scalarBounds.cmin,
+      cmax: isPhaseView ? undefined : scalarBounds.cmax,
       line: { width: isPhaseView ? 0 : 0.3, color: "rgba(50,50,50,0.20)" }
     },
     showlegend: false
@@ -518,6 +538,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
 
   const isPhaseView = colourBy === "phase";
   const amorphousBaseOpacity = getAmorphousBaseOpacity();
+  const scalarBounds = scalarBoundsForMode(colourBy);
 
   const baseTrace = {
     type: "scatter",
@@ -557,6 +578,8 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
       colorscale: isPhaseView ? undefined : colorscale,
       showscale: isPhaseView ? false : showscale,
       colorbar: isPhaseView ? undefined : colorbar,
+      cmin: isPhaseView ? undefined : scalarBounds.cmin,
+      cmax: isPhaseView ? undefined : scalarBounds.cmax,
       line: { width: isPhaseView ? 0 : 0.3, color: "rgba(50,50,50,0.20)" }
     },
     showlegend: false

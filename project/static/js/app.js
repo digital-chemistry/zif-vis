@@ -35,6 +35,7 @@ function wireControls() {
     "spacingScale",
     "markerScale3D",
     "amorphousOpacity",
+    "showInterlayerGuides",
     "crystBalance",
     "proteinThreshold",
     "eeThreshold",
@@ -601,7 +602,14 @@ async function updateCompositionPrediction() {
     });
 
     if (!res.ok) {
-      throw new Error(`Prediction request failed (${res.status})`);
+      let message = `Prediction request failed (${res.status})`;
+      try {
+        const payload = await res.json();
+        if (payload?.error) message = payload.error;
+      } catch (_err) {
+        // Keep the default message when no JSON body is available.
+      }
+      throw new Error(message);
     }
 
     const payload = await res.json();
@@ -612,7 +620,7 @@ async function updateCompositionPrediction() {
     console.error("updateCompositionPrediction failed:", err);
     if (card) {
       card.classList.remove("is-hidden");
-      card.innerHTML = `<div class="prediction-copy">Prediction preview unavailable.</div>`;
+      card.innerHTML = `<div class="prediction-copy">${err?.message || "Prediction preview unavailable."}</div>`;
     }
   }
 }
@@ -661,6 +669,7 @@ function toggleModeDependentCards() {
   const spacingCard = $("spacingCard");
   const markerSizeCard = $("markerSizeCard");
   const amorphousOpacityCard = $("amorphousOpacityCard");
+  const interlayerGuideCard = $("interlayerGuideCard");
   const colourBy = $("colourBy")?.value || "phase";
 
   if (spacingCard) {
@@ -671,6 +680,9 @@ function toggleModeDependentCards() {
   }
   if (amorphousOpacityCard) {
     amorphousOpacityCard.style.display = colourBy === "phase" ? "flex" : "none";
+  }
+  if (interlayerGuideCard) {
+    interlayerGuideCard.style.display = mode === "3d" ? "flex" : "none";
   }
 }
 

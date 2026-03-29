@@ -4,6 +4,7 @@ import { getOrderedLayers, buildLayerZMap } from "./plot3d-layers.js";
 import {
   buildLayerPlanes,
   buildTriangleGrid,
+  buildInterlayerGuides3D,
   buildTriangleEdges,
   buildLayerLabels3D,
   buildConcentrationGuide3D,
@@ -38,10 +39,12 @@ export function renderPlot3D(
   const concToZ = buildLayerZMap(orderedLayers, spacingScale);
 
   const searchMarker = markerForSearchPosition3D(searchPosition, concToZ);
+  const showInterlayerGuides = Boolean($("showInterlayerGuides")?.checked);
 
   const traces = [
     ...buildLayerPlanes(orderedLayers, concToZ),
     buildTriangleGrid(orderedLayers, concToZ),
+    ...(showInterlayerGuides ? buildInterlayerGuides3D(orderedLayers, concToZ) : []),
     ...buildTriangleEdges(orderedLayers, concToZ),
     buildLayerLabels3D(orderedLayers, concToZ),
     ...buildConcentrationGuide3D(orderedLayers, concToZ),
