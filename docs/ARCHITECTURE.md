@@ -21,7 +21,9 @@ The runtime is intentionally simple:
 
 1. `project/app.py`
    Creates the Flask app, loads all data once, and registers routes.
-2. `project/data_loader.py`
+2. `project/wsgi.py`
+   Mounts the Flask app under `/zif` for production deployment.
+3. `project/data_loader.py`
    Reads the master JSON and builds three main structures:
    - `points`
    - `point_details`
@@ -38,7 +40,9 @@ The runtime is intentionally simple:
 ## 3. Backend file map
 
 - `project/app.py`
-  App entry point. Minimal by design.
+  Flask app factory and local dev entry point.
+- `project/wsgi.py`
+  Production WSGI entry point used by Docker and Gunicorn. Mounts the explorer at `/zif`.
 - `project/routes.py`
   Route registration. This is the first file to edit when adding a new API endpoint.
 - `project/predictor.py`
@@ -68,7 +72,7 @@ The runtime is intentionally simple:
 ### JavaScript
 
 - `project/static/js/app.js`
-  Frontend entry point. If a control should trigger a re-render, it is usually wired here. It also manages the measured/predicted data-layer switching.
+  Frontend entry point. If a control should trigger a re-render, it is usually wired here. It also manages the measured/predicted data-layer switching and now builds API URLs from the mounted app prefix.
 - `project/static/js/filters.js`
   Reads DOM control state and filters the full point list.
 - `project/static/js/plot3d.js`
@@ -78,7 +82,7 @@ The runtime is intentionally simple:
 - `project/static/js/plot2d.js`
   2D ternary rendering and hover/marker logic for the single-layer mode.
 - `project/static/js/inspector.js`
-  Sample loading, ATR/XRD fetches, lazy expansion behavior, and CSV download behavior.
+  Sample loading, ATR/XRD fetches, lazy expansion behavior, CSV download behavior, and prefix-aware API fetches.
 - `project/static/js/inspector-data.js`
   Extracts sample summary information, top phases, and experiment selections from the sample payload.
 - `project/static/js/inspector-render.js`
@@ -264,6 +268,14 @@ An included template with a BOM at the beginning can create a visible layout bug
 
 Most visible behavior is not controlled by Flask templates after initial page load. If something looks wrong in the plot or inspector, the fix is usually in `project/static/js/`.
 
+### Deployment uses a mounted subpath
+
+Production is now intended to run under `/zif/` rather than `/`.
+
+- `project/wsgi.py` mounts the Flask app at `/zif`
+- the frontend reads `window.ZIF_BASE_PATH` from the template shell
+- API requests should always be built from that prefix, not hardcoded as `/api/...`
+
 ### Raw experiment folders may be local-only
 
 The summary JSON is the minimum data required for the explorer. ATR/XRD/image content depends on local files being present and correctly named.
@@ -281,7 +293,7 @@ Reasonable future work items:
 - export ATR and XRD plots as images in addition to CSV
 - add a compact glossary for terms such as EE, crystallinity, amorphous fraction, and ATR ratio
 - add tests for data loading and endpoint behavior
-- add a production entry point instead of relying on the Flask dev server
+- add smoke tests for `/zif/` deployment behavior and static asset URLs
 
 ## 10. Suggested starting points for a future Codex session
 

@@ -9,6 +9,11 @@ let allPoints = [];
 let predictedGridCache = new Map();
 let currentCamera = null;
 let predictionRequestToken = 0;
+const ZIF_BASE_PATH = String(window.ZIF_BASE_PATH || "");
+
+function apiUrl(path) {
+  return `${ZIF_BASE_PATH}${path}`;
+}
 
 document.addEventListener("DOMContentLoaded", initApp);
 
@@ -145,9 +150,9 @@ function wireControls() {
 
 async function loadPoints() {
   try {
-    const res = await fetch("/api/points");
+    const res = await fetch(apiUrl("/api/points"));
     if (!res.ok) {
-      throw new Error(`Failed to load /api/points (${res.status})`);
+      throw new Error(`Failed to load ${apiUrl("/api/points")} (${res.status})`);
     }
 
     allPoints = await res.json();
@@ -184,10 +189,12 @@ async function getPredictedGridPoints(wash, includeIntermediateLayers = false) {
 
   const washValue = String(wash || "ethanol");
   const res = await fetch(
-    `/api/prediction-grid?wash=${encodeURIComponent(washValue)}&intermediate=${includeIntermediateLayers ? "1" : "0"}`
+    apiUrl(
+      `/api/prediction-grid?wash=${encodeURIComponent(washValue)}&intermediate=${includeIntermediateLayers ? "1" : "0"}`
+    )
   );
   if (!res.ok) {
-    throw new Error(`Failed to load /api/prediction-grid (${res.status})`);
+    throw new Error(`Failed to load ${apiUrl("/api/prediction-grid")} (${res.status})`);
   }
 
   const payload = await res.json();
@@ -597,7 +604,7 @@ async function updateCompositionPrediction() {
   const token = ++predictionRequestToken;
 
   try {
-    const res = await fetch("/api/predict", {
+    const res = await fetch(apiUrl("/api/predict"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

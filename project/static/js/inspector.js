@@ -24,6 +24,11 @@ let atrLoadedForSample = null;
 let xrdLoadedForSample = null;
 let currentAtrSpectrum = null;
 let currentXrdSpectra = new Map();
+const ZIF_BASE_PATH = String(window.ZIF_BASE_PATH || "");
+
+function apiUrl(path) {
+  return `${ZIF_BASE_PATH}${path}`;
+}
 
 function toNumericArray(value) {
   if (!Array.isArray(value)) return [];
@@ -136,7 +141,7 @@ export async function loadInspector(sampleId) {
   setInspectorLoading(sampleId);
 
   try {
-    const res = await fetch(`/api/sample/${encodeURIComponent(sampleId)}`);
+    const res = await fetch(apiUrl(`/api/sample/${encodeURIComponent(sampleId)}`));
     if (!res.ok) {
       throw new Error(`Failed sample load: ${res.status}`);
     }
@@ -226,7 +231,7 @@ async function loadATRForPoint(sample, token) {
   }
 
   try {
-    const url = `/api/spectrum/atr/${encodeURIComponent(atrExp.experiment_id)}`;
+    const url = apiUrl(`/api/spectrum/atr/${encodeURIComponent(atrExp.experiment_id)}`);
     const res = await fetch(url);
     if (!res.ok) {
       throw new Error(`Failed ATR load: ${res.status}`);
@@ -311,7 +316,7 @@ async function loadExperimentCards(sample, token) {
     if (token !== currentInspectorToken) return;
 
     try {
-      const xrdRes = await fetch(`/api/spectrum/xrd/${encodeURIComponent(exp.experiment_id)}`);
+      const xrdRes = await fetch(apiUrl(`/api/spectrum/xrd/${encodeURIComponent(exp.experiment_id)}`));
       if (!xrdRes.ok) {
         throw new Error(`HTTP ${xrdRes.status}`);
       }

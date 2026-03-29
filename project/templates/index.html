@@ -23,6 +23,9 @@
     {% include "_right_inspector.html" %}
   </div>
 
+  <script>
+    window.ZIF_BASE_PATH = {{ request.script_root|tojson }};
+  </script>
   <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
   <script>
     lucide.createIcons();

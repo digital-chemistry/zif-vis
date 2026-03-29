@@ -49,6 +49,24 @@ python -m project.app
 
 5. Open `http://127.0.0.1:8000`
 
+## Docker deployment at `/zif/`
+
+This repo is now packaged for deployment under `digital-chemistry.io/zif/`.
+
+Local container test:
+
+```bash
+docker compose up -d --build
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000/zif/
+```
+
+Production handoff notes live in [`DEPLOY.md`](DEPLOY.md).
+
 ## Repository layout
 
 - `project/app.py`
@@ -107,6 +125,7 @@ These decisions are intentional and should generally be preserved unless the vis
 ## Developer notes
 
 - The app currently runs with `debug=True`.
+- Production Docker runs through `gunicorn` with the WSGI app mounted at `/zif`.
 - The frontend is intentionally modular; avoid moving styling back into inline template `<style>` blocks.
 - Be careful with file encoding when rewriting templates or static assets. A UTF-8 BOM at the start of an included template can visibly break the layout.
 - If you are extending the app, start with [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). It documents the data model, module map, and the main extension points for future Codex or human contributors.
