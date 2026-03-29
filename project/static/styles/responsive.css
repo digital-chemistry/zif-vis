@@ -1,0 +1,21 @@
+@media (max-width: 1280px) {
+  .layout {
+    grid-template-columns: 280px minmax(420px, 1fr) 340px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  #plot {
+    height: 70vh;
+  }
+
+  .position-grid,
+  .metrics-grid,
+  .phase-legend {
+    grid-template-columns: 1fr;
+  }
+}

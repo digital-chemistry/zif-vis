@@ -4,7 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ZIF Biocomposite Explorer</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/tokens.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/layout.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/panels.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/forms.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/plot.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/inspector.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/responsive.css') }}">
+
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 <body>
@@ -140,14 +148,14 @@
 
         <div id="ternaryInset" class="plot-overlay ternary-inset" aria-hidden="true">
           <svg viewBox="0 0 220 190" class="ternary-inset-svg">
-            <polygon points="20,170 200,170 110,14" class="tri-outline" />
+            <polygon points="20,170 200,170 110,14" class="tri-outline"></polygon>
             <text x="10" y="96" class="tri-label tri-label-left">Metal [%]</text>
             <text x="110" y="186" text-anchor="middle" class="tri-label">Ligand [%]</text>
             <text x="206" y="96" text-anchor="end" class="tri-label tri-label-right">BSA [%]</text>
           </svg>
         </div>
 
-        <div id="plotPhaseLegend" class="plot-overlay phase-legend is-hidden"></div>
+        <div id="plotPhaseLegend" class="plot-overlay plot-phase-legend is-hidden"></div>
       </div>
     </main>
 
@@ -180,7 +188,7 @@
       <section class="panel-card">
         <div class="panel-heading">Material composition</div>
         <div id="phaseCompositionPlot" class="phase-plot"></div>
-        <div id="phaseLegend" class="phase-legend"></div>
+        <div id="phaseLegend" class="inspector-phase-legend"></div>
       </section>
 
       <section class="panel-card">
@@ -206,6 +214,6 @@
     </aside>
   </div>
 
-  <script type="module" src="{{ url_for('static', filename='app.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

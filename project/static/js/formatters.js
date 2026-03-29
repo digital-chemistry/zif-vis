@@ -1,4 +1,4 @@
-import { PHASE_LABELS } from "./js/constants.js";
+import { PHASE_LABELS } from "./constants.js";
 
 export function normalisePhase(phase) {
   let s = String(phase || "")

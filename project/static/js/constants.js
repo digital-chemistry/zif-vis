@@ -32,3 +32,10 @@ export const BASE_LAYER_Z = {
   75: 3.45,
   100: 4.95
 };
+
+export const SAMPLE_MARKER_SIZE_2D = 16;
+export const SAMPLE_MARKER_SIZE_3D = 7.5;
+
+export const AMORPHOUS_BASE_COLOR = "#B2B2B2";
+export const CRYSTAL_CORE_MIN_SIZE_2D = 2.5;
+export const CRYSTAL_CORE_MIN_SIZE_3D = 1.8;

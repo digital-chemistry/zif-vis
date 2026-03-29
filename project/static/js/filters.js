@@ -1,4 +1,4 @@
-import { $ } from "./js/dom.js";
+import { $ } from "./dom.js";
 
 export function finiteValues(points, key) {
   return points
