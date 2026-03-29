@@ -15,7 +15,7 @@ export const PHASE_LABELS = {
   sod: "Sodalite",
   dia: "Diamondoid",
   u12: "U12",
-  u13: "Unclassified",
+  u13: "U13",
   "zif-c": "ZIF-C",
   "zif-ec-1": "ZIF-EC-1",
   "zif-l": "ZIF-L",
