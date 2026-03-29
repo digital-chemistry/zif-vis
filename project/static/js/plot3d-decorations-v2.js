@@ -11,11 +11,11 @@ import {
 } from "./plot3d-geometry.js";
 
 const LAYER_PLANE_COLORS = [
-  "rgba(236, 242, 248, 0.28)",
-  "rgba(226, 236, 245, 0.24)",
-  "rgba(215, 230, 242, 0.20)",
-  "rgba(206, 224, 239, 0.16)",
-  "rgba(197, 219, 237, 0.13)"
+  "rgba(255, 255, 255, 0.22)",
+  "rgba(250, 250, 251, 0.18)",
+  "rgba(246, 247, 248, 0.14)",
+  "rgba(242, 243, 245, 0.11)",
+  "rgba(238, 239, 241, 0.08)"
 ];
 
 function makeLineTrace(coords, color, width = 5) {
@@ -199,7 +199,7 @@ export function buildTriangleGrid(orderedLayers, concToZ) {
     z: zs,
     hoverinfo: "skip",
     showlegend: false,
-    line: { color: "rgba(140, 157, 178, 0.18)", width: 2 }
+    line: { color: "rgba(65, 74, 86, 0.12)", width: 2 }
   };
 }
 
@@ -225,12 +225,12 @@ export function buildLayerLabels3D(orderedLayers, concToZ) {
     {
       size: 10,
       color: "rgba(255,255,255,0.92)",
-      line: { width: 1.5, color: "rgba(118, 137, 160, 0.52)" },
+      line: { width: 1.5, color: "rgba(55, 66, 80, 0.32)" },
       symbol: "circle"
     },
     {
       size: 12,
-      color: "#556476"
+      color: "#2f3946"
     }
   );
 }
@@ -254,7 +254,7 @@ export function buildConcentrationGuide3D(orderedLayers, concToZ) {
       z: [zMin, zMax],
       hoverinfo: "skip",
       showlegend: false,
-      line: { color: "rgba(118, 137, 160, 0.35)", width: 5 }
+      line: { color: "rgba(40, 49, 61, 0.22)", width: 5 }
     },
     {
       type: "scatter3d",
@@ -266,7 +266,7 @@ export function buildConcentrationGuide3D(orderedLayers, concToZ) {
       showlegend: false,
       marker: {
         size: 5,
-        color: "rgba(118, 137, 160, 0.9)",
+        color: "rgba(48, 57, 69, 0.7)",
         line: { width: 1, color: "rgba(255,255,255,0.85)" }
       }
     },
@@ -276,7 +276,7 @@ export function buildConcentrationGuide3D(orderedLayers, concToZ) {
       [midZ],
       ["Concentration"],
       "middle right",
-      { size: 12, color: "#7b8796" }
+      { size: 12, color: "#424c59" }
     )
   ];
 }
@@ -318,7 +318,7 @@ export function buildSideLabels3D(orderedLayers, concToZ) {
     [z, z, z],
     ["Metal", "Ligand", "BSA"],
     ["middle left", "top center", "middle right"],
-    { size: 16, color: "#25364a" }
+    { size: 16, color: "#111111" }
   );
 
   const tickTrace = makeTextTrace(
@@ -348,7 +348,7 @@ export function buildSideLabels3D(orderedLayers, concToZ) {
       "middle left",
       "middle right"
     ],
-    { size: 10, color: "#8a95a3" }
+    { size: 10, color: "#5a6572" }
   );
 
   return [axisTrace, tickTrace];

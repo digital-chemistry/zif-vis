@@ -48,7 +48,7 @@ export function renderPlot3D(
     ...buildPerLayerDirectionArrows3D(orderedLayers, concToZ),
     ...buildSideLabels3D(orderedLayers, concToZ),
     ...buildPointTraces(points, concToZ, colourBy),
-    ...(searchMarker ? [searchMarker] : [])
+    ...(searchMarker || [])
   ].filter(Boolean);
 
   Plotly.react(

@@ -33,6 +33,7 @@ function wireControls() {
     "layerFocus",
     "spacingScale",
     "markerScale3D",
+    "amorphousOpacity",
     "crystBalance",
     "proteinThreshold",
     "eeThreshold",
@@ -584,12 +585,14 @@ function updateDerivedReadouts() {
   const ee = Number($("eeThreshold")?.value ?? 0);
   const spacing = Number($("spacingScale")?.value ?? 0.2);
   const markerScale = Number($("markerScale3D")?.value ?? 1.8);
+  const amorphousOpacity = Number($("amorphousOpacity")?.value ?? 0.7);
 
   const crystOut = $("crystBalanceVal");
   const proteinOut = $("proteinThresholdVal");
   const eeOut = $("eeThresholdVal");
   const spacingOut = $("spacingScaleVal");
   const markerScaleOut = $("markerScale3DVal");
+  const amorphousOpacityOut = $("amorphousOpacityVal");
 
   if (crystOut) {
     crystOut.textContent = cryst === 0 ? "Any" : `>= ${cryst}%`;
@@ -606,6 +609,9 @@ function updateDerivedReadouts() {
   if (markerScaleOut) {
     markerScaleOut.textContent = `${formatValShort(markerScale, 1)}x`;
   }
+  if (amorphousOpacityOut) {
+    amorphousOpacityOut.textContent = `${Math.round(amorphousOpacity * 100)}%`;
+  }
 
   updatePositionNote();
 }
@@ -616,12 +622,17 @@ function toggleModeDependentCards() {
 
   const spacingCard = $("spacingCard");
   const markerSizeCard = $("markerSizeCard");
+  const amorphousOpacityCard = $("amorphousOpacityCard");
+  const colourBy = $("colourBy")?.value || "phase";
 
   if (spacingCard) {
     spacingCard.style.display = mode === "3d" ? "flex" : "none";
   }
   if (markerSizeCard) {
     markerSizeCard.style.display = mode === "3d" ? "flex" : "none";
+  }
+  if (amorphousOpacityCard) {
+    amorphousOpacityCard.style.display = colourBy === "phase" ? "flex" : "none";
   }
 }
 

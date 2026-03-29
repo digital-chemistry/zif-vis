@@ -2,13 +2,13 @@
   width: 100%;
   height: 100%;
   background:
-    radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 1), rgba(252, 252, 253, 0.98) 42%, rgba(248, 249, 251, 0.96) 100%);
+    radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 1), rgba(253, 253, 254, 0.99) 46%, rgba(250, 250, 251, 0.97) 100%);
   border: none;
   border-radius: 28px;
   overflow: hidden;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.78),
-    inset 0 -12px 28px rgba(222, 229, 237, 0.12);
+    inset 0 -10px 24px rgba(232, 236, 241, 0.08);
 }
 
 .plot-overlay {

@@ -20,6 +20,13 @@ const WARM_SCALAR_SCALE = [
   [1, "#fff2a8"]
 ];
 
+const SEARCH_MARKER_COLOR = "#d85b72";
+
+function getAmorphousBaseOpacity() {
+  const v = Number($("amorphousOpacity")?.value ?? 0.7);
+  return Number.isFinite(v) ? Math.max(0.1, Math.min(1, v)) : 0.7;
+}
+
 function get3DMarkerScale() {
   const v = Number($("markerScale3D")?.value ?? 1.8);
   return Number.isFinite(v) && v > 0 ? v : 1.8;
@@ -187,6 +194,7 @@ const hoverLabelStyle = {
 export function buildPointTraces(points, concToZ, colourBy) {
   const markerStyle = getMarkerStyle(points, colourBy);
   const isPhaseView = colourBy === "phase";
+  const amorphousBaseOpacity = getAmorphousBaseOpacity();
 
   const xs = points.map((p) => ternaryXYFromPoint(p).x);
   const ys = points.map((p) => ternaryXYFromPoint(p).y);
@@ -206,7 +214,7 @@ export function buildPointTraces(points, concToZ, colourBy) {
     hoverlabel: hoverLabelStyle,
     marker: {
       size: SAMPLE_MARKER_SIZE_3D * get3DMarkerScale(),
-      opacity: 0.95,
+      opacity: amorphousBaseOpacity,
       color: AMORPHOUS_BASE_COLOR,
       line: { width: 0.25, color: "rgba(70,70,70,0.18)" }
     },
@@ -262,30 +270,64 @@ export function markerForSearchPosition3D(searchPosition, concToZ) {
   let z = concentrationToInterpolatedZ(concentration, concToZ);
   if (!Number.isFinite(z)) z = 0;
 
-  return {
-    type: "scatter3d",
-    mode: "markers+text",
-    x: [x],
-    y: [y],
-    z: [z],
-    text: ["You are here"],
-    textposition: "top center",
-    hovertemplate:
-      `You are here<br>` +
-      `Metal: ${formatValShort(metal, 1)} %<br>` +
-      `Ligand: ${formatValShort(ligand, 1)} %<br>` +
-      `BSA: ${formatValShort(bsa, 1)} %<br>` +
-      `Concentration: ${formatValShort(concentration, 1)} mg mL^-1<extra></extra>`,
-    hoverlabel: {
-      bgcolor: "rgba(255,255,255,0.96)",
-      bordercolor: "#111111",
-      font: { color: "#20242a", size: 13 }
+  const hovertemplate =
+    `You are here<br>` +
+    `Metal: ${formatValShort(metal, 1)} %<br>` +
+    `Ligand: ${formatValShort(ligand, 1)} %<br>` +
+    `BSA: ${formatValShort(bsa, 1)} %<br>` +
+    `Concentration: ${formatValShort(concentration, 1)} mg mL^-1<extra></extra>`;
+
+  return [
+    {
+      type: "scatter3d",
+      mode: "markers",
+      x: [x],
+      y: [y],
+      z: [z],
+      hoverinfo: "skip",
+      showlegend: false,
+      marker: {
+        size: 22 * get3DSearchMarkerScale(),
+        color: "rgba(216, 91, 114, 0.12)",
+        line: { width: 0, color: "rgba(0,0,0,0)" }
+      }
     },
-    marker: {
-      size: 9 * get3DSearchMarkerScale(),
-      color: "#111111",
-      symbol: "diamond",
-      line: { width: 2, color: "#ffffff" }
+    {
+      type: "scatter3d",
+      mode: "markers",
+      x: [x],
+      y: [y],
+      z: [z],
+      hoverinfo: "skip",
+      showlegend: false,
+      marker: {
+        size: 15 * get3DSearchMarkerScale(),
+        color: "rgba(216, 91, 114, 0.22)",
+        line: { width: 0, color: "rgba(0,0,0,0)" }
+      }
+    },
+    {
+      type: "scatter3d",
+      mode: "markers+text",
+      x: [x],
+      y: [y],
+      z: [z],
+      text: ["You are here"],
+      textposition: "top center",
+      hovertemplate,
+      hoverlabel: {
+        bgcolor: "rgba(255,255,255,0.96)",
+        bordercolor: SEARCH_MARKER_COLOR,
+        font: { color: "#20242a", size: 13 }
+      },
+      marker: {
+        size: 8.5 * get3DSearchMarkerScale(),
+        color: SEARCH_MARKER_COLOR,
+        symbol: "circle",
+        line: { width: 2, color: "#ffffff" }
+      },
+      textfont: { size: 13, color: "#2e3947" },
+      showlegend: false
     }
-  };
+  ];
 }

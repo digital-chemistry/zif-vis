@@ -19,6 +19,13 @@ const WARM_SCALAR_SCALE = [
   [1, "#fff2a8"]
 ];
 
+const SEARCH_MARKER_COLOR = "#d85b72";
+
+function getAmorphousBaseOpacity() {
+  const v = Number($("amorphousOpacity")?.value ?? 0.7);
+  return Number.isFinite(v) ? Math.max(0.1, Math.min(1, v)) : 0.7;
+}
+
 function crystallinityToCoreSize2D(c) {
   const v = Math.max(0, Math.min(1, Number(c) || 0));
   return CRYSTAL_CORE_MIN_SIZE_2D + (SAMPLE_MARKER_SIZE_2D - CRYSTAL_CORE_MIN_SIZE_2D) * Math.sqrt(v);
@@ -94,32 +101,66 @@ function markerForSearchPosition2D(searchPosition, layer) {
 
   if (!Number.isFinite(total) || total <= 0) return null;
 
-  return {
-    type: "scatterternary",
-    mode: "markers+text",
-    a: [Number(searchPosition.metal)],
-    b: [Number(searchPosition.ligand)],
-    c: [Number(searchPosition.bsa)],
-    text: ["You are here"],
-    textposition: "top center",
-    hovertemplate:
-      `You are here<br>` +
-      `Metal: ${formatValShort(searchPosition.metal, 1)} %<br>` +
-      `Ligand: ${formatValShort(searchPosition.ligand, 1)} %<br>` +
-      `BSA: ${formatValShort(searchPosition.bsa, 1)} %<br>` +
-      `Concentration: ${formatValShort(searchPosition.concentration, 1)} mg mL^-1<extra></extra>`,
-    hoverlabel: {
-      bgcolor: "rgba(255,255,255,0.96)",
-      bordercolor: "#111111",
-      font: { color: "#20242a", size: 13 }
+  const hovertemplate =
+    `You are here<br>` +
+    `Metal: ${formatValShort(searchPosition.metal, 1)} %<br>` +
+    `Ligand: ${formatValShort(searchPosition.ligand, 1)} %<br>` +
+    `BSA: ${formatValShort(searchPosition.bsa, 1)} %<br>` +
+    `Concentration: ${formatValShort(searchPosition.concentration, 1)} mg mL^-1<extra></extra>`;
+
+  return [
+    {
+      type: "scatterternary",
+      mode: "markers",
+      a: [Number(searchPosition.metal)],
+      b: [Number(searchPosition.ligand)],
+      c: [Number(searchPosition.bsa)],
+      hoverinfo: "skip",
+      showlegend: false,
+      marker: {
+        size: 28,
+        color: "rgba(216, 91, 114, 0.12)",
+        line: { width: 0, color: "rgba(0,0,0,0)" }
+      }
     },
-    marker: {
-      size: 14,
-      color: "#111111",
-      symbol: "diamond",
-      line: { width: 2, color: "#ffffff" }
+    {
+      type: "scatterternary",
+      mode: "markers",
+      a: [Number(searchPosition.metal)],
+      b: [Number(searchPosition.ligand)],
+      c: [Number(searchPosition.bsa)],
+      hoverinfo: "skip",
+      showlegend: false,
+      marker: {
+        size: 20,
+        color: "rgba(216, 91, 114, 0.2)",
+        line: { width: 0, color: "rgba(0,0,0,0)" }
+      }
+    },
+    {
+      type: "scatterternary",
+      mode: "markers+text",
+      a: [Number(searchPosition.metal)],
+      b: [Number(searchPosition.ligand)],
+      c: [Number(searchPosition.bsa)],
+      text: ["You are here"],
+      textposition: "top center",
+      hovertemplate,
+      hoverlabel: {
+        bgcolor: "rgba(255,255,255,0.96)",
+        bordercolor: SEARCH_MARKER_COLOR,
+        font: { color: "#20242a", size: 13 }
+      },
+      marker: {
+        size: 12,
+        color: SEARCH_MARKER_COLOR,
+        symbol: "circle",
+        line: { width: 2, color: "#ffffff" }
+      },
+      textfont: { size: 13, color: "#2e3947" },
+      showlegend: false
     }
-  };
+  ];
 }
 
 function markerForSearchPosition2DFallback(searchPosition, layer) {
@@ -140,31 +181,63 @@ function markerForSearchPosition2DFallback(searchPosition, layer) {
   const x = ll + 0.5 * bb;
   const y = (Math.sqrt(3) / 2) * bb;
 
-  return {
-    type: "scatter",
-    mode: "markers+text",
-    x: [x],
-    y: [y],
-    text: ["You are here"],
-    textposition: "top center",
-    hovertemplate:
-      `You are here<br>` +
-      `Metal: ${formatValShort(metal, 1)} %<br>` +
-      `Ligand: ${formatValShort(ligand, 1)} %<br>` +
-      `BSA: ${formatValShort(bsa, 1)} %<br>` +
-      `Concentration: ${formatValShort(searchPosition.concentration, 1)} mg mL^-1<extra></extra>`,
-    hoverlabel: {
-      bgcolor: "rgba(255,255,255,0.96)",
-      bordercolor: "#111111",
-      font: { color: "#20242a", size: 13 }
+  const hovertemplate =
+    `You are here<br>` +
+    `Metal: ${formatValShort(metal, 1)} %<br>` +
+    `Ligand: ${formatValShort(ligand, 1)} %<br>` +
+    `BSA: ${formatValShort(bsa, 1)} %<br>` +
+    `Concentration: ${formatValShort(searchPosition.concentration, 1)} mg mL^-1<extra></extra>`;
+
+  return [
+    {
+      type: "scatter",
+      mode: "markers",
+      x: [x],
+      y: [y],
+      hoverinfo: "skip",
+      showlegend: false,
+      marker: {
+        size: 28,
+        color: "rgba(216, 91, 114, 0.12)",
+        line: { width: 0, color: "rgba(0,0,0,0)" }
+      }
     },
-    marker: {
-      size: 14,
-      color: "#111111",
-      symbol: "diamond",
-      line: { width: 2, color: "#ffffff" }
+    {
+      type: "scatter",
+      mode: "markers",
+      x: [x],
+      y: [y],
+      hoverinfo: "skip",
+      showlegend: false,
+      marker: {
+        size: 20,
+        color: "rgba(216, 91, 114, 0.2)",
+        line: { width: 0, color: "rgba(0,0,0,0)" }
+      }
+    },
+    {
+      type: "scatter",
+      mode: "markers+text",
+      x: [x],
+      y: [y],
+      text: ["You are here"],
+      textposition: "top center",
+      hovertemplate,
+      hoverlabel: {
+        bgcolor: "rgba(255,255,255,0.96)",
+        bordercolor: SEARCH_MARKER_COLOR,
+        font: { color: "#20242a", size: 13 }
+      },
+      marker: {
+        size: 12,
+        color: SEARCH_MARKER_COLOR,
+        symbol: "circle",
+        line: { width: 2, color: "#ffffff" }
+      },
+      textfont: { size: 13, color: "#2e3947" },
+      showlegend: false
     }
-  };
+  ];
 }
 
 export function renderPlot2D(points, colourBy, onPointClick, searchPosition = null) {
@@ -240,6 +313,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
   }
 
   const isPhaseView = colourBy === "phase";
+  const amorphousBaseOpacity = getAmorphousBaseOpacity();
 
   const baseTrace = {
     type: "scatterternary",
@@ -253,7 +327,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
     hoverlabel: hoverLabelStyle,
     marker: {
       size: SAMPLE_MARKER_SIZE_2D,
-      opacity: 0.95,
+      opacity: amorphousBaseOpacity,
       color: AMORPHOUS_BASE_COLOR,
       line: { width: 0.3, color: "rgba(50,50,50,0.20)" }
     },
@@ -288,7 +362,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
 
   const searchTrace = markerForSearchPosition2D(searchPosition, layer);
   const pointTraces = isPhaseView ? [baseTrace, colorTrace] : [colorTrace];
-  const traces = searchTrace ? [...pointTraces, searchTrace] : pointTraces;
+  const traces = searchTrace ? [...pointTraces, ...searchTrace] : pointTraces;
 
   const layout = {
     margin: { l: 40, r: 40, t: 40, b: 40 },
@@ -310,22 +384,22 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
         title: { text: "Metal" },
         min: 0,
         ticks: "outside",
-        gridcolor: "rgba(140,140,140,0.18)",
-        linecolor: "rgba(90,90,90,0.35)"
+        gridcolor: "rgba(45,45,45,0.1)",
+        linecolor: "rgba(25,25,25,0.45)"
       },
       baxis: {
         title: { text: "Ligand" },
         min: 0,
         ticks: "outside",
-        gridcolor: "rgba(140,140,140,0.18)",
-        linecolor: "rgba(90,90,90,0.35)"
+        gridcolor: "rgba(45,45,45,0.1)",
+        linecolor: "rgba(25,25,25,0.45)"
       },
       caxis: {
         title: { text: "BSA" },
         min: 0,
         ticks: "outside",
-        gridcolor: "rgba(140,140,140,0.18)",
-        linecolor: "rgba(90,90,90,0.35)"
+        gridcolor: "rgba(45,45,45,0.1)",
+        linecolor: "rgba(25,25,25,0.45)"
       }
     },
     showlegend: false,
@@ -386,6 +460,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
   }
 
   const isPhaseView = colourBy === "phase";
+  const amorphousBaseOpacity = getAmorphousBaseOpacity();
 
   const baseTrace = {
     type: "scatter",
@@ -398,7 +473,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
     hoverlabel: hoverLabelStyle,
     marker: {
       size: SAMPLE_MARKER_SIZE_2D,
-      opacity: 0.95,
+      opacity: amorphousBaseOpacity,
       color: AMORPHOUS_BASE_COLOR,
       line: { width: 0.3, color: "rgba(50,50,50,0.20)" }
     },
@@ -432,7 +507,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
 
   const searchTrace = markerForSearchPosition2DFallback(searchPosition, layer);
   const pointTraces = isPhaseView ? [baseTrace, colorTrace] : [colorTrace];
-  const traces = searchTrace ? [...pointTraces, searchTrace] : pointTraces;
+  const traces = searchTrace ? [...pointTraces, ...searchTrace] : pointTraces;
 
   const layout = {
     margin: { l: 40, r: 40, t: 40, b: 40 },
@@ -451,7 +526,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
       path: `M 0 0 L 1 0 L 0.5 ${Math.sqrt(3) / 2} Z`,
       xref: "x",
       yref: "y",
-      line: { color: "rgba(90,90,90,0.35)", width: 2 },
+      line: { color: "rgba(25,25,25,0.45)", width: 2 },
       fillcolor: "rgba(0,0,0,0)"
     }],
     showlegend: false,

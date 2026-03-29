@@ -46,23 +46,23 @@ export function buildLayout(currentCamera) {
       {
         xref: "paper",
         yref: "paper",
-        x: 0.025,
-        y: 0.975,
-        text: "Stacked ternary composition map",
-        showarrow: false,
-        font: { size: 14, color: "#516274" },
-        align: "left"
-      },
+      x: 0.025,
+      y: 0.975,
+      text: "Stacked ternary composition map",
+      showarrow: false,
+      font: { size: 15, color: "#283240" },
+      align: "left"
+    },
       {
         xref: "paper",
         yref: "paper",
-        x: 0.025,
-        y: 0.935,
-        text: "Layered by concentration with anchored ternary axes",
-        showarrow: false,
-        font: { size: 11, color: "#8a95a3" },
-        align: "left"
-      }
+      x: 0.025,
+      y: 0.935,
+      text: "Layered by concentration with anchored ternary axes",
+      showarrow: false,
+      font: { size: 11, color: "#6d7785" },
+      align: "left"
+    }
     ],
 
     showlegend: false

@@ -15,16 +15,16 @@ export const ARROW_STYLE = {
   wing: 0.02,
   width: 4,
   colours: {
-    ligand: "rgba(102, 116, 132, 0.84)",
-    metal: "rgba(210, 126, 114, 0.84)",
-    bsa: "rgba(115, 191, 132, 0.84)"
+    ligand: "rgba(28, 33, 40, 0.82)",
+    metal: "rgba(28, 33, 40, 0.82)",
+    bsa: "rgba(28, 33, 40, 0.82)"
   }
 };
 
 export const EDGE_STYLE = {
-  base: "rgba(102, 116, 132, 0.42)",
-  left: "rgba(210, 126, 114, 0.42)",
-  right: "rgba(115, 191, 132, 0.42)"
+  base: "rgba(46, 56, 69, 0.34)",
+  left: "rgba(46, 56, 69, 0.34)",
+  right: "rgba(46, 56, 69, 0.34)"
 };
 
 export function vec(from, to) {
