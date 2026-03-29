@@ -1,13 +1,14 @@
-# Data and Images 
-project/images/ 
-project/ATR_xy/ 
-project/XRD_xy/ 
-project/static/*.xlsx 
-project/static/logo.png 
-*.json 
-*.png 
-*.xy 
-__pycache__/ 
-myenv/ 
-old/ 
-old/ 
+# Python cache and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+myenv/
+
+# Local working folders
+old/
+
+# Optional large/raw experiment assets
+project/ATR_xy/
+project/XRD_xy/
+project/images/

@@ -97,6 +97,12 @@ input.is-auto {
   box-shadow: var(--focus-ring);
 }
 
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* --- FLATTENED SEGMENTED CONTROL (SIDE-BY-SIDE) --- */
 .segmented-control {
   display: flex;

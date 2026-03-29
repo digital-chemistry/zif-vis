@@ -1,4 +1,4 @@
-.panel-details {
+﻿.panel-details {
   padding: 0;
   overflow: hidden;
 }
@@ -16,13 +16,13 @@
 }
 
 .panel-details > summary::after {
-  content: "▾";
+  content: "+";
   float: right;
   color: var(--muted);
 }
 
 .panel-details[open] > summary::after {
-  content: "▴";
+  content: "-";
 }
 
 .panel-details-body {
@@ -45,7 +45,7 @@
 .parameters-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px 16px; /* Added spacing to compensate for removed boxes */
+  gap: 20px 16px;
 }
 
 .parameter-item {

@@ -1,4 +1,4 @@
-.merged-plot-card {
+﻿.merged-plot-card {
   background: var(--card);
   border: 1px solid #e3e6ea;
   border-radius: 16px;
@@ -12,10 +12,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   padding: 12px 18px;
   background: var(--card);
   border-bottom: 1px solid var(--border);
   z-index: 10;
+}
+
+.plot-header-main {
+  min-width: 0;
 }
 
 .plot-header-title {
@@ -26,7 +31,22 @@
   margin: 0;
 }
 
-.plot-header-inline img {
+.plot-header-subtitle {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.plot-brand-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.plot-brand-logo {
+  display: block;
   max-width: 100%;
   max-height: 44px;
   object-fit: contain;
@@ -89,20 +109,32 @@
 }
 
 .accordion-section > summary::after {
-  content: "▾";
+  content: "+";
   float: right;
   color: var(--muted);
 }
 
 .accordion-section[open] > summary::after {
-  content: "▴";
+  content: "-";
 }
 
 .accordion-body {
   padding: 0 14px 14px 14px;
 }
 
+.icon-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-label i {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2px;
+}
+
 .sidebar .panel-card {
   border-radius: 16px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
 }

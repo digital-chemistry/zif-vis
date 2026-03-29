@@ -1,4 +1,4 @@
-import { $, updateViewControls } from "./dom.js";
+﻿import { $, updateViewControls } from "./dom.js";
 import { formatValShort } from "./formatters.js";
 import { readFiltersFromDom, filterPoints } from "./filters.js";
 import { renderPlot3D } from "./plot3d.js";
@@ -22,7 +22,7 @@ function wireControls() {
   [
     "layerFocus",
     "spacingScale",
-    "markerScale3D", // Added here
+    "markerScale3D",
     "crystBalance",
     "proteinThreshold",
     "eeThreshold",
@@ -166,7 +166,7 @@ function buildLayerOptions() {
         (v) => `
       <label class="simple-check">
         <input type="checkbox" class="layer-check" value="${v}" checked>
-        <span>${formatValShort(v, 1)} mg mL⁻¹</span>
+        <span>${formatValShort(v, 1)} mg mL^-1</span>
       </label>
     `
       )
@@ -181,7 +181,7 @@ function buildLayerOptions() {
     focus.innerHTML =
       `<option value="">Auto</option>` +
       layers
-        .map((v) => `<option value="${v}">${formatValShort(v, 1)} mg mL⁻¹</option>`)
+        .map((v) => `<option value="${v}">${formatValShort(v, 1)} mg mL^-1</option>`)
         .join("");
   }
 }
@@ -212,7 +212,7 @@ function buildPhaseFilters() {
             step="1"
             value="0"
           >
-          <div class="phase-slider-readout" id="phaseReadout_${cssSafe(phase)}">≥ 0%</div>
+          <div class="phase-slider-readout" id="phaseReadout_${cssSafe(phase)}">>= 0%</div>
         </div>
       </div>
     `
@@ -255,7 +255,7 @@ function updatePhaseReadouts() {
     const phase = slider.dataset.phase;
     const out = $(`phaseReadout_${cssSafe(phase)}`);
     if (out) {
-      out.textContent = `≥ ${slider.value}%`;
+      out.textContent = `>= ${slider.value}%`;
     }
   });
 }
@@ -423,7 +423,7 @@ function updateDerivedReadouts() {
   const markerScaleOut = $("markerScale3DVal");
 
   if (crystOut) {
-    crystOut.textContent = cryst === 0 ? "Any" : `≥ ${cryst}%`;
+    crystOut.textContent = cryst === 0 ? "Any" : `>= ${cryst}%`;
   }
   if (proteinOut) {
     proteinOut.textContent = formatValShort(protein, 3);
@@ -435,7 +435,7 @@ function updateDerivedReadouts() {
     spacingOut.textContent = formatValShort(spacing, 2);
   }
   if (markerScaleOut) {
-    markerScaleOut.textContent = `${formatValShort(markerScale, 1)}×`;
+    markerScaleOut.textContent = `${formatValShort(markerScale, 1)}x`;
   }
 
   updatePositionNote();
