@@ -1,6 +1,13 @@
 import { TRI_H } from "./plot3d-geometry.js";
 
 export function buildLayout(currentCamera) {
+  const xMin = -0.14;
+  const xMax = 1.14;
+  const span = xMax - xMin;
+  const yCenter = TRI_H / 2;
+  const yMin = yCenter - span / 2;
+  const yMax = yCenter + span / 2;
+
   return {
     margin: { l: 0, r: 0, t: 8, b: 0 },
     paper_bgcolor: "rgba(0,0,0,0)",
@@ -13,7 +20,7 @@ export function buildLayout(currentCamera) {
         showbackground: false,
         showgrid: false,
         zeroline: false,
-        range: [-0.22, 1.26]
+        range: [xMin, xMax]
       },
 
       yaxis: {
@@ -21,7 +28,7 @@ export function buildLayout(currentCamera) {
         showbackground: false,
         showgrid: false,
         zeroline: false,
-        range: [-0.16, TRI_H + 0.12]
+        range: [yMin, yMax]
       },
 
       zaxis: {
