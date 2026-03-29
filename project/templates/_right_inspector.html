@@ -1,16 +1,28 @@
 <aside class="sidebar right">
   <section class="panel-card">
-    <div class="panel-heading icon-label">
-      <i data-lucide="badge-info"></i>
-      <span>Parameters</span>
+    <div class="panel-heading icon-label label-with-help">
+      <span class="icon-label">
+        <i data-lucide="badge-info"></i>
+        <span>Parameters</span>
+      </span>
+      <span class="info-tip" tabindex="0">
+        <span class="info-tip-button">?</span>
+        <span class="info-tip-popover">This panel summarizes the selected sample, including encapsulation efficiency, ATR-derived ratio, and crystalline versus amorphous fractions.</span>
+      </span>
     </div>
     <div id="parametersGrid" class="parameters-grid"></div>
   </section>
 
   <section class="panel-card">
-    <div class="panel-heading icon-label">
-      <i data-lucide="pie-chart"></i>
-      <span>Material composition</span>
+    <div class="panel-heading icon-label label-with-help">
+      <span class="icon-label">
+        <i data-lucide="pie-chart"></i>
+        <span>Material composition</span>
+      </span>
+      <span class="info-tip" tabindex="0">
+        <span class="info-tip-button">?</span>
+        <span class="info-tip-popover">Shows the relative contribution of the identified crystalline phases for the selected sample. Top phases are the dominant assigned phases in that sample.</span>
+      </span>
     </div>
     <div id="phaseCompositionPlot" class="phase-plot"></div>
     <div id="phaseLegend" class="inspector-phase-legend"></div>
@@ -22,6 +34,7 @@
       <span>ATR-IR spectrum</span>
     </summary>
     <div class="panel-details-body">
+      <p class="helper-copy">ATR-IR is an infrared spectroscopy measurement used here to compare characteristic absorbance features and derive the estimated ratio shown in the explorer.</p>
       <div id="atrPlot" class="mini-plot"></div>
     </div>
   </details>
@@ -32,7 +45,14 @@
       <span>Repeated XRD experiments</span>
     </summary>
     <div class="panel-details-body">
+      <p class="helper-copy">These plots show repeated XRD measurements for the selected sample so visitors can compare repeatability and phase-related diffraction features.</p>
       <div id="experimentCards" class="experiment-grid"></div>
     </div>
   </details>
+
+  <div class="sidebar-credits">
+    Aleksandar Kondinski
+    <span class="sidebar-credits-sep">•</span>
+    CheMIn Group, Graz University of Technology
+  </div>
 </aside>

@@ -16,6 +16,13 @@
   font-weight: 700;
 }
 
+.label-with-help {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 /* --- Inputs & Selects --- */
 input[type="text"],
 input[type="number"],
@@ -213,4 +220,60 @@ input.is-auto {
 input[type="range"] {
   width: 100%;
   accent-color: var(--accent);
+}
+
+.info-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  outline: none;
+}
+
+.info-tip-button {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-tip-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(270px, 70vw);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 14px 36px rgba(18, 24, 40, 0.12);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  z-index: 30;
+}
+
+.info-tip:hover .info-tip-popover,
+.info-tip:focus .info-tip-popover,
+.info-tip:focus-within .info-tip-popover {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.info-tip:focus-visible .info-tip-button {
+  box-shadow: var(--focus-ring);
 }

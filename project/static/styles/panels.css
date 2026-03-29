@@ -122,6 +122,13 @@
   padding: 0 14px 14px 14px;
 }
 
+.helper-copy {
+  margin: 2px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .icon-label {
   display: inline-flex;
   align-items: center;
@@ -137,4 +144,16 @@
 .sidebar .panel-card {
   border-radius: 16px;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-credits {
+  margin: 14px 6px 4px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.sidebar-credits-sep {
+  margin: 0 4px;
 }
