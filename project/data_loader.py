@@ -115,8 +115,13 @@ def load_data():
         )
         ee_std = (
             entry.get("encapsulation_efficiency", {})
-            .get("std")
+            .get("error_bar")
         )
+        if ee_std is None:
+            ee_std = (
+                entry.get("encapsulation_efficiency", {})
+                .get("std")
+            )
         protein_ratio = (
             entry.get("ir_data", {})
             .get("ratio_selected_peaks")
@@ -127,12 +132,26 @@ def load_data():
             .get("crystalline", {})
             .get("std")
         )
+        if cryst_std is None:
+            cryst_std = (
+                entry.get("crystallinity", {})
+                .get("fractions", {})
+                .get("crystalline", {})
+                .get("error_bar")
+            )
         amorphous_std = (
             entry.get("crystallinity", {})
             .get("fractions", {})
             .get("amorphous", {})
             .get("std")
         )
+        if amorphous_std is None:
+            amorphous_std = (
+                entry.get("crystallinity", {})
+                .get("fractions", {})
+                .get("amorphous", {})
+                .get("error_bar")
+            )
         crystallinity_uncertainty = max(
             [v for v in (cryst_std, amorphous_std) if isinstance(v, (int, float))],
             default=None
