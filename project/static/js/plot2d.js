@@ -13,6 +13,12 @@ import {
   escapeHtml
 } from "./formatters.js";
 
+const WARM_SCALAR_SCALE = [
+  [0, "#d9482b"],
+  [0.5, "#f3a64a"],
+  [1, "#fff2a8"]
+];
+
 function crystallinityToCoreSize2D(c) {
   const v = Math.max(0, Math.min(1, Number(c) || 0));
   return CRYSTAL_CORE_MIN_SIZE_2D + (SAMPLE_MARKER_SIZE_2D - CRYSTAL_CORE_MIN_SIZE_2D) * Math.sqrt(v);
@@ -193,7 +199,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
   }
 
   let markerColor = "#9c9c9c";
-  let colorscale = "RdBu";
+  let colorscale = WARM_SCALAR_SCALE;
   let showscale = false;
   let colorbar = undefined;
 
@@ -209,7 +215,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
     colorbar = { title: "Encapsulation efficiency" };
   } else if (colourBy === "ee_error") {
     markerColor = layerPoints.map((p) => numericOrNull(p.ee_error ?? p.ee_std));
-    colorscale = "YlOrRd";
+    colorscale = WARM_SCALAR_SCALE;
     showscale = true;
     colorbar = { title: "EE standard deviation" };
   } else if (colourBy === "crystallinity") {
@@ -224,7 +230,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
         p.amorphousness_std
       )
     );
-    colorscale = "YlOrRd";
+    colorscale = WARM_SCALAR_SCALE;
     showscale = true;
     colorbar = { title: "Crystallinity standard deviation" };
   } else if (colourBy === "protein_ratio") {
@@ -339,7 +345,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
   const plotDiv = $("plot");
 
   let markerColor = "#9c9c9c";
-  let colorscale = "RdBu";
+  let colorscale = WARM_SCALAR_SCALE;
   let showscale = false;
   let colorbar = undefined;
 
@@ -355,7 +361,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
     colorbar = { title: "Encapsulation efficiency" };
   } else if (colourBy === "ee_error") {
     markerColor = layerPoints.map((p) => numericOrNull(p.ee_error ?? p.ee_std));
-    colorscale = "YlOrRd";
+    colorscale = WARM_SCALAR_SCALE;
     showscale = true;
     colorbar = { title: "EE standard deviation" };
   } else if (colourBy === "crystallinity") {
@@ -370,7 +376,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
         p.amorphousness_std
       )
     );
-    colorscale = "YlOrRd";
+    colorscale = WARM_SCALAR_SCALE;
     showscale = true;
     colorbar = { title: "Crystallinity standard deviation" };
   } else if (colourBy === "protein_ratio") {

@@ -14,6 +14,12 @@ import {
 } from "./formatters.js";
 import { TRI_H, concentrationToInterpolatedZ } from "./plot3d-geometry.js";
 
+const WARM_SCALAR_SCALE = [
+  [0, "#d9482b"],
+  [0.5, "#f3a64a"],
+  [1, "#fff2a8"]
+];
+
 function get3DMarkerScale() {
   const v = Number($("markerScale3D")?.value ?? 1.8);
   return Number.isFinite(v) && v > 0 ? v : 1.8;
@@ -116,7 +122,7 @@ function getMarkerStyle(points, colourBy) {
   if (colourBy === "ee") {
     return {
       color: points.map((p) => numericOrNull(p.ee)),
-      colorscale: "RdBu",
+      colorscale: WARM_SCALAR_SCALE,
       showscale: true,
       colorbar: { title: "Encapsulation efficiency" }
     };
@@ -125,7 +131,7 @@ function getMarkerStyle(points, colourBy) {
   if (colourBy === "ee_error") {
     return {
       color: points.map((p) => numericOrNull(p.ee_error ?? p.ee_std)),
-      colorscale: "YlOrRd",
+      colorscale: WARM_SCALAR_SCALE,
       showscale: true,
       colorbar: { title: "EE standard deviation" }
     };
@@ -134,7 +140,7 @@ function getMarkerStyle(points, colourBy) {
   if (colourBy === "crystallinity") {
     return {
       color: points.map((p) => numericOrNull(p.crystallinity)),
-      colorscale: "RdBu",
+      colorscale: WARM_SCALAR_SCALE,
       showscale: true,
       colorbar: { title: "Crystalline fraction" }
     };
@@ -149,7 +155,7 @@ function getMarkerStyle(points, colourBy) {
           p.amorphousness_std
         )
       ),
-      colorscale: "YlOrRd",
+      colorscale: WARM_SCALAR_SCALE,
       showscale: true,
       colorbar: { title: "Crystallinity standard deviation" }
     };
@@ -158,7 +164,7 @@ function getMarkerStyle(points, colourBy) {
   if (colourBy === "protein_ratio") {
     return {
       color: points.map((p) => numericOrNull(p.protein_ratio)),
-      colorscale: "RdBu",
+      colorscale: WARM_SCALAR_SCALE,
       showscale: true,
       colorbar: { title: "Estimated ATR ratio" }
     };
