@@ -225,25 +225,45 @@ export function renderLinePlotElement(target, x, y, xlabel, ylabel) {
         y,
         type: "scatter",
         mode: "lines",
-        line: { width: 2 }
+        line: { width: 2, color: "#50667f" }
       }
     ],
     {
+      autosize: true,
       margin: { l: 46, r: 12, t: 10, b: 42 },
       paper_bgcolor: "white",
       plot_bgcolor: "white",
+      font: {
+        family: "Segoe UI, Arial, sans-serif",
+        color: "#4d627a",
+        size: 12
+      },
       xaxis: {
         title: xlabel,
         showgrid: false,
-        zeroline: false
+        zeroline: false,
+        showline: true,
+        linecolor: "#cfd9e4",
+        tickcolor: "#cfd9e4",
+        ticks: "outside",
+        automargin: true
       },
       yaxis: {
         title: ylabel,
         showgrid: false,
-        zeroline: false
+        zeroline: false,
+        showline: true,
+        linecolor: "#cfd9e4",
+        tickcolor: "#cfd9e4",
+        ticks: "outside",
+        automargin: true
       },
       showlegend: false
     },
     { responsive: true, displaylogo: false }
   );
+
+  requestAnimationFrame(() => {
+    Plotly.Plots.resize(target);
+  });
 }
