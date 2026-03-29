@@ -1,6 +1,6 @@
-import { $, } from "./dom.js";
+import { $ } from "./dom.js";
 import { PHASE_COLORS, PHASE_LABELS } from "./constants.js";
-import { normalisePhase, formatValShort, escapeHtml } from "./formatters.js";
+import { normalisePhase, numericOrNull, formatValShort, escapeHtml } from "./formatters.js";
 
 let currentInspectorToken = 0;
 let currentSample = null;
@@ -32,6 +32,7 @@ export async function loadInspector(sampleId) {
     $("eeVal").textContent = formatValShort(data.ee, 2);
     $("proteinVal").textContent = formatValShort(data.protein_ratio, 2);
 
+    renderUncertaintyBlock(data);
     renderPhaseComposition(data);
     prepareCollapsedSections();
     wireLazySections(token);
@@ -41,6 +42,7 @@ export async function loadInspector(sampleId) {
     $("sampleTitle").textContent = sampleId;
     $("eeVal").textContent = "—";
     $("proteinVal").textContent = "—";
+    clearUncertaintyBlock();
   }
 }
 
@@ -48,6 +50,11 @@ function setInspectorLoading(sampleId) {
   $("sampleTitle").textContent = sampleId;
   $("eeVal").textContent = "Loading...";
   $("proteinVal").textContent = "Loading...";
+
+  const uncertaintyEl = $("inspectorUncertainty");
+  if (uncertaintyEl) {
+    uncertaintyEl.innerHTML = `<div class="empty-msg">Loading uncertainty...</div>`;
+  }
 
   const phasePlot = $("phaseCompositionPlot");
   if (phasePlot) {
@@ -68,6 +75,83 @@ function setInspectorLoading(sampleId) {
   if (cards) {
     cards.innerHTML = `<div class="empty-msg">Open to load repeated XRD experiments.</div>`;
   }
+}
+
+function clearUncertaintyBlock() {
+  const el = $("inspectorUncertainty");
+  if (!el) return;
+  el.innerHTML = `<div class="empty-msg">No uncertainty data available.</div>`;
+}
+
+function formatMeanPm(mean, err, digits = 2) {
+  const m = numericOrNull(mean);
+  const e = numericOrNull(err);
+
+  if (m == null) return "N/A";
+  if (e == null) return formatValShort(m, digits);
+
+  return `${formatValShort(m, digits)} ± ${formatValShort(e, digits)}`;
+}
+
+function renderUncertaintyBlock(point) {
+  const el = $("inspectorUncertainty");
+  if (!el) return;
+
+  const eeMean = numericOrNull(point.ee);
+  const eeErr = numericOrNull(point.ee_error ?? point.error_bar ?? point.ee_std);
+
+  const crystMean = numericOrNull(point.crystallinity);
+  const crystStd = numericOrNull(point.crystallinity_std);
+
+  const amorphMean = numericOrNull(point.amorphousness);
+  const amorphStd = numericOrNull(point.amorphousness_std);
+
+  const phaseComp = point.phase_composition || {};
+  const topPhases = Object.entries(phaseComp)
+    .map(([name, obj]) => ({
+      name,
+      mean: numericOrNull(obj?.mean ?? obj),
+      std: numericOrNull(obj?.std)
+    }))
+    .filter((v) => v.mean != null && v.mean > 0)
+    .sort((a, b) => b.mean - a.mean)
+    .slice(0, 3);
+
+  const hasMainData =
+    eeMean != null ||
+    eeErr != null ||
+    crystMean != null ||
+    crystStd != null ||
+    amorphMean != null ||
+    amorphStd != null ||
+    topPhases.length > 0;
+
+  if (!hasMainData) {
+    el.innerHTML = `<div class="empty-msg">No uncertainty data available.</div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="inspector-uncertainty-row">EE: ${escapeHtml(formatMeanPm(eeMean, eeErr, 2))}</div>
+    <div class="inspector-uncertainty-row">Crystalline: ${escapeHtml(formatMeanPm(crystMean, crystStd, 3))}</div>
+    <div class="inspector-uncertainty-row">Amorphous: ${escapeHtml(formatMeanPm(amorphMean, amorphStd, 3))}</div>
+    ${
+      topPhases.length
+        ? `
+          <div class="inspector-uncertainty-subtitle">Top phases</div>
+          ${topPhases.map((p) =>
+            `<div class="inspector-uncertainty-row">${escapeHtml(p.name)}: ${escapeHtml(
+              formatMeanPm(
+                p.mean * 100,
+                p.std == null ? null : p.std * 100,
+                1
+              )
+            )}%</div>`
+          ).join("")}
+        `
+        : ""
+    }
+  `;
 }
 
 function prepareCollapsedSections() {
@@ -121,9 +205,9 @@ function renderPhaseComposition(sample) {
     return;
   }
 
-  const labels = slices.map(s => s.label);
-  const values = slices.map(s => s.value);
-  const colors = slices.map(s => s.color);
+  const labels = slices.map((s) => s.label);
+  const values = slices.map((s) => s.value);
+  const colors = slices.map((s) => s.color);
 
   Plotly.react(
     plotDiv,
@@ -162,9 +246,6 @@ function renderPhaseComposition(sample) {
 function buildPhaseSlices(sample) {
   const result = [];
 
-  // Your API returns flattened values:
-  // sample.crystallinity = crystalline fraction
-  // sample.amorphousness = amorphous fraction
   const crystalline = Number(
     sample?.crystallinity ??
     sample?.crystallinity_fractions?.crystalline ??
@@ -180,7 +261,6 @@ function buildPhaseSlices(sample) {
   const hasCrystalline = Number.isFinite(crystalline) && crystalline > 0;
   const hasAmorphous = Number.isFinite(amorphous) && amorphous > 0;
 
-  // Add amorphous part directly as whole-material fraction
   if (hasAmorphous) {
     result.push({
       key: "am",
@@ -190,7 +270,6 @@ function buildPhaseSlices(sample) {
     });
   }
 
-  // Read crystalline phase distribution
   const phaseComp = sample?.phase_composition || {};
   const rawPhases = [];
 
@@ -209,7 +288,6 @@ function buildPhaseSlices(sample) {
 
   const rawTotal = rawPhases.reduce((sum, p) => sum + p.raw, 0);
 
-  // Scale normalized crystalline phases into the whole material
   if (rawTotal > 0 && hasCrystalline) {
     rawPhases.forEach((p) => {
       const fractionWithinCrystalline = p.raw / rawTotal;
@@ -234,7 +312,7 @@ async function loadATRForPoint(sample, token) {
   const atrDiv = $("atrPlot");
   if (!atrDiv) return;
 
-  const atrExp = (sample.experiments || []).find(e => e.has_atr);
+  const atrExp = (sample.experiments || []).find((e) => e.has_atr);
 
   if (!atrExp) {
     if (token !== currentInspectorToken) return;
@@ -295,7 +373,7 @@ async function loadExperimentCards(experiments, token) {
 
     cards.appendChild(card);
 
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
     if (token !== currentInspectorToken) return;
 
     try {

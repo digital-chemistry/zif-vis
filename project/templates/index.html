@@ -135,7 +135,20 @@
     </aside>
 
     <main class="plot-area">
-      <div id="plot"></div>
+      <div class="plot-shell">
+        <div id="plot"></div>
+
+        <div id="ternaryInset" class="plot-overlay ternary-inset" aria-hidden="true">
+          <svg viewBox="0 0 220 190" class="ternary-inset-svg">
+            <polygon points="20,170 200,170 110,14" class="tri-outline" />
+            <text x="10" y="96" class="tri-label tri-label-left">Metal [%]</text>
+            <text x="110" y="186" text-anchor="middle" class="tri-label">Ligand [%]</text>
+            <text x="206" y="96" text-anchor="end" class="tri-label tri-label-right">BSA [%]</text>
+          </svg>
+        </div>
+
+        <div id="plotPhaseLegend" class="plot-overlay phase-legend is-hidden"></div>
+      </div>
     </main>
 
     <aside class="sidebar right">
@@ -168,6 +181,13 @@
         <div class="panel-heading">Material composition</div>
         <div id="phaseCompositionPlot" class="phase-plot"></div>
         <div id="phaseLegend" class="phase-legend"></div>
+      </section>
+
+      <section class="panel-card">
+        <div class="inspector-block">
+          <div class="inspector-block-title">Uncertainty</div>
+          <div id="inspectorUncertainty"></div>
+        </div>
       </section>
 
       <details class="panel-card panel-details" id="atrDetails">
