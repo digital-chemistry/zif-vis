@@ -63,13 +63,15 @@
         </span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">Change the marker coloring to emphasize phase identity, crystallinity, encapsulation efficiency, or the ATR-derived estimated ratio signal.</span>
+          <span class="info-tip-popover">Change the marker coloring to emphasize phase identity, crystallinity, encapsulation efficiency, ATR-derived estimated ratio, or the uncertainty in EE and crystallinity assignment.</span>
         </span>
       </label>
       <select id="colourBy">
         <option value="phase">Phase</option>
         <option value="crystallinity">Crystallinity</option>
         <option value="ee">Encapsulation efficiency</option>
+        <option value="ee_error">EE standard deviation</option>
+        <option value="crystallinity_uncertainty">Crystallinity standard deviation</option>
         <option value="protein_ratio">Estimated ATR ratio</option>
         <option value="none">None</option>
       </select>

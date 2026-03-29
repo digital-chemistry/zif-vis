@@ -207,10 +207,26 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
     markerColor = layerPoints.map((p) => numericOrNull(p.ee));
     showscale = true;
     colorbar = { title: "Encapsulation efficiency" };
+  } else if (colourBy === "ee_error") {
+    markerColor = layerPoints.map((p) => numericOrNull(p.ee_error ?? p.ee_std));
+    colorscale = "YlOrRd";
+    showscale = true;
+    colorbar = { title: "EE standard deviation" };
   } else if (colourBy === "crystallinity") {
     markerColor = layerPoints.map((p) => numericOrNull(p.crystallinity));
     showscale = true;
     colorbar = { title: "Crystallinity" };
+  } else if (colourBy === "crystallinity_uncertainty") {
+    markerColor = layerPoints.map((p) =>
+      numericOrNull(
+        p.crystallinity_uncertainty ??
+        p.crystallinity_std ??
+        p.amorphousness_std
+      )
+    );
+    colorscale = "YlOrRd";
+    showscale = true;
+    colorbar = { title: "Crystallinity standard deviation" };
   } else if (colourBy === "protein_ratio") {
     markerColor = layerPoints.map((p) => numericOrNull(p.protein_ratio));
     showscale = true;
@@ -337,10 +353,26 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
     markerColor = layerPoints.map((p) => numericOrNull(p.ee));
     showscale = true;
     colorbar = { title: "Encapsulation efficiency" };
+  } else if (colourBy === "ee_error") {
+    markerColor = layerPoints.map((p) => numericOrNull(p.ee_error ?? p.ee_std));
+    colorscale = "YlOrRd";
+    showscale = true;
+    colorbar = { title: "EE standard deviation" };
   } else if (colourBy === "crystallinity") {
     markerColor = layerPoints.map((p) => numericOrNull(p.crystallinity));
     showscale = true;
     colorbar = { title: "Crystallinity" };
+  } else if (colourBy === "crystallinity_uncertainty") {
+    markerColor = layerPoints.map((p) =>
+      numericOrNull(
+        p.crystallinity_uncertainty ??
+        p.crystallinity_std ??
+        p.amorphousness_std
+      )
+    );
+    colorscale = "YlOrRd";
+    showscale = true;
+    colorbar = { title: "Crystallinity standard deviation" };
   } else if (colourBy === "protein_ratio") {
     markerColor = layerPoints.map((p) => numericOrNull(p.protein_ratio));
     showscale = true;

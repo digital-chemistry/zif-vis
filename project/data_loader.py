@@ -113,9 +113,29 @@ def load_data():
             entry.get("encapsulation_efficiency", {})
             .get("mean")
         )
+        ee_std = (
+            entry.get("encapsulation_efficiency", {})
+            .get("std")
+        )
         protein_ratio = (
             entry.get("ir_data", {})
             .get("ratio_selected_peaks")
+        )
+        cryst_std = (
+            entry.get("crystallinity", {})
+            .get("fractions", {})
+            .get("crystalline", {})
+            .get("std")
+        )
+        amorphous_std = (
+            entry.get("crystallinity", {})
+            .get("fractions", {})
+            .get("amorphous", {})
+            .get("std")
+        )
+        crystallinity_uncertainty = max(
+            [v for v in (cryst_std, amorphous_std) if isinstance(v, (int, float))],
+            default=None
         )
 
         experiments = []
@@ -149,13 +169,17 @@ def load_data():
                 "concentration": concentration,
                 "concentration_label": str(concentration),
                 "ee": ee_mean,
+                "ee_error": ee_std,
                 "protein_ratio": protein_ratio,
                 "round": round_name,
                 "round_no": round_no,
                 "conc": str(concentration),
                 "formulation": point_id.split("_")[1] if "_" in point_id else None,
                 "crystallinity": cryst_mean,
+                "crystallinity_std": cryst_std,
                 "amorphousness": amorphous_mean,
+                "amorphousness_std": amorphous_std,
+                "crystallinity_uncertainty": crystallinity_uncertainty,
                 "relative_crystallinity": cryst_mean,
                 "x": x,
                 "y": y,
@@ -205,9 +229,13 @@ def load_data():
             "detected_phases": detected_phases,
             "phase_composition": deepcopy(phase_comp),
             "ee": ee_mean,
+            "ee_error": ee_std,
             "protein_ratio": protein_ratio,
             "crystallinity": cryst_mean,
+            "crystallinity_std": cryst_std,
             "amorphousness": amorphous_mean,
+            "amorphousness_std": amorphous_std,
+            "crystallinity_uncertainty": crystallinity_uncertainty,
             "relative_crystallinity": cryst_mean,
             "experiments": experiments,
         }
@@ -243,9 +271,13 @@ def load_data():
             "primary_phase": primary_phase,
             "detected_phases": detected_phases,
             "ee": ee_mean,
+            "ee_error": ee_std,
             "protein_ratio": protein_ratio,
             "crystallinity_mean": cryst_mean,
+            "crystallinity_std": cryst_std,
             "amorphousness_mean": amorphous_mean,
+            "amorphousness_std": amorphous_std,
+            "crystallinity_uncertainty": crystallinity_uncertainty,
             "relative_crystallinity": cryst_mean,
             "experiments": experiments,
         })

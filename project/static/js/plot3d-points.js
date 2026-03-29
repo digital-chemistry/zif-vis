@@ -122,12 +122,36 @@ function getMarkerStyle(points, colourBy) {
     };
   }
 
+  if (colourBy === "ee_error") {
+    return {
+      color: points.map((p) => numericOrNull(p.ee_error ?? p.ee_std)),
+      colorscale: "YlOrRd",
+      showscale: true,
+      colorbar: { title: "EE standard deviation" }
+    };
+  }
+
   if (colourBy === "crystallinity") {
     return {
       color: points.map((p) => numericOrNull(p.crystallinity)),
       colorscale: "RdBu",
       showscale: true,
       colorbar: { title: "Crystalline fraction" }
+    };
+  }
+
+  if (colourBy === "crystallinity_uncertainty") {
+    return {
+      color: points.map((p) =>
+        numericOrNull(
+          p.crystallinity_uncertainty ??
+          p.crystallinity_std ??
+          p.amorphousness_std
+        )
+      ),
+      colorscale: "YlOrRd",
+      showscale: true,
+      colorbar: { title: "Crystallinity standard deviation" }
     };
   }
 
