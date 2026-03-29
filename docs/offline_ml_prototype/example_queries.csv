@@ -1,0 +1,4 @@
+metal_pct,ligand_pct,bsa_pct,concentration,wash,top_phase,phase_confidence,pred_ee_mean,pred_ee_std,pred_crystalline_mean,pred_crystalline_std,pred_atr_ratio,distance_to_nearest
+20.0,20.0,60.0,37.5,ethanol,Sodalite,0.6989,67.285,3.6704,0.1257,0.0271,0.2924,0.1429
+40.0,30.0,30.0,62.5,water,ZIF-C,0.8494,24.9919,5.4121,0.097,0.0335,0.1888,0.1429
+60.0,20.0,20.0,87.5,ethanol,Sodalite,0.5,28.5531,4.4293,0.149,0.0936,0.6171,0.1429

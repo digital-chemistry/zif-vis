@@ -78,6 +78,81 @@ input.is-auto {
   justify-content: flex-start;
 }
 
+.prediction-card {
+  margin: 4px 0 12px;
+  padding: 12px 13px;
+  border-radius: 14px;
+  border: 1px solid #dde4ec;
+  background: linear-gradient(180deg, #ffffff, #f8fbfd);
+  box-shadow: 0 10px 24px rgba(93, 115, 140, 0.08);
+}
+
+.prediction-card.is-hidden {
+  display: none;
+}
+
+.prediction-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a8796;
+  margin-bottom: 6px;
+}
+
+.prediction-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #213247;
+  margin-bottom: 6px;
+}
+
+.prediction-copy {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #607184;
+  margin-bottom: 10px;
+}
+
+.prediction-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.prediction-item {
+  min-width: 0;
+}
+
+.prediction-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7a8796;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.prediction-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #213247;
+  line-height: 1.25;
+}
+
+.prediction-neighbors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prediction-neighbor {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #526476;
+}
+
 /* --- Buttons --- */
 .ghost-btn {
   border: 1px solid var(--border);

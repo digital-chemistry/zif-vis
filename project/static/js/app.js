@@ -7,6 +7,7 @@ import { loadInspector } from "./inspector.js";
 
 let allPoints = [];
 let currentCamera = null;
+let predictionRequestToken = 0;
 
 document.addEventListener("DOMContentLoaded", initApp);
 
@@ -49,6 +50,7 @@ function wireControls() {
       clearAutoFlags();
       validatePositionInputs();
       updatePositionNote();
+      updateCompositionPrediction();
       applyFiltersAndRender();
     });
 
@@ -56,8 +58,23 @@ function wireControls() {
       clearAutoFlags();
       autoFillPosition();
       updateDerivedReadouts();
+      updateCompositionPrediction();
       applyFiltersAndRender();
     });
+  });
+
+  $("posConcentration")?.addEventListener("input", () => {
+    updatePositionNote();
+    updateCompositionPrediction();
+  });
+
+  $("posConcentration")?.addEventListener("change", () => {
+    updateDerivedReadouts();
+    updateCompositionPrediction();
+  });
+
+  $("posWash")?.addEventListener("change", () => {
+    updateCompositionPrediction();
   });
 
   $("clearCompositionBtn")?.addEventListener("click", () => {
@@ -65,10 +82,16 @@ function wireControls() {
       const el = $(id);
       if (el) el.value = "";
     });
+    const posWash = $("posWash");
+    if (posWash) {
+      posWash.value =
+        document.querySelector('input[name="washing"]:checked')?.value || "ethanol";
+    }
 
     clearAutoFlags();
     validatePositionInputs();
     updatePositionNote();
+    clearCompositionPrediction();
     applyFiltersAndRender();
   });
 
@@ -85,6 +108,10 @@ function wireControls() {
       updateDerivedReadouts();
       updateViewControls();
       toggleModeDependentCards();
+      if ($("posWash") && !readPositionNumber("posConcentration")) {
+        $("posWash").value = el.value;
+        updateCompositionPrediction();
+      }
       applyFiltersAndRender();
     });
   });
@@ -104,8 +131,14 @@ async function loadPoints() {
     initSliderRanges();
 
     updateDerivedReadouts();
+    const posWash = $("posWash");
+    if (posWash) {
+      posWash.value =
+        document.querySelector('input[name="washing"]:checked')?.value || "ethanol";
+    }
     updateViewControls();
     toggleModeDependentCards();
+    updateCompositionPrediction();
     applyFiltersAndRender();
   } catch (err) {
     console.error("loadPoints failed:", err);
@@ -407,6 +440,126 @@ function updatePositionNote() {
   note.textContent =
     "Enter any two of Metal, Ligand, and BSA. The third will be filled automatically.";
   note.style.color = "";
+}
+
+function clearCompositionPrediction() {
+  const card = $("compositionPrediction");
+  if (!card) return;
+  card.classList.add("is-hidden");
+  card.innerHTML = "";
+}
+
+function renderCompositionPrediction(payload) {
+  const card = $("compositionPrediction");
+  if (!card) return;
+
+  const topPhase = payload?.predictions?.top_phase || "N/A";
+  const confidence = payload?.predictions?.phase_probabilities?.[topPhase] ?? null;
+  const trust = payload?.trust || {};
+  const preds = payload?.predictions || {};
+  const neighbors = Array.isArray(payload?.neighbors) ? payload.neighbors.slice(0, 3) : [];
+
+  const neighborHtml = neighbors.length
+    ? neighbors
+        .map(
+          (neighbor) => `
+          <div class="prediction-neighbor">
+            <strong>${neighbor.point_id}</strong> · ${neighbor.phase} · d=${formatValShort(neighbor.distance, 3)}
+          </div>
+        `
+        )
+        .join("")
+    : `<div class="prediction-neighbor">No nearby measured samples found.</div>`;
+
+  card.innerHTML = `
+    <div class="prediction-eyebrow">Prototype prediction</div>
+    <div class="prediction-title">${topPhase}${confidence == null ? "" : ` · ${formatValShort(confidence * 100, 1)}%`}</div>
+    <div class="prediction-copy">${payload?.method || "Prediction from nearby measured points."}</div>
+    <div class="prediction-grid">
+      <div class="prediction-item">
+        <div class="prediction-label">Predicted EE</div>
+        <div class="prediction-value">${formatValShort(preds.encapsulation_efficiency_mean, 1)}</div>
+      </div>
+      <div class="prediction-item">
+        <div class="prediction-label">EE std</div>
+        <div class="prediction-value">${formatValShort(preds.encapsulation_efficiency_std, 2)}</div>
+      </div>
+      <div class="prediction-item">
+        <div class="prediction-label">Crystalline fraction</div>
+        <div class="prediction-value">${formatValShort((preds.crystalline_fraction_mean ?? NaN) * 100, 1)}%</div>
+      </div>
+      <div class="prediction-item">
+        <div class="prediction-label">Crystallinity std</div>
+        <div class="prediction-value">${formatValShort((preds.crystalline_fraction_std ?? NaN) * 100, 1)}%</div>
+      </div>
+      <div class="prediction-item">
+        <div class="prediction-label">ATR ratio</div>
+        <div class="prediction-value">${formatValShort(preds.atr_ratio_mean, 3)}</div>
+      </div>
+      <div class="prediction-item">
+        <div class="prediction-label">Trust</div>
+        <div class="prediction-value">${trust.confidence_band || "N/A"}</div>
+      </div>
+    </div>
+    <div class="prediction-copy">Nearest measured points</div>
+    <div class="prediction-neighbors">${neighborHtml}</div>
+  `;
+  card.classList.remove("is-hidden");
+}
+
+async function updateCompositionPrediction() {
+  const metal = readPositionNumber("posMetal");
+  const ligand = readPositionNumber("posLigand");
+  const bsa = readPositionNumber("posBsa");
+  const concentration = readPositionNumber("posConcentration");
+  const wash = $("posWash")?.value || "ethanol";
+  const { hasRangeError, hasSumError } = validatePositionInputs();
+
+  if (
+    hasRangeError ||
+    hasSumError ||
+    [metal, ligand, bsa, concentration].some((value) => value === null)
+  ) {
+    clearCompositionPrediction();
+    return;
+  }
+
+  const card = $("compositionPrediction");
+  if (card) {
+    card.classList.remove("is-hidden");
+    card.innerHTML = `<div class="prediction-copy">Calculating prototype prediction...</div>`;
+  }
+
+  const token = ++predictionRequestToken;
+
+  try {
+    const res = await fetch("/api/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        metal_pct: metal,
+        ligand_pct: ligand,
+        bsa_pct: bsa,
+        concentration,
+        wash
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(`Prediction request failed (${res.status})`);
+    }
+
+    const payload = await res.json();
+    if (token !== predictionRequestToken) return;
+    renderCompositionPrediction(payload);
+  } catch (err) {
+    if (token !== predictionRequestToken) return;
+    console.error("updateCompositionPrediction failed:", err);
+    if (card) {
+      card.classList.remove("is-hidden");
+      card.innerHTML = `<div class="prediction-copy">Prediction preview unavailable.</div>`;
+    }
+  }
 }
 
 function updateDerivedReadouts() {

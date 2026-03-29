@@ -1,0 +1,18 @@
+Offline find-composition prototype
+Points: 360
+Primary phase counts:
+- Sodalite: 177
+- Amorphous: 102
+- ZIF-C: 68
+- Diamondoid: 13
+
+Metrics:
+- points: 360.0
+- phase_accuracy: 0.7972
+- ee_mean_mae: 14.6999
+- ee_std_mae: 1.6457
+- crystalline_mean_mae: 0.0874
+- crystalline_std_mae: 0.0422
+- amorphous_mean_mae: 0.0874
+- amorphous_std_mae: 0.0422
+- atr_ratio_mae: 0.1394

@@ -1,10 +1,10 @@
-from flask import jsonify, render_template, send_from_directory, abort
+from flask import jsonify, render_template, send_from_directory, abort, request
 
 from .config import ATR_DIR, XRD_DIR, IMG_DIR
 from .io_utils import read_xy, find_existing_file
 
 
-def register_routes(app, points, point_details, experiment_details, build_atr_index, build_full_experiment_index):
+def register_routes(app, points, point_details, experiment_details, predictor, build_atr_index, build_full_experiment_index):
     def resolve_best_experiment_for_kind(identifier: str, kind: str):
         if identifier in experiment_details:
             return experiment_details[identifier]
@@ -83,6 +83,34 @@ def register_routes(app, points, point_details, experiment_details, build_atr_in
             abort(404)
 
         return send_from_directory(IMG_DIR, img_file)
+
+    @app.route("/api/predict", methods=["POST"])
+    def api_predict():
+        payload = request.get_json(silent=True) or {}
+
+        try:
+            metal_pct = float(payload.get("metal_pct"))
+            ligand_pct = float(payload.get("ligand_pct"))
+            bsa_pct = float(payload.get("bsa_pct"))
+            concentration = float(payload.get("concentration"))
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid numeric prediction input."}), 400
+
+        total = metal_pct + ligand_pct + bsa_pct
+        if not all(0 <= value <= 100 for value in (metal_pct, ligand_pct, bsa_pct)):
+            return jsonify({"error": "Composition percentages must stay between 0 and 100."}), 400
+        if abs(total - 100) > 0.25:
+            return jsonify({"error": "Metal + Ligand + BSA must equal 100."}), 400
+
+        wash = payload.get("wash") or "ethanol"
+        prediction = predictor.predict(
+            metal_pct=metal_pct,
+            ligand_pct=ligand_pct,
+            bsa_pct=bsa_pct,
+            concentration=concentration,
+            wash=wash,
+        )
+        return jsonify(prediction)
 
     @app.route("/api/debug/files")
     def api_debug_files():
