@@ -22,12 +22,52 @@ let currentInspectorToken = 0;
 let currentSample = null;
 let atrLoadedForSample = null;
 let xrdLoadedForSample = null;
+let currentAtrSpectrum = null;
+let currentXrdSpectra = new Map();
 
 function toNumericArray(value) {
   if (!Array.isArray(value)) return [];
   return value
     .map((v) => Number(v))
     .filter((v) => Number.isFinite(v));
+}
+
+function downloadSpectrumCsv(filename, x, y, xLabel, yLabel) {
+  const rows = [[xLabel, yLabel]];
+  const n = Math.min(x.length, y.length);
+
+  for (let i = 0; i < n; i += 1) {
+    rows.push([x[i], y[i]]);
+  }
+
+  const csv = rows.map((row) => row.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function wireDownloadButtons() {
+  const atrDownloadBtn = $("atrDownloadBtn");
+  if (!atrDownloadBtn) return;
+
+  atrDownloadBtn.disabled = !currentAtrSpectrum;
+  atrDownloadBtn.onclick = () => {
+    if (!currentAtrSpectrum) return;
+
+    downloadSpectrumCsv(
+      `${currentAtrSpectrum.name}.csv`,
+      currentAtrSpectrum.x,
+      currentAtrSpectrum.y,
+      "wavenumber_cm^-1",
+      "absorbance"
+    );
+  };
 }
 
 function extractSpectrumXY(data, mode = "generic") {
@@ -108,6 +148,9 @@ export async function loadInspector(sampleId) {
     currentSample = data;
     atrLoadedForSample = null;
     xrdLoadedForSample = null;
+    currentAtrSpectrum = null;
+    currentXrdSpectra = new Map();
+    wireDownloadButtons();
 
     const sampleTitle = $("sampleTitle");
     if (sampleTitle) {
@@ -147,20 +190,8 @@ function wireLazySections(token) {
   const atrDetails = $("atrDetails");
   const xrdDetails = $("xrdDetails");
 
-  console.log("wireLazySections", {
-    atrDetails,
-    xrdDetails,
-    currentSample
-  });
-
   if (atrDetails) {
     atrDetails.ontoggle = async () => {
-      console.log("ATR toggled", {
-        open: atrDetails.open,
-        currentSample,
-        atrLoadedForSample
-      });
-
       if (!atrDetails.open || !currentSample) return;
       if (atrLoadedForSample === currentSample.id) return;
 
@@ -171,12 +202,6 @@ function wireLazySections(token) {
 
   if (xrdDetails) {
     xrdDetails.ontoggle = async () => {
-      console.log("XRD toggled", {
-        open: xrdDetails.open,
-        currentSample,
-        xrdLoadedForSample
-      });
-
       if (!xrdDetails.open || !currentSample) return;
       if (xrdLoadedForSample === currentSample.id) return;
 
@@ -185,44 +210,51 @@ function wireLazySections(token) {
     };
   }
 }
+
 async function loadATRForPoint(sample, token) {
   const atrDiv = $("atrPlot");
-  console.log("loadATRForPoint called", { sample, atrDiv });
-
   if (!atrDiv) return;
 
   const atrExp = getAtrExperiment(sample);
-  console.log("resolved ATR experiment", atrExp);
 
   if (!atrExp?.experiment_id) {
     if (token !== currentInspectorToken) return;
+    currentAtrSpectrum = null;
+    wireDownloadButtons();
     clearAtrSection("No ATR data");
     return;
   }
 
   try {
     const url = `/api/spectrum/atr/${encodeURIComponent(atrExp.experiment_id)}`;
-    console.log("fetching ATR", url);
-
     const res = await fetch(url);
     if (!res.ok) {
       throw new Error(`Failed ATR load: ${res.status}`);
     }
 
     const data = await res.json();
-    console.log("ATR response", data);
 
     if (token !== currentInspectorToken) return;
 
     if (!data?.x?.length || !data?.y?.length) {
+      currentAtrSpectrum = null;
+      wireDownloadButtons();
       clearAtrSection("No ATR data");
       return;
     }
 
-    renderLinePlotElement(atrDiv, data.x, data.y, "Wavenumber / cm⁻¹", "Absorbance");
+    currentAtrSpectrum = {
+      name: atrExp.experiment_id || sample.id || "atr_spectrum",
+      x: data.x,
+      y: data.y
+    };
+    wireDownloadButtons();
+    renderLinePlotElement(atrDiv, data.x, data.y, "Wavenumber / cm^-1", "Absorbance");
   } catch (err) {
     if (token !== currentInspectorToken) return;
     console.error("ATR load failed:", err);
+    currentAtrSpectrum = null;
+    wireDownloadButtons();
     clearAtrSection("No ATR data");
   }
 }
@@ -233,15 +265,16 @@ async function loadExperimentCards(sample, token) {
   if (token !== currentInspectorToken) return;
 
   const experiments = getXrdExperiments(sample);
-  console.log("XRD experiments resolved:", experiments, sample);
 
   if (!experiments.length) {
+    currentXrdSpectra = new Map();
     clearXrdSection("No repeated experiments found.");
     return;
   }
 
   cards.innerHTML = "";
   const seen = new Set();
+  currentXrdSpectra = new Map();
 
   for (const exp of experiments) {
     if (token !== currentInspectorToken) return;
@@ -252,10 +285,21 @@ async function loadExperimentCards(sample, token) {
     const card = document.createElement("div");
     card.className = "experiment-card";
 
+    const head = document.createElement("div");
+    head.className = "experiment-card-head";
+    card.appendChild(head);
+
     const title = document.createElement("div");
     title.className = "experiment-title";
     title.textContent = exp.experiment_id;
-    card.appendChild(title);
+    head.appendChild(title);
+
+    const downloadBtn = document.createElement("button");
+    downloadBtn.type = "button";
+    downloadBtn.className = "ghost-btn download-btn";
+    downloadBtn.textContent = "Download CSV";
+    downloadBtn.disabled = true;
+    head.appendChild(downloadBtn);
 
     const plotDiv = document.createElement("div");
     plotDiv.className = "experiment-mini-plot";
@@ -275,11 +319,24 @@ async function loadExperimentCards(sample, token) {
       const xrd = await xrdRes.json();
       if (token !== currentInspectorToken) return;
 
-      console.log("XRD spectrum response:", exp.experiment_id, xrd);
-
       const { x, y } = extractSpectrumXY(xrd, "xrd");
 
       if (x.length && y.length) {
+        currentXrdSpectra.set(exp.experiment_id, { x, y });
+        downloadBtn.disabled = false;
+        downloadBtn.onclick = () => {
+          const spectrum = currentXrdSpectra.get(exp.experiment_id);
+          if (!spectrum) return;
+
+          downloadSpectrumCsv(
+            `${exp.experiment_id}.csv`,
+            spectrum.x,
+            spectrum.y,
+            "two_theta_deg",
+            "intensity"
+          );
+        };
+
         renderLinePlotElement(plotDiv, x, y, "2θ / °", "Intensity");
       } else {
         plotDiv.innerHTML = `<div class="empty-msg">No XRD data</div>`;
@@ -290,4 +347,3 @@ async function loadExperimentCards(sample, token) {
     }
   }
 }
-

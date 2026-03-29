@@ -29,6 +29,12 @@
   padding: 0 14px 14px 14px;
 }
 
+.panel-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0 0 12px;
+}
+
 .parameters-card {
   padding-top: 12px;
 }
@@ -120,12 +126,26 @@
   background: #fcfbf9;
 }
 
+.experiment-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
 .experiment-title {
   font-size: 13px;
   font-weight: 800;
   color: #3a332c;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   word-break: break-word;
+}
+
+.download-btn {
+  padding: 7px 11px;
+  font-size: 12px;
+  flex: 0 0 auto;
 }
 
 .experiment-mini-plot {
