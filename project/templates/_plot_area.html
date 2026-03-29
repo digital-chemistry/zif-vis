@@ -5,22 +5,64 @@
       <div class="plot-header-subtitle">Parameters, phase maps, and stacked concentration layers</div>
     </div>
 
-    <a
-      class="plot-brand-link"
-      href="https://www.tugraz.at/institute/ptc/research/the-falcaro-group"
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label="Visit the Falcaro Group webpage"
-    >
-      <img
-        src="{{ url_for('static', filename='logo.png') }}"
-        class="plot-brand-logo"
+    <div class="plot-header-actions">
+      <button type="button" class="plot-search-trigger" id="openCompositionPanel">
+        <i data-lucide="search-code"></i>
+        <span>Search / Predict</span>
+      </button>
+
+      <a
+        class="plot-brand-link"
+        href="https://www.tugraz.at/institute/ptc/research/the-falcaro-group"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Visit the Falcaro Group webpage"
       >
-    </a>
+        <img
+          src="{{ url_for('static', filename='logo.png') }}"
+          class="plot-brand-logo"
+        >
+      </a>
+    </div>
   </div>
 
   <div class="plot-shell">
     <div id="plot"></div>
+    <aside class="plot-overlay composition-panel is-hidden" id="compositionPanel">
+      <div class="composition-panel-head">
+        <div>
+          <div class="composition-panel-eyebrow">Interactive query</div>
+          <div class="composition-panel-title">Search and predict composition</div>
+        </div>
+        <button type="button" class="composition-panel-close" id="closeCompositionPanel" aria-label="Close search and prediction panel">×</button>
+      </div>
+
+      <p class="composition-panel-copy">Place a marker for any composition and preview a prototype prediction from nearby measured samples.</p>
+
+      <div class="position-grid composition-grid">
+        <label class="field"><span>Metal %</span><input id="posMetal" type="number" step="0.1"></label>
+        <label class="field"><span>Ligand %</span><input id="posLigand" type="number" step="0.1"></label>
+        <label class="field"><span>BSA %</span><input id="posBsa" type="number" step="0.1"></label>
+        <label class="field"><span>Concentration</span><input id="posConcentration" type="number" step="0.1"></label>
+        <label class="field composition-field-wide">
+          <span>Prediction wash</span>
+          <select id="posWash">
+            <option value="ethanol">Ethanol</option>
+            <option value="water">Water</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="positionNote" class="position-note composition-note"></div>
+      <div id="compositionPrediction" class="prediction-card is-hidden"></div>
+
+      <div class="action-row composition-actions">
+        <button type="button" class="ghost-btn icon-btn" id="clearCompositionBtn">
+          <i data-lucide="rotate-ccw"></i>
+          <span>Clear composition</span>
+        </button>
+      </div>
+    </aside>
     <div id="plotPhaseLegend" class="plot-overlay plot-phase-legend is-hidden"></div>
   </div>
 </main>

@@ -9,6 +9,15 @@
     grid-template-columns: 1fr;
   }
 
+  .plot-header-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .plot-header-actions {
+    justify-content: space-between;
+  }
+
   #plot {
     height: 70vh;
   }
@@ -23,5 +32,13 @@
     right: auto;
     left: 0;
     width: min(250px, 82vw);
+  }
+
+  .composition-panel {
+    left: 14px;
+    right: 14px;
+    top: 14px;
+    width: auto;
+    max-height: calc(100% - 28px);
   }
 }

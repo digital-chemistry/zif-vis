@@ -20,6 +20,15 @@ async function initApp() {
 }
 
 function wireControls() {
+  $("openCompositionPanel")?.addEventListener("click", () => {
+    $("compositionPanel")?.classList.remove("is-hidden");
+    $("posMetal")?.focus();
+  });
+
+  $("closeCompositionPanel")?.addEventListener("click", () => {
+    $("compositionPanel")?.classList.add("is-hidden");
+  });
+
   [
     "layerFocus",
     "spacingScale",
@@ -114,6 +123,12 @@ function wireControls() {
       }
       applyFiltersAndRender();
     });
+  });
+
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") {
+      $("compositionPanel")?.classList.add("is-hidden");
+    }
   });
 }
 
@@ -526,6 +541,7 @@ async function updateCompositionPrediction() {
 
   const card = $("compositionPrediction");
   if (card) {
+    $("compositionPanel")?.classList.remove("is-hidden");
     card.classList.remove("is-hidden");
     card.innerHTML = `<div class="prediction-copy">Calculating prototype prediction...</div>`;
   }

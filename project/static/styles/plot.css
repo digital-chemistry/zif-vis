@@ -13,8 +13,86 @@
 
 .plot-overlay {
   position: absolute;
-  pointer-events: none;
   z-index: 5;
+}
+
+.composition-panel {
+  pointer-events: auto;
+  top: 18px;
+  right: 18px;
+  width: min(380px, calc(100% - 36px));
+  max-height: calc(100% - 36px);
+  overflow-y: auto;
+  padding: 16px 16px 14px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(188, 202, 218, 0.7);
+  box-shadow: 0 24px 48px rgba(80, 103, 130, 0.16);
+}
+
+.composition-panel.is-hidden {
+  display: none;
+}
+
+.composition-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.composition-panel-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a95a3;
+  margin-bottom: 4px;
+}
+
+.composition-panel-title {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #213247;
+}
+
+.composition-panel-copy {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #66788d;
+}
+
+.composition-panel-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(198, 209, 221, 0.72);
+  background: rgba(255, 255, 255, 0.86);
+  color: #7a8796;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.composition-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.composition-field-wide {
+  grid-column: 1 / -1;
+}
+
+.composition-note {
+  min-height: 0;
+}
+
+.composition-actions {
+  margin-top: 2px;
 }
 
 .ternary-inset {
@@ -53,6 +131,7 @@
 }
 
 .plot-phase-legend {
+  pointer-events: none;
   left: 22px;
   right: 22px;
   bottom: 22px;
