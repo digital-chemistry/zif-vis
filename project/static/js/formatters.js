@@ -11,6 +11,7 @@ export function normalisePhase(phase) {
   if (s === "diamondoid") s = "dia";
   if (s === "amorphous") s = "am";
   if (s === "unclassified") s = "u13";
+  if (s === "mixed" || s === "sod+dia" || s === "sod/dia") s = "unknown";
 
   return s || "unknown";
 }

@@ -1,4 +1,4 @@
-import { PHASE_COLORS, PHASE_LABELS } from "./constants.js";
+import { PHASE_COLORS, PHASE_LABELS, OFFICIAL_PHASE_ORDER } from "./constants.js";
 import { $ } from "./dom.js";
 import { escapeHtml } from "./formatters.js";
 
@@ -12,9 +12,10 @@ export function updatePhaseLegend(colourBy) {
     return;
   }
 
-  const entries = Object.entries(PHASE_COLORS)
-    .filter(([key]) => key !== "unknown")
-    .map(([key, color]) => {
+  const entries = OFFICIAL_PHASE_ORDER
+    .filter((key) => PHASE_COLORS[key])
+    .map((key) => {
+      const color = PHASE_COLORS[key];
       const label = PHASE_LABELS?.[key] || key;
       return `
         <div class="plot-phase-legend-row">

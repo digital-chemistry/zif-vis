@@ -7,8 +7,6 @@ export const PHASE_COLORS = {
   u12: "#4FBF5B",
   "zif-ec-1": "#E84FA8",
   "zif-l": "#F28C28",
-  mixed: "#907FA8",
-  "sod+dia": "#944C78",
   unknown: "#8B8B8B"
 };
 
@@ -21,9 +19,19 @@ export const PHASE_LABELS = {
   "zif-c": "ZIF-C",
   "zif-ec-1": "ZIF-EC-1",
   "zif-l": "ZIF-L",
-  mixed: "Mixed",
   unknown: "Unknown"
 };
+
+export const OFFICIAL_PHASE_ORDER = [
+  "am",
+  "zif-c",
+  "sod",
+  "dia",
+  "u13",
+  "u12",
+  "zif-ec-1",
+  "zif-l"
+];
 
 export const BASE_LAYER_Z = {
   12.5: 0.0,
