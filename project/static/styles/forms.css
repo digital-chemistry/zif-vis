@@ -1,10 +1,11 @@
+/* --- Standard Form Groups --- */
 .field,
 .control-block,
 .slider-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .field span,
@@ -12,32 +13,44 @@
 .slider-title {
   font-size: 12px;
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 700;
 }
 
+/* --- Inputs & Selects --- */
 input[type="text"],
 input[type="number"],
 select {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #d7d0ca;
-  border-radius: 14px;
-  background: #ffffff;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
   font-size: 14px;
   color: var(--text);
   outline: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+input[type="text"]::placeholder,
+input[type="number"]::placeholder {
+  color: #8b95a3;
 }
 
 input[type="text"]:focus,
 input[type="number"]:focus,
 select:focus {
-  border-color: #c9aca6;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
 }
 
 input.is-auto {
-  background: #f7f3ef;
+  background: #f8fafc;
 }
 
+/* --- Grid Layouts --- */
 .position-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -58,29 +71,57 @@ input.is-auto {
   justify-content: flex-start;
 }
 
+/* --- Buttons --- */
 .ghost-btn {
   border: 1px solid var(--border);
-  background: #faf8f6;
+  background: var(--card);
   color: var(--text);
   border-radius: 999px;
-  padding: 8px 12px;
+  padding: 9px 14px;
   font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.18s ease;
 }
 
 .ghost-btn:hover {
-  background: #f3efeb;
+  background: #f8fafc;
+  border-color: #cdd3db;
 }
 
+.ghost-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* --- FLATTENED SEGMENTED CONTROL (SIDE-BY-SIDE) --- */
 .segmented-control {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 8px; /* Space between chips */
+  width: 100%;
 }
 
 .seg-chip {
   position: relative;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center; /* Center icon and text */
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 13px;
+  color: var(--text);
+  transition: all 0.18s ease;
+  
+  flex: 1; /* THIS FORCES THEM TO SHARE THE ROW EQUALLY */
+  white-space: nowrap; /* Prevents text from wrapping inside the chip */
 }
 
 .seg-chip input {
@@ -89,26 +130,26 @@ input.is-auto {
   pointer-events: none;
 }
 
-.seg-chip span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: #faf8f6;
-  font-size: 13px;
-  color: var(--text);
+/* Icon style inside chips */
+.seg-chip i {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.5px;
 }
 
-.seg-chip input:checked + span {
+/* Selection state */
+.seg-chip:has(input:checked) {
   background: var(--accent-weak);
-  border-color: #d8b2ab;
-  color: #7f3d34;
+  border-color: var(--accent);
+  color: var(--accent);
   font-weight: 700;
 }
 
+.seg-chip:has(input:focus-visible) {
+  box-shadow: var(--focus-ring);
+}
+
+/* --- Checks & Filters --- */
 .simple-check-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -165,5 +206,5 @@ input.is-auto {
 
 input[type="range"] {
   width: 100%;
-  accent-color: #a65ac7;
+  accent-color: var(--accent);
 }

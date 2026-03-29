@@ -29,39 +29,50 @@
   padding: 0 14px 14px 14px;
 }
 
-.sample-title {
+.parameters-card {
+  padding-top: 12px;
+}
+
+.parameter-sample-id {
   font-size: 19px;
   font-weight: 800;
-  margin: 6px 0 10px;
+  line-height: 1.15;
+  margin: 2px 0 20px;
   word-break: break-word;
+  color: var(--text);
 }
 
-.metrics-grid {
+.parameters-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 20px 16px; /* Added spacing to compensate for removed boxes */
 }
 
-.metric-tile {
-  border: 1px solid #ece6e0;
-  border-radius: 14px;
-  padding: 12px;
-  background: #fcfbf9;
+.parameter-item {
+  padding: 0;
+  min-width: 0;
 }
 
-.metric-tile span {
+.parameter-item-wide {
+  grid-column: 1 / -1;
+}
+
+.parameter-label {
   display: block;
   font-size: 11px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 6px;
 }
 
-.metric-tile strong {
+.parameter-value {
   display: block;
-  font-size: 22px;
-  line-height: 1.1;
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--text);
+  word-break: break-word;
 }
 
 .phase-plot {

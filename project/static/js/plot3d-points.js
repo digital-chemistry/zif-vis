@@ -4,6 +4,7 @@ import {
   SAMPLE_MARKER_SIZE_3D,
   CRYSTAL_CORE_MIN_SIZE_3D
 } from "./constants.js";
+import { $ } from "./dom.js";
 import {
   normalisePhase,
   numericOrNull,
@@ -13,9 +14,22 @@ import {
 } from "./formatters.js";
 import { TRI_H, concentrationToInterpolatedZ } from "./plot3d-geometry.js";
 
+function get3DMarkerScale() {
+  const v = Number($("markerScale3D")?.value ?? 1.8);
+  return Number.isFinite(v) && v > 0 ? v : 1.8;
+}
+
+function get3DSearchMarkerScale() {
+  return Math.max(1.2, get3DMarkerScale() * 0.8);
+}
+
 function crystallinityToCoreSize3D(c) {
   const v = Math.max(0, Math.min(1, Number(c) || 0));
-  return CRYSTAL_CORE_MIN_SIZE_3D + (SAMPLE_MARKER_SIZE_3D - CRYSTAL_CORE_MIN_SIZE_3D) * Math.sqrt(v);
+  const baseSize =
+    CRYSTAL_CORE_MIN_SIZE_3D +
+    (SAMPLE_MARKER_SIZE_3D - CRYSTAL_CORE_MIN_SIZE_3D) * Math.sqrt(v);
+
+  return baseSize * get3DMarkerScale();
 }
 
 function blendPhaseColor(p) {
@@ -175,7 +189,7 @@ export function buildPointTraces(points, concToZ, colourBy) {
     text: texts,
     hovertemplate: "%{text}<extra></extra>",
     marker: {
-      size: SAMPLE_MARKER_SIZE_3D,
+      size: SAMPLE_MARKER_SIZE_3D * get3DMarkerScale(),
       opacity: 0.95,
       color: AMORPHOUS_BASE_COLOR,
       line: { width: 0.25, color: "rgba(70,70,70,0.18)" }
@@ -244,7 +258,7 @@ export function markerForSearchPosition3D(searchPosition, concToZ) {
       `BSA: ${formatValShort(bsa, 1)} %<br>` +
       `Concentration: ${formatValShort(concentration, 1)} mg mL⁻¹<extra></extra>`,
     marker: {
-      size: 9,
+      size: 9 * get3DSearchMarkerScale(),
       color: "#111111",
       symbol: "diamond",
       line: { width: 2, color: "#ffffff" }

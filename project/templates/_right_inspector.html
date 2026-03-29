@@ -1,0 +1,38 @@
+<aside class="sidebar right">
+  <section class="panel-card">
+    <div class="panel-heading icon-label">
+      <i data-lucide="badge-info"></i>
+      <span>Parameters</span>
+    </div>
+    <div id="parametersGrid" class="parameters-grid"></div>
+  </section>
+
+  <section class="panel-card">
+    <div class="panel-heading icon-label">
+      <i data-lucide="pie-chart"></i>
+      <span>Material composition</span>
+    </div>
+    <div id="phaseCompositionPlot" class="phase-plot"></div>
+    <div id="phaseLegend" class="inspector-phase-legend"></div>
+  </section>
+
+  <details class="panel-card panel-details" id="atrDetails">
+    <summary class="icon-label">
+      <i data-lucide="activity"></i>
+      <span>ATR-IR spectrum</span>
+    </summary>
+    <div class="panel-details-body">
+      <div id="atrPlot" class="mini-plot"></div>
+    </div>
+  </details>
+
+  <details class="panel-card panel-details" id="xrdDetails">
+    <summary class="icon-label">
+      <i data-lucide="bar-chart-3"></i>
+      <span>Repeated XRD experiments</span>
+    </summary>
+    <div class="panel-details-body">
+      <div id="experimentCards" class="experiment-grid"></div>
+    </div>
+  </details>
+</aside>

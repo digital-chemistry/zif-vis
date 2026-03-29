@@ -1,0 +1,26 @@
+<main class="plot-area merged-plot-card">
+  <div class="plot-header-inline">
+    <div class="plot-header-main">
+      <div class="plot-header-title">ZIF Biocomposite Explorer</div>
+      <div class="plot-header-subtitle">Parameters, phase maps, and stacked concentration layers</div>
+    </div>
+
+    <a
+      class="plot-brand-link"
+      href="https://www.tugraz.at/institute/ptc/research/the-falcaro-group"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Visit the Falcaro Group webpage"
+    >
+      <img
+        src="{{ url_for('static', filename='logo.png') }}"
+        class="plot-brand-logo"
+      >
+    </a>
+  </div>
+
+  <div class="plot-shell">
+    <div id="plot"></div>
+    <div id="plotPhaseLegend" class="plot-overlay plot-phase-legend is-hidden"></div>
+  </div>
+</main>

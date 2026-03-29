@@ -1,0 +1,133 @@
+<aside class="sidebar left">
+  <section class="panel-card">
+    <div class="panel-heading icon-label">
+      <i data-lucide="sliders-horizontal"></i>
+      <span>Display</span>
+    </div>
+
+    <div class="control-block">
+      <div class="control-label icon-label">
+        <i data-lucide="layers-3"></i>
+        <span>View mode</span>
+      </div>
+      <div class="segmented-control" id="viewModeGroup">
+        <label class="seg-chip">
+          <input type="radio" name="viewMode" value="3d" checked>
+          <i data-lucide="boxes"></i>
+          <span>3D stacked</span>
+        </label>
+        <label class="seg-chip">
+          <input type="radio" name="viewMode" value="2d">
+          <i data-lucide="triangle"></i>
+          <span>2D ternary</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="control-block">
+      <div class="control-label icon-label">
+        <i data-lucide="droplets"></i>
+        <span>Wash type</span>
+      </div>
+      <div class="segmented-control" id="washingGroup">
+        <label class="seg-chip" for="washEth">
+          <input type="radio" name="washing" id="washEth" value="ethanol" checked>
+          <i data-lucide="beaker"></i>
+          <span>Ethanol</span>
+        </label>
+        <label class="seg-chip" for="washWat">
+          <input type="radio" name="washing" id="washWat" value="water">
+          <i data-lucide="droplets"></i>
+          <span>Water</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="control-block">
+      <label class="control-label icon-label" for="colourBy">
+        <i data-lucide="palette"></i>
+        <span>Color by</span>
+      </label>
+      <select id="colourBy">
+        <option value="phase">Phase</option>
+        <option value="crystallinity">Crystallinity</option>
+        <option value="ee">EE%</option>
+        <option value="protein_ratio">Estimated ratio</option>
+        <option value="none">None</option>
+      </select>
+    </div>
+
+    <div class="control-block" id="layerMultiCard">
+      <div class="control-label">Visible layers</div>
+      <div id="layerCheckboxes" class="simple-check-wrap"></div>
+    </div>
+
+    <div class="control-block" id="layerFocusCard">
+      <label class="control-label" for="layerFocus">Selected layer</label>
+      <select id="layerFocus"></select>
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-title">Min crystallinity</div>
+      <div class="single-slider-readout"><span id="crystBalanceVal">Any</span></div>
+      <input type="range" id="crystBalance" min="0" max="100" step="1" value="0">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-title">Estimated ratio minimum</div>
+      <div class="single-slider-readout"><span id="proteinThresholdVal">0</span></div>
+      <input type="range" id="proteinThreshold" min="0" max="1" step="0.001" value="0">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-title">Min EE</div>
+      <div class="single-slider-readout"><span id="eeThresholdVal">0</span></div>
+      <input type="range" id="eeThreshold" min="0" max="100" step="0.1" value="0">
+    </div>
+
+    <div class="slider-group" id="spacingCard">
+      <div class="slider-title">3D layer spacing</div>
+      <div class="single-slider-readout"><span id="spacingScaleVal">0.2</span></div>
+      <input type="range" id="spacingScale" min="0.02" max="3.0" step="0.02" value="0.2">
+    </div>
+
+    <div class="slider-group" id="markerSizeCard">
+      <div class="slider-title">3D marker size</div>
+      <div class="single-slider-readout"><span id="markerScale3DVal">1.8×</span></div>
+      <input type="range" id="markerScale3D" min="0.6" max="3" step="0.1" value="1.8">
+    </div>
+  </section>
+
+  <div class="panel-card accordion-card">
+    <details class="accordion-section">
+      <summary class="icon-label">
+        <i data-lucide="search"></i>
+        <span>Find composition</span>
+      </summary>
+      <div class="accordion-body">
+        <div class="position-grid">
+          <label class="field"><span>Metal %</span><input id="posMetal" type="number" step="0.1"></label>
+          <label class="field"><span>Ligand %</span><input id="posLigand" type="number" step="0.1"></label>
+          <label class="field"><span>BSA %</span><input id="posBsa" type="number" step="0.1"></label>
+          <label class="field"><span>Concentration</span><input id="posConcentration" type="number" step="0.1"></label>
+        </div>
+        <div class="action-row">
+          <button type="button" class="ghost-btn icon-btn" id="clearCompositionBtn">
+            <i data-lucide="rotate-ccw"></i>
+            <span>Clear composition</span>
+          </button>
+        </div>
+      </div>
+    </details>
+
+    <details class="accordion-section">
+      <summary class="icon-label">
+        <i data-lucide="funnel"></i>
+        <span>Advanced phase filters</span>
+      </summary>
+      <div class="accordion-body">
+        <div id="phaseFilters"></div>
+      </div>
+    </details>
+  </div>
+</aside>

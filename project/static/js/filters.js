@@ -46,7 +46,10 @@ function getPositionMarker() {
 
 export function readFiltersFromDom() {
   const mode = getCheckedRadio("viewMode", "3d");
-  const washing = $("washing")?.value || "all";
+  
+  // UPDATED: Now uses the radio button helper instead of looking for an ID
+  const washing = getCheckedRadio("washing", "ethanol"); 
+  
   const colourBy = $("colourBy")?.value || "phase";
 
   return {

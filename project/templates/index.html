@@ -13,207 +13,187 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/inspector.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/responsive.css') }}">
 
+  <style>
+    .card-divider {
+      border: 0;
+      height: 1px;
+      background: var(--border);
+      margin: 18px 0;
+    }
+
+    .accordion-card {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .accordion-section {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .accordion-section:last-child {
+      border-bottom: none;
+    }
+
+    .accordion-section > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .accordion-section > summary::after {
+      content: "▾";
+      float: right;
+      color: var(--muted);
+    }
+
+    .accordion-section[open] > summary::after {
+      content: "▴";
+    }
+
+    .accordion-body {
+      padding: 0 14px 14px 14px;
+    }
+
+    .icon-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-label i {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2px;
+    }
+
+    .plot-area.merged-plot-card {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+      padding: 12px 14px 6px 14px;
+    }
+
+    .plot-header-inline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 4px 10px 4px;
+    }
+
+    .plot-header-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1f2937;
+      letter-spacing: -0.01em;
+    }
+
+    .plot-shell {
+      position: relative;
+      min-height: 720px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fcfcfd;
+    }
+
+    #plot {
+      width: 100%;
+      height: 720px;
+    }
+
+    .sidebar .panel-card {
+      border-radius: 16px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.05);
+    }
+
+    .panel-heading {
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .slider-group {
+      margin-bottom: 14px;
+    }
+
+    .slider-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .single-slider-readout {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .seg-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .seg-chip span {
+      font-weight: 700;
+    }
+
+    .control-label {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .simple-check-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+    }
+
+    .field span {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .action-row {
+      margin-top: 12px;
+    }
+
+    .ghost-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+  </style>
+
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <div class="layout">
-    <aside class="sidebar left">
-      <div class="title">ZIF Biocomposite Explorer</div>
-
-      <section class="panel-card">
-        <div class="panel-heading">Find composition</div>
-
-        <div class="position-grid">
-          <label class="field">
-            <span>Metal %</span>
-            <input id="posMetal" type="number" min="0" max="100" step="0.1" placeholder="e.g. 33">
-          </label>
-
-          <label class="field">
-            <span>Ligand %</span>
-            <input id="posLigand" type="number" min="0" max="100" step="0.1" placeholder="e.g. 35">
-          </label>
-
-          <label class="field">
-            <span>BSA %</span>
-            <input id="posBsa" type="number" min="0" max="100" step="0.1" placeholder="auto">
-          </label>
-
-          <label class="field">
-            <span>Concentration</span>
-            <input id="posConcentration" type="number" min="0" step="0.1" placeholder="e.g. 50">
-          </label>
-        </div>
-
-        <div class="position-note" id="positionNote">
-          Enter any two of Metal, Ligand, and BSA. The third will be filled automatically.
-        </div>
-
-        <div class="action-row">
-          <button type="button" class="ghost-btn" id="clearCompositionBtn">Clear composition</button>
-        </div>
-      </section>
-
-      <section class="panel-card">
-        <div class="panel-heading">Display</div>
-
-        <div class="control-block">
-          <div class="control-label">View mode</div>
-          <div class="segmented-control" id="viewModeGroup">
-            <label class="seg-chip">
-              <input type="radio" name="viewMode" value="3d" checked>
-              <span>3D stacked</span>
-            </label>
-            <label class="seg-chip">
-              <input type="radio" name="viewMode" value="2d">
-              <span>2D ternary</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="control-block">
-          <label class="control-label" for="colourBy">Color by</label>
-          <select id="colourBy">
-            <option value="phase">Phase</option>
-            <option value="crystallinity">Crystallinity</option>
-            <option value="ee">EE%</option>
-            <option value="protein_ratio">Estimated ratio</option>
-            <option value="none">None</option>
-          </select>
-        </div>
-
-        <div class="control-block">
-          <label class="control-label" for="washing">Wash type</label>
-          <select id="washing">
-            <option value="all">All</option>
-            <option value="ethanol">Ethanol washing</option>
-            <option value="water">Water washing</option>
-          </select>
-        </div>
-
-        <div class="control-block" id="layerMultiCard">
-          <div class="control-label">Visible layers</div>
-          <div id="layerCheckboxes" class="simple-check-wrap"></div>
-        </div>
-
-        <div class="control-block" id="layerFocusCard">
-          <label class="control-label" for="layerFocus">Selected layer</label>
-          <select id="layerFocus"></select>
-        </div>
-      </section>
-
-      <section class="panel-card">
-        <div class="panel-heading">Data filters</div>
-
-        <div class="slider-group">
-          <div class="slider-title">Min crystallinity</div>
-          <div class="single-slider-readout"><span id="crystBalanceVal">Any</span></div>
-          <input type="range" id="crystBalance" min="0" max="100" step="1" value="0">
-          <div class="slider-help">
-            <span>Any</span>
-            <span>More crystalline</span>
-          </div>
-        </div>
-
-        <div class="slider-group">
-          <div class="slider-title">Estimated ratio minimum</div>
-          <div class="single-slider-readout"><span id="proteinThresholdVal">0</span></div>
-          <input type="range" id="proteinThreshold" min="0" max="1" step="0.001" value="0">
-        </div>
-
-        <div class="slider-group">
-          <div class="slider-title">Min EE</div>
-          <div class="single-slider-readout"><span id="eeThresholdVal">0</span></div>
-          <input type="range" id="eeThreshold" min="0" max="100" step="0.1" value="0">
-        </div>
-
-        <div class="slider-group" id="spacingCard">
-          <div class="slider-title">3D layer spacing</div>
-          <div class="single-slider-readout"><span id="spacingScaleVal">0.2</span></div>
-          <input type="range" id="spacingScale" min="0.02" max="3.0" step="0.02" value="0.2">
-        </div>
-      </section>
-
-      <details class="panel-card panel-details">
-        <summary>Advanced phase filters</summary>
-        <div class="panel-details-body">
-          <div id="phaseFilters" class="phase-filter-list"></div>
-        </div>
-      </details>
-    </aside>
-
-    <main class="plot-area">
-      <div class="plot-shell">
-        <div id="plot"></div>
-
-        <div id="ternaryInset" class="plot-overlay ternary-inset" aria-hidden="true">
-          <svg viewBox="0 0 220 190" class="ternary-inset-svg">
-            <polygon points="20,170 200,170 110,14" class="tri-outline"></polygon>
-            <text x="10" y="96" class="tri-label tri-label-left">Metal [%]</text>
-            <text x="110" y="186" text-anchor="middle" class="tri-label">Ligand [%]</text>
-            <text x="206" y="96" text-anchor="end" class="tri-label tri-label-right">BSA [%]</text>
-          </svg>
-        </div>
-
-        <div id="plotPhaseLegend" class="plot-overlay plot-phase-legend is-hidden"></div>
-      </div>
-    </main>
-
-    <aside class="sidebar right">
-      <div class="logo-card logo-card-right">
-        <img
-          src="{{ url_for('static', filename='logo.png') }}"
-          alt="Logo"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-        >
-        <div class="logo-fallback" style="display:none;">Logo unavailable</div>
-      </div>
-
-      <div class="sample-title" id="sampleTitle">Select a sample</div>
-
-      <section class="panel-card metrics-card">
-        <div class="panel-heading">Key metrics</div>
-        <div class="metrics-grid">
-          <div class="metric-tile">
-            <span>EE%</span>
-            <strong id="eeVal">—</strong>
-          </div>
-          <div class="metric-tile">
-            <span>Estimated ratio</span>
-            <strong id="proteinVal">—</strong>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel-card">
-        <div class="panel-heading">Material composition</div>
-        <div id="phaseCompositionPlot" class="phase-plot"></div>
-        <div id="phaseLegend" class="inspector-phase-legend"></div>
-      </section>
-
-      <section class="panel-card">
-        <div class="inspector-block">
-          <div class="inspector-block-title">Uncertainty</div>
-          <div id="inspectorUncertainty"></div>
-        </div>
-      </section>
-
-      <details class="panel-card panel-details" id="atrDetails">
-        <summary>ATR-IR spectrum</summary>
-        <div class="panel-details-body">
-          <div id="atrPlot" class="mini-plot"></div>
-        </div>
-      </details>
-
-      <details class="panel-card panel-details" id="xrdDetails">
-        <summary>Repeated XRD experiments</summary>
-        <div class="panel-details-body">
-          <div id="experimentCards" class="experiment-grid"></div>
-        </div>
-      </details>
-    </aside>
+    {% include "_left_sidebar.html" %}
+    {% include "_plot_area.html" %}
+    {% include "_right_inspector.html" %}
   </div>
 
   <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script>
+    lucide.createIcons();
+  </script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 
 from .config import MASTER_JSON, ATR_DIR, XRD_DIR
 from .io_utils import find_existing_file
@@ -84,7 +85,7 @@ def load_data():
             x, y = ternary_xy(float(metal), float(ligand), float(bsa))
             uses_real_ternary = True
 
-        phase_comp = entry.get("phase_composition", {}) or {}
+        phase_comp = deepcopy(entry.get("phase_composition", {}) or {})
         phase_candidates = [
             (name, vals.get("mean", 0.0))
             for name, vals in phase_comp.items()
@@ -108,12 +109,10 @@ def load_data():
             .get("amorphous", {})
             .get("mean")
         )
-
         ee_mean = (
             entry.get("encapsulation_efficiency", {})
             .get("mean")
         )
-
         protein_ratio = (
             entry.get("ir_data", {})
             .get("ratio_selected_peaks")
@@ -121,13 +120,17 @@ def load_data():
 
         experiments = []
         measurements = entry.get("measurements", {}) or {}
+
+
+        sample_atr_file = entry.get("atr_file")
+
         for round_name, filename in measurements.items():
             round_no = "".join(ch for ch in str(round_name) if ch.isdigit()) or "1"
             experiment_id = build_measurement_experiment_id(filename) or f"{point_id}_{int(round_no):02d}"
 
             xrd_file = xrd_index.get(experiment_id)
-            atr_file = entry.get("atr_file") if str(round_no) in {"1", "01"} else resolve_atr_file(concentration, wash_code, round_no)
-
+            atr_file = sample_atr_file
+       
             exp = {
                 "experiment_id": experiment_id,
                 "sample_id": experiment_id,
@@ -137,7 +140,7 @@ def load_data():
                 "primary_phase": primary_phase,
                 "detected_phases": detected_phases,
                 "phase_label": detected_phases,
-                "phase_composition": phase_comp,
+                "phase_composition": deepcopy(phase_comp),
                 "signal_class": "N/A",
                 "layer": str(concentration),
                 "washing": washing_label,
@@ -146,7 +149,6 @@ def load_data():
                 "concentration": concentration,
                 "concentration_label": str(concentration),
                 "ee": ee_mean,
-                "encapsulation_efficiency": ee_mean,
                 "protein_ratio": protein_ratio,
                 "round": round_name,
                 "round_no": round_no,
@@ -172,6 +174,7 @@ def load_data():
             experiments.append(exp)
             experiment_details[experiment_id] = exp
 
+        # Flat object for /api/points and plotting
         point_summary = {
             "id": point_id,
             "sample_id": point_id,
@@ -200,9 +203,8 @@ def load_data():
             "phase": primary_phase,
             "primary_phase": primary_phase,
             "detected_phases": detected_phases,
-            "phase_composition": phase_comp,
+            "phase_composition": deepcopy(phase_comp),
             "ee": ee_mean,
-            "encapsulation_efficiency": ee_mean,
             "protein_ratio": protein_ratio,
             "crystallinity": cryst_mean,
             "amorphousness": amorphous_mean,
@@ -210,7 +212,45 @@ def load_data():
             "experiments": experiments,
         }
 
+        # Full object for /api/sample/<point_id> and inspector
+        point_detail = deepcopy(entry)
+        point_detail.update({
+            "id": point_id,
+            "sample_id": point_id,
+            "x": x,
+            "y": y,
+            "z": concentration if concentration is not None else 0.0,
+            "metal": metal,
+            "ligand": ligand,
+            "bsa": bsa,
+            "uses_real_ternary": uses_real_ternary,
+            "conc": str(concentration),
+            "concentration": concentration,
+            "concentration_label": str(concentration),
+            "formulation": point_id.split("_")[1] if "_" in point_id else None,
+            "wash_code": wash_code,
+            "wash": wash_code,
+            "washing": washing_label,
+            "layer": str(concentration),
+            "n_experiments": len(experiments),
+            "experiment_ids": [e["experiment_id"] for e in experiments],
+            "first_experiment_id": experiments[0]["experiment_id"] if experiments else None,
+            "has_atr": any(e["has_atr"] for e in experiments),
+            "has_xrd": any(e["has_xrd"] for e in experiments),
+            "has_image": False,
+            "phases": [name for name, _ in phase_candidates],
+            "phase": primary_phase,
+            "primary_phase": primary_phase,
+            "detected_phases": detected_phases,
+            "ee": ee_mean,
+            "protein_ratio": protein_ratio,
+            "crystallinity_mean": cryst_mean,
+            "amorphousness_mean": amorphous_mean,
+            "relative_crystallinity": cryst_mean,
+            "experiments": experiments,
+        })
+
         points.append(point_summary)
-        point_details[point_id] = point_summary
+        point_details[point_id] = point_detail
 
     return points, point_details, experiment_details

@@ -33,7 +33,7 @@ export function renderPlot3D(
     return;
   }
 
-  const spacingScale = Number($("spacingScale")?.value || 0.2);
+  const spacingScale = Number($("spacingScale")?.value || 0.17);
   const orderedLayers = getOrderedLayers(points);
   const concToZ = buildLayerZMap(orderedLayers, spacingScale);
 

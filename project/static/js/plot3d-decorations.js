@@ -7,7 +7,8 @@ import {
   insetParallelSegment,
   add,
   unit,
-  vec
+  vec,
+  midpoint
 } from "./plot3d-geometry.js";
 
 function makeLineTrace(coords, color, width = 5) {
@@ -18,7 +19,8 @@ function makeLineTrace(coords, color, width = 5) {
     y: coords.y,
     z: coords.z,
     hoverinfo: "skip",
-    line: { color, width }
+    line: { color, width },
+    showlegend: false
   };
 }
 
@@ -36,6 +38,7 @@ function addArrowTrace(traces, start, end, z, color) {
     y: [start.y, end.y],
     z: [z, z],
     hoverinfo: "skip",
+    showlegend: false,
     line: { color, width: ARROW_STYLE.width }
   });
 
@@ -53,6 +56,7 @@ function addArrowTrace(traces, start, end, z, color) {
     y: [end.y, wing1.y],
     z: [z, z],
     hoverinfo: "skip",
+    showlegend: false,
     line: { color, width: ARROW_STYLE.width }
   });
 
@@ -63,8 +67,15 @@ function addArrowTrace(traces, start, end, z, color) {
     y: [end.y, wing2.y],
     z: [z, z],
     hoverinfo: "skip",
+    showlegend: false,
     line: { color, width: ARROW_STYLE.width }
   });
+}
+
+function formatLayerLabel(layer) {
+  const n = Number(layer);
+  if (!Number.isFinite(n)) return String(layer);
+  return Number.isInteger(n) ? `${n} mg mL⁻¹` : `${n.toFixed(1)} mg mL⁻¹`;
 }
 
 export function buildLayerPlanes(orderedLayers, concToZ) {
@@ -149,6 +160,7 @@ export function buildTriangleGrid(orderedLayers, concToZ) {
     y: ys,
     z: zs,
     hoverinfo: "skip",
+    showlegend: false,
     line: { color: "rgba(150,150,150,0.12)", width: 2 }
   };
 }
@@ -160,10 +172,10 @@ export function buildLayerLabels3D(orderedLayers, concToZ) {
   const text = [];
 
   orderedLayers.forEach((layer) => {
-    x.push(-0.12);
-    y.push(0.035);
+    x.push(-0.285);
+    y.push(0.02);
     z.push(concToZ.get(layer));
-    text.push(`${layer} mg mL⁻¹`);
+    text.push(formatLayerLabel(layer));
   });
 
   return {
@@ -175,38 +187,16 @@ export function buildLayerLabels3D(orderedLayers, concToZ) {
     text,
     textposition: "middle left",
     hoverinfo: "skip",
-    textfont: { size: 12, color: "#4d4d4d" }
+    showlegend: false,
+    textfont: {
+      size: 13,
+      color: "#4d4d4d"
+    }
   };
 }
 
-export function buildConcentrationGuide3D(orderedLayers, concToZ) {
-  if (!orderedLayers.length) return [];
-
-  const minZ = Math.min(...orderedLayers.map((v) => concToZ.get(v) ?? 0));
-  const maxZ = Math.max(...orderedLayers.map((v) => concToZ.get(v) ?? 0));
-
-  return [
-    {
-      type: "scatter3d",
-      mode: "lines",
-      x: [-0.22, -0.22],
-      y: [0.02, 0.02],
-      z: [minZ - 0.2, maxZ + 0.2],
-      hoverinfo: "skip",
-      line: { color: "rgba(70,70,70,0.72)", width: 6 }
-    },
-    {
-      type: "scatter3d",
-      mode: "text",
-      x: [-0.34],
-      y: [0.03],
-      z: [(minZ + maxZ) / 2],
-      text: ["Concentration [mg mL⁻¹]"],
-      textposition: "middle left",
-      hoverinfo: "skip",
-      textfont: { size: 14, color: "#2f2f2f" }
-    }
-  ];
+export function buildConcentrationGuide3D() {
+  return [];
 }
 
 export function buildPerLayerDirectionArrows3D(orderedLayers, concToZ) {
@@ -235,15 +225,21 @@ export function buildSideLabels3D(orderedLayers, concToZ) {
   const midLayer = orderedLayers[Math.floor(orderedLayers.length / 2)];
   const z = (concToZ.get(midLayer) ?? 0) - 0.03;
 
+  const { A, B, C } = TRIANGLE;
+  const leftMid = midpoint(A, C);
+  const baseMid = midpoint(A, B);
+  const rightMid = midpoint(B, C);
+
   return {
     type: "scatter3d",
     mode: "text",
-    x: [0.10, 0.50, 0.90],
-    y: [0.34, -0.065, 0.34],
+    x: [leftMid.x - 0.08, baseMid.x, rightMid.x + 0.08],
+    y: [leftMid.y, baseMid.y - 0.095, rightMid.y],
     z: [z, z, z],
     text: ["Metal [%]", "Ligand [%]", "BSA [%]"],
     textposition: ["middle left", "top center", "middle right"],
     hoverinfo: "skip",
+    showlegend: false,
     textfont: { size: 14, color: "#3b3b3b" }
   };
 }
