@@ -9,11 +9,155 @@
 </head>
 <body>
   <div class="layout">
-    <!-- LEFT SIDEBAR -->
     <aside class="sidebar left">
       <div class="title">ZIF Biocomposite Explorer</div>
 
-      <div class="logo-card">
+      <details class="filter-collapse" open>
+        <summary>Search position</summary>
+        <div class="filter-collapse-body">
+          <div class="card card-tight">
+            <div class="position-grid">
+              <div class="position-field">
+                <span>Metal %</span>
+                <input id="posMetal" type="number" min="0" max="100" step="0.1" placeholder="e.g. 33">
+              </div>
+              <div class="position-field">
+                <span>Ligand %</span>
+                <input id="posLigand" type="number" min="0" max="100" step="0.1" placeholder="e.g. 35">
+              </div>
+              <div class="position-field">
+                <span>BSA %</span>
+                <input id="posBsa" type="number" min="0" max="100" step="0.1" placeholder="auto">
+              </div>
+              <div class="position-field">
+                <span>Concentration</span>
+                <input id="posConcentration" type="number" min="0" step="0.1" placeholder="e.g. 50">
+              </div>
+            </div>
+            <div class="position-note" id="positionNote">
+              Enter any two of Metal, Ligand, and BSA. The third will be filled automatically.
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="filter-collapse" open>
+        <summary>Colour / View / Washing</summary>
+        <div class="filter-collapse-body">
+          <div class="card card-tight">
+            <div class="merged-choice-block">
+              <div class="choice-group">
+                <label>Colour by</label>
+                <div class="radio-inline-group" id="colourByGroup">
+                  <label class="radio-chip"><input type="radio" name="colourBy" value="phase" checked><span>Primary phase</span></label>
+                  <label class="radio-chip"><input type="radio" name="colourBy" value="crystallinity"><span>Crystallinity</span></label>
+                  <label class="radio-chip"><input type="radio" name="colourBy" value="ee"><span>EE%</span></label>
+                  <label class="radio-chip"><input type="radio" name="colourBy" value="protein_ratio"><span>Protein ratio</span></label>
+                  <label class="radio-chip"><input type="radio" name="colourBy" value="none"><span>None</span></label>
+                </div>
+              </div>
+
+              <div class="choice-group">
+                <label>View</label>
+                <div class="radio-inline-group" id="viewModeGroup">
+                  <label class="radio-chip"><input type="radio" name="viewMode" value="3d" checked><span>3D stacked</span></label>
+                  <label class="radio-chip"><input type="radio" name="viewMode" value="2d"><span>2D ternary</span></label>
+                </div>
+              </div>
+
+              <div class="choice-group">
+                <label>Washing</label>
+                <div class="radio-inline-group" id="washingGroup">
+                  <label class="radio-chip"><input type="radio" name="washing" value="all" checked><span>All</span></label>
+                  <label class="radio-chip"><input type="radio" name="washing" value="ethanol"><span>Ethanol</span></label>
+                  <label class="radio-chip"><input type="radio" name="washing" value="water"><span>Water</span></label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="filter-collapse" open id="layerMultiCard">
+        <summary>Layers / Concentration</summary>
+        <div class="filter-collapse-body">
+          <div class="card card-tight">
+            <div id="layerCheckboxes" class="simple-check-wrap"></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="filter-collapse" open id="layerFocusCard">
+        <summary>2D layer</summary>
+        <div class="filter-collapse-body">
+          <div class="card card-tight">
+            <label for="layerFocus">2D layer</label>
+            <select id="layerFocus"></select>
+          </div>
+        </div>
+      </details>
+
+      <details class="filter-collapse" open>
+        <summary>Phases</summary>
+        <div class="filter-collapse-body">
+          <div class="card card-tight">
+            <div id="phaseFilters" class="phase-filter-list"></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="filter-collapse" open>
+        <summary>Filters</summary>
+        <div class="filter-collapse-body">
+          <div class="card card-tight">
+            <div class="merged-slider-block">
+              <div class="slider-group">
+                <div class="slider-title">Crystallinity / Amorphousness</div>
+                <div class="single-slider-readout">
+                  <span id="crystBalanceVal">Any</span>
+                </div>
+                <input type="range" id="crystBalance" min="0" max="100" step="1" value="0">
+                <div class="slider-help">
+                  <span>More amorphous</span>
+                  <span>More crystalline</span>
+                </div>
+              </div>
+
+              <div class="slider-group">
+                <div class="slider-title">Protein ratio minimum</div>
+                <div class="single-slider-readout">
+                  <span id="proteinThresholdVal">0</span>
+                </div>
+                <input type="range" id="proteinThreshold" min="0" max="1" step="0.001" value="0">
+              </div>
+
+              <div class="slider-group">
+                <div class="slider-title">Encapsulation efficiency minimum</div>
+                <div class="single-slider-readout">
+                  <span id="eeThresholdVal">0</span>
+                </div>
+                <input type="range" id="eeThreshold" min="0" max="100" step="0.1" value="0">
+              </div>
+
+              <div class="slider-group" id="spacingCard">
+                <div class="slider-title">Relative layer spacing</div>
+                <div class="single-slider-readout">
+                  <span id="spacingScaleVal">0.2</span>
+                </div>
+                <input type="range" id="spacingScale" min="0.02" max="3.0" step="0.02" value="0.2">
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
+    </aside>
+
+    <main class="plot-area">
+      <div id="plot"></div>
+    </main>
+
+    <aside class="sidebar right">
+      <div class="logo-card logo-card-right">
         <img
           src="{{ url_for('static', filename='logo.png') }}"
           alt="Logo"
@@ -22,127 +166,17 @@
         <div class="logo-fallback" style="display:none;">Place static/logo.png here</div>
       </div>
 
-      <div class="card">
-        <label for="searchBox">Search sample ID</label>
-        <input id="searchBox" type="text" placeholder="e.g. 50_17_WW">
-      </div>
-
-      <div class="card">
-        <label for="colourBy">Colour by</label>
-        <select id="colourBy">
-          <option value="phase">Primary phase</option>
-          <option value="crystallinity">Relative crystallinity</option>
-          <option value="ee">EE%</option>
-          <option value="protein_ratio">Protein ratio</option>
-          <option value="none">None</option>
-        </select>
-      </div>
-
-      <div class="card">
-        <label for="viewMode">View</label>
-        <select id="viewMode">
-          <option value="3d">3D stacked</option>
-          <option value="2d">2D ternary</option>
-        </select>
-      </div>
-
-      <div class="card">
-        <label for="phaseMulti">Phases</label>
-        <select id="phaseMulti" multiple size="7"></select>
-      </div>
-
-      <div class="card" id="layerMultiCard">
-        <label for="layerMulti">Layers</label>
-        <select id="layerMulti" multiple size="6"></select>
-      </div>
-
-      <div class="card" id="layerFocusCard">
-        <label for="layerFocus">2D layer</label>
-        <select id="layerFocus"></select>
-      </div>
-
-      <div class="card">
-        <label>Wash</label>
-        <div class="inline-checks">
-          <label class="check-inline">
-            <input type="checkbox" id="washEW" checked>
-            <span>Ethanol</span>
-          </label>
-          <label class="check-inline">
-            <input type="checkbox" id="washWW" checked>
-            <span>Water</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="card">
-        <label>Relative crystallinity filter</label>
-        <div class="range-readout">
-          <span id="crystMinVal">0</span>
-          <span id="crystMaxVal">1</span>
-        </div>
-        <input type="range" id="crystMin" min="0" max="1" step="0.01" value="0">
-        <input type="range" id="crystMax" min="0" max="1" step="0.01" value="1">
-      </div>
-
-      <div class="card">
-        <label>IR / protein ratio filter</label>
-        <div class="range-readout">
-          <span id="protMinVal">0</span>
-          <span id="protMaxVal">1</span>
-        </div>
-        <input type="range" id="protMin" min="0" max="1" step="0.01" value="0">
-        <input type="range" id="protMax" min="0" max="1" step="0.01" value="1">
-      </div>
-
-      <div class="card" id="spacingCard">
-        <label for="spacingScale">Relative layer spacing</label>
-        <input type="range" id="spacingScale" min="0.15" max="3.0" step="0.05" value="0.75">
-      </div>
-    </aside>
-
-    <!-- MAIN PLOT -->
-    <main class="plot-area">
-      <div id="plot"></div>
-    </main>
-
-    <!-- RIGHT SIDEBAR -->
-    <aside class="sidebar right">
       <div id="sampleTitle" class="sample-title">Click a point</div>
 
       <div class="card info-grid">
-        <div>
-          <span>EE%</span>
-          <strong id="eeVal">—</strong>
-        </div>
-        <div>
-          <span>Relative crystallinity</span>
-          <strong id="crystVal">—</strong>
-        </div>
-        <div>
-          <span>Primary phase</span>
-          <strong id="phaseVal">—</strong>
-        </div>
-        <div>
-          <span>Detected phases</span>
-          <strong id="detectedVal">—</strong>
-        </div>
-        <div>
-          <span>Protein ratio</span>
-          <strong id="proteinVal">—</strong>
-        </div>
-        <div>
-          <span>Wash</span>
-          <strong id="washVal">—</strong>
-        </div>
-        <div>
-          <span>Concentration</span>
-          <strong id="concVal">—</strong>
-        </div>
-        <div>
-          <span>Signal class</span>
-          <strong id="signalVal">—</strong>
-        </div>
+        <div><span>EE%</span><strong id="eeVal">—</strong></div>
+        <div><span>Crystallinity</span><strong id="crystVal">—</strong></div>
+        <div><span>Primary phase</span><strong id="phaseVal">—</strong></div>
+        <div><span>Detected phases</span><strong id="detectedVal">—</strong></div>
+        <div><span>Protein ratio</span><strong id="proteinVal">—</strong></div>
+        <div><span>Washing</span><strong id="washVal">—</strong></div>
+        <div><span>Concentration</span><strong id="concVal">—</strong></div>
+        <div><span>Signal class</span><strong id="signalVal">—</strong></div>
       </div>
 
       <div class="card">

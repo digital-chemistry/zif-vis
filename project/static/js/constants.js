@@ -1,14 +1,14 @@
 export const PHASE_COLORS = {
-  am: "#585858",
-  "am-zif": "#B0B0B0",
-  "zif-c": "#5F9AE0",
-  sod: "#45439E",
-  dia: "#EA5A46",
-  u13: "#DCCB6A",
+  am: "#B2B2B2",
+  "zif-c": "#64CAD6",
+  sod: "#5825ED",
+  dia: "#D73819",
+  u13: "#C8AC34",
+  u12: "#4FBF5B",
+  "zif-ec-1": "#E84FA8",
+  "zif-l": "#F28C28",
   mixed: "#907FA8",
   "sod+dia": "#944C78",
-  "zif-l": "#3A9D5D",
-  "zif-ec-1": "#C47A2C",
   unknown: "#8B8B8B"
 };
 

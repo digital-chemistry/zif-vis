@@ -8,7 +8,71 @@ import {
   escapeHtml
 } from "./formatters.js";
 
-export function renderPlot2D(points, colourBy, onPointClick) {
+function markerForSearchPosition2D(searchPosition, layer) {
+  if (!searchPosition) return null;
+  if (Number(searchPosition.concentration) !== Number(layer)) return null;
+
+  const total =
+    Number(searchPosition.metal) +
+    Number(searchPosition.ligand) +
+    Number(searchPosition.bsa);
+
+  if (!Number.isFinite(total) || total <= 0) return null;
+
+  return {
+    type: "scatterternary",
+    mode: "markers+text",
+    a: [Number(searchPosition.metal)],
+    b: [Number(searchPosition.ligand)],
+    c: [Number(searchPosition.bsa)],
+    text: ["You are here"],
+    textposition: "top center",
+    hovertemplate: "You are here<extra></extra>",
+    marker: {
+      size: 14,
+      color: "#111111",
+      symbol: "diamond",
+      line: { width: 2, color: "#ffffff" }
+    }
+  };
+}
+
+function markerForSearchPosition2DFallback(searchPosition, layer) {
+  if (!searchPosition) return null;
+  if (Number(searchPosition.concentration) !== Number(layer)) return null;
+
+  const metal = Number(searchPosition.metal);
+  const ligand = Number(searchPosition.ligand);
+  const bsa = Number(searchPosition.bsa);
+  const total = metal + ligand + bsa;
+
+  if (!Number.isFinite(total) || total <= 0) return null;
+
+  const mm = metal / total;
+  const ll = ligand / total;
+  const bb = bsa / total;
+
+  const x = ll + 0.5 * bb;
+  const y = (Math.sqrt(3) / 2) * bb;
+
+  return {
+    type: "scatter",
+    mode: "markers+text",
+    x: [x],
+    y: [y],
+    text: ["You are here"],
+    textposition: "top center",
+    hovertemplate: "You are here<extra></extra>",
+    marker: {
+      size: 14,
+      color: "#111111",
+      symbol: "diamond",
+      line: { width: 2, color: "#ffffff" }
+    }
+  };
+}
+
+export function renderPlot2D(points, colourBy, onPointClick, searchPosition = null) {
   const plotDiv = $("plot");
   if (!plotDiv) return;
 
@@ -36,7 +100,7 @@ export function renderPlot2D(points, colourBy, onPointClick) {
   );
 
   if (!realTernary) {
-    return renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick);
+    return renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, searchPosition);
   }
 
   let markerColor = "#9c9c9c";
@@ -57,7 +121,7 @@ export function renderPlot2D(points, colourBy, onPointClick) {
   } else if (colourBy === "crystallinity") {
     markerColor = layerPoints.map(p => numericOrNull(p.crystallinity));
     showscale = true;
-    colorbar = { title: "Rel. cryst." };
+    colorbar = { title: "Crystallinity" };
   } else if (colourBy === "protein_ratio") {
     markerColor = layerPoints.map(p => numericOrNull(p.protein_ratio));
     showscale = true;
@@ -75,10 +139,10 @@ export function renderPlot2D(points, colourBy, onPointClick) {
       `<b>${escapeHtml(p.id)}</b><br>` +
       `Primary phase: ${escapeHtml(displayPhase(p.phase))}<br>` +
       `Detected phases: ${escapeHtml(p.detected_phases || "N/A")}<br>` +
-      `Wash: ${escapeHtml(p.washing || "N/A")}<br>` +
+      `Washing: ${escapeHtml(p.washing || p.wash || "N/A")}<br>` +
       `Conc: ${formatValShort(p.concentration)}<br>` +
       `EE: ${formatValShort(p.ee)}<br>` +
-      `Relative crystallinity: ${formatValShort(p.crystallinity)}<br>` +
+      `Crystallinity: ${formatValShort(p.crystallinity)}<br>` +
       `Protein ratio: ${formatValShort(p.protein_ratio)}`
     ),
     hovertemplate: "%{text}<extra></extra>",
@@ -92,6 +156,9 @@ export function renderPlot2D(points, colourBy, onPointClick) {
       line: { width: 0.3, color: "rgba(50,50,50,0.20)" }
     }
   };
+
+  const searchTrace = markerForSearchPosition2D(searchPosition, layer);
+  const traces = searchTrace ? [trace, searchTrace] : [trace];
 
   const layout = {
     margin: { l: 40, r: 40, t: 40, b: 40 },
@@ -109,15 +176,33 @@ export function renderPlot2D(points, colourBy, onPointClick) {
     ternary: {
       sum: 100,
       bgcolor: "white",
-      aaxis: { title: { text: "Metal" }, min: 0, ticks: "outside", gridcolor: "rgba(140,140,140,0.18)", linecolor: "rgba(90,90,90,0.35)" },
-      baxis: { title: { text: "Ligand" }, min: 0, ticks: "outside", gridcolor: "rgba(140,140,140,0.18)", linecolor: "rgba(90,90,90,0.35)" },
-      caxis: { title: { text: "BSA" }, min: 0, ticks: "outside", gridcolor: "rgba(140,140,140,0.18)", linecolor: "rgba(90,90,90,0.35)" }
+      aaxis: {
+        title: { text: "Metal" },
+        min: 0,
+        ticks: "outside",
+        gridcolor: "rgba(140,140,140,0.18)",
+        linecolor: "rgba(90,90,90,0.35)"
+      },
+      baxis: {
+        title: { text: "Ligand" },
+        min: 0,
+        ticks: "outside",
+        gridcolor: "rgba(140,140,140,0.18)",
+        linecolor: "rgba(90,90,90,0.35)"
+      },
+      caxis: {
+        title: { text: "BSA" },
+        min: 0,
+        ticks: "outside",
+        gridcolor: "rgba(140,140,140,0.18)",
+        linecolor: "rgba(90,90,90,0.35)"
+      }
     },
     showlegend: false,
     uirevision: "stay2d"
   };
 
-  Plotly.react(plotDiv, [trace], layout, { responsive: true, displaylogo: false });
+  Plotly.react(plotDiv, traces, layout, { responsive: true, displaylogo: false });
 
   plotDiv.removeAllListeners?.("plotly_click");
   plotDiv.on("plotly_click", async (ev) => {
@@ -126,7 +211,7 @@ export function renderPlot2D(points, colourBy, onPointClick) {
   });
 }
 
-function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick) {
+function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, searchPosition = null) {
   const plotDiv = $("plot");
 
   let markerColor = "#9c9c9c";
@@ -147,7 +232,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick) {
   } else if (colourBy === "crystallinity") {
     markerColor = layerPoints.map(p => numericOrNull(p.crystallinity));
     showscale = true;
-    colorbar = { title: "Rel. cryst." };
+    colorbar = { title: "Crystallinity" };
   } else if (colourBy === "protein_ratio") {
     markerColor = layerPoints.map(p => numericOrNull(p.protein_ratio));
     showscale = true;
@@ -164,7 +249,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick) {
       `<b>${escapeHtml(p.id)}</b><br>` +
       `Primary phase: ${escapeHtml(displayPhase(p.phase))}<br>` +
       `Detected phases: ${escapeHtml(p.detected_phases || "N/A")}<br>` +
-      `Wash: ${escapeHtml(p.washing || "N/A")}<br>` +
+      `Washing: ${escapeHtml(p.washing || p.wash || "N/A")}<br>` +
       `Conc: ${formatValShort(p.concentration)}`
     ),
     hovertemplate: "%{text}<extra></extra>",
@@ -178,6 +263,9 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick) {
       line: { width: 0.3, color: "rgba(50,50,50,0.20)" }
     }
   };
+
+  const searchTrace = markerForSearchPosition2DFallback(searchPosition, layer);
+  const traces = searchTrace ? [trace, searchTrace] : [trace];
 
   const layout = {
     margin: { l: 40, r: 40, t: 40, b: 40 },
@@ -203,7 +291,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick) {
     uirevision: "stay2d"
   };
 
-  Plotly.react(plotDiv, [trace], layout, { responsive: true, displaylogo: false });
+  Plotly.react(plotDiv, traces, layout, { responsive: true, displaylogo: false });
 
   plotDiv.removeAllListeners?.("plotly_click");
   plotDiv.on("plotly_click", async (ev) => {

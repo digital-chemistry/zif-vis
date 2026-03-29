@@ -1,17 +1,8 @@
 import json
 
-from .config import MASTER_JSON, ATR_DIR, XRD_DIR, IMG_DIR
+from .config import MASTER_JSON, ATR_DIR, XRD_DIR
 from .io_utils import find_existing_file
 from .transform import ternary_xy
-
-
-def format_concentration_for_filename(value):
-    if value is None:
-        return ""
-    n = float(value)
-    if n.is_integer():
-        return str(int(n))
-    return str(n)
 
 
 def normalise_wash_label(washing: str) -> str:
@@ -57,9 +48,9 @@ def pretty_wash_label(wash_code: str, raw: str):
         return "ethanol washing"
     return raw
 
+
 def resolve_atr_file(concentration, wash_code, round_no):
-    conc_str = format_concentration_for_filename(concentration)
-    stem = f"A{conc_str}{wash_code}-{round_no}"
+    stem = f"A{int(concentration) if concentration is not None else concentration}{wash_code}-{int(round_no):02d}"
     return find_existing_file(ATR_DIR, stem)
 
 
@@ -82,16 +73,28 @@ def load_data():
         washing_label = pretty_wash_label(wash_code, washing_raw)
 
         concentration = entry.get("concentration")
-        composition = entry.get("composition", {})
+        composition = entry.get("composition", {}) or {}
         metal = composition.get("M_percent")
         ligand = composition.get("L_percent")
         bsa = composition.get("BSA_percent")
 
         x = y = None
         uses_real_ternary = False
-        if metal is not None and ligand is not None and bsa is not None:
+        if all(v is not None for v in (metal, ligand, bsa)):
             x, y = ternary_xy(float(metal), float(ligand), float(bsa))
             uses_real_ternary = True
+
+        phase_comp = entry.get("phase_composition", {}) or {}
+        phase_candidates = [
+            (name, vals.get("mean", 0.0))
+            for name, vals in phase_comp.items()
+            if isinstance(vals, dict)
+        ]
+        phase_candidates.sort(key=lambda t: t[1], reverse=True)
+
+        nonzero_phases = [name for name, val in phase_candidates if float(val or 0) > 0]
+        primary_phase = nonzero_phases[0] if nonzero_phases else "Amorphous"
+        detected_phases = ", ".join(nonzero_phases) if nonzero_phases else "Amorphous"
 
         cryst_mean = (
             entry.get("crystallinity", {})
@@ -99,32 +102,31 @@ def load_data():
             .get("crystalline", {})
             .get("mean")
         )
+        amorphous_mean = (
+            entry.get("crystallinity", {})
+            .get("fractions", {})
+            .get("amorphous", {})
+            .get("mean")
+        )
 
-        ee_mean = entry.get("encapsulation_efficiency", {}).get("mean")
-        protein_ratio = entry.get("ir_data", {}).get("ratio_selected_peaks")
+        ee_mean = (
+            entry.get("encapsulation_efficiency", {})
+            .get("mean")
+        )
 
-        phase_comp = entry.get("phase_composition", {})
-        phase_candidates = []
-        for phase_name, vals in phase_comp.items():
-            mean_val = (vals or {}).get("mean", 0) or 0
-            if mean_val > 0:
-                phase_candidates.append((phase_name, mean_val))
-        phase_candidates.sort(key=lambda t: t[1], reverse=True)
-
-        primary_phase = phase_candidates[0][0] if phase_candidates else "Amorphous"
-        detected_phases = " | ".join([name for name, _ in phase_candidates]) if phase_candidates else "N/A"
+        protein_ratio = (
+            entry.get("ir_data", {})
+            .get("ratio_selected_peaks")
+        )
 
         experiments = []
-        measurements = entry.get("measurements", {})
+        measurements = entry.get("measurements", {}) or {}
+        for round_name, filename in measurements.items():
+            round_no = "".join(ch for ch in str(round_name) if ch.isdigit()) or "1"
+            experiment_id = build_measurement_experiment_id(filename) or f"{point_id}_{int(round_no):02d}"
 
-        for round_name, filename in sorted(measurements.items()):
-            experiment_id = build_measurement_experiment_id(filename)
-            if not experiment_id:
-                continue
-
-            round_no = "".join(ch for ch in str(round_name) if ch.isdigit()).zfill(2)
-            xrd_file = xrd_index.get(experiment_id) or find_existing_file(XRD_DIR, experiment_id)
-            atr_file = resolve_atr_file(concentration, wash_code, round_no)
+            xrd_file = xrd_index.get(experiment_id)
+            atr_file = entry.get("atr_file") if str(round_no) in {"1", "01"} else resolve_atr_file(concentration, wash_code, round_no)
 
             exp = {
                 "experiment_id": experiment_id,
@@ -135,6 +137,7 @@ def load_data():
                 "primary_phase": primary_phase,
                 "detected_phases": detected_phases,
                 "phase_label": detected_phases,
+                "phase_composition": phase_comp,
                 "signal_class": "N/A",
                 "layer": str(concentration),
                 "washing": washing_label,
@@ -143,12 +146,14 @@ def load_data():
                 "concentration": concentration,
                 "concentration_label": str(concentration),
                 "ee": ee_mean,
+                "encapsulation_efficiency": ee_mean,
                 "protein_ratio": protein_ratio,
                 "round": round_name,
                 "round_no": round_no,
                 "conc": str(concentration),
                 "formulation": point_id.split("_")[1] if "_" in point_id else None,
                 "crystallinity": cryst_mean,
+                "amorphousness": amorphous_mean,
                 "relative_crystallinity": cryst_mean,
                 "x": x,
                 "y": y,
@@ -164,7 +169,6 @@ def load_data():
                 "has_xrd": xrd_file is not None,
                 "has_image": False,
             }
-
             experiments.append(exp)
             experiment_details[experiment_id] = exp
 
@@ -196,9 +200,12 @@ def load_data():
             "phase": primary_phase,
             "primary_phase": primary_phase,
             "detected_phases": detected_phases,
+            "phase_composition": phase_comp,
             "ee": ee_mean,
+            "encapsulation_efficiency": ee_mean,
             "protein_ratio": protein_ratio,
             "crystallinity": cryst_mean,
+            "amorphousness": amorphous_mean,
             "relative_crystallinity": cryst_mean,
             "experiments": experiments,
         }
@@ -206,5 +213,4 @@ def load_data():
         points.append(point_summary)
         point_details[point_id] = point_summary
 
-    points.sort(key=lambda p: p["id"])
     return points, point_details, experiment_details

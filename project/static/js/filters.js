@@ -1,5 +1,4 @@
-import { $, getSelectedMulti } from "./dom.js";
-import { normaliseWash } from "./formatters.js";
+import { $ } from "./dom.js";
 
 export function finiteValues(points, key) {
   return points
@@ -8,110 +7,87 @@ export function finiteValues(points, key) {
     .sort((a, b) => a - b);
 }
 
-export function setRangePair(minId, maxId, minLabelId, maxLabelId, values, formatValShort) {
-  if (!values.length) return;
-
-  const minEl = $(minId);
-  const maxEl = $(maxId);
-  const minLabel = $(minLabelId);
-  const maxLabel = $(maxLabelId);
-
-  if (!minEl || !maxEl) return;
-
-  const lo = Math.min(...values);
-  const hi = Math.max(...values);
-  const step = Math.max((hi - lo) / 200, 0.01);
-
-  minEl.min = lo;
-  minEl.max = hi;
-  minEl.step = step;
-  minEl.value = lo;
-
-  maxEl.min = lo;
-  maxEl.max = hi;
-  maxEl.step = step;
-  maxEl.value = hi;
-
-  if (minLabel) minLabel.textContent = formatValShort(lo);
-  if (maxLabel) maxLabel.textContent = formatValShort(hi);
+function getCheckedRadio(name, fallback) {
+  return document.querySelector(`input[name="${name}"]:checked`)?.value || fallback;
 }
 
-export function syncOneRangePair(minId, maxId, minLabelId, maxLabelId, formatValShort) {
-  const minEl = $(minId);
-  const maxEl = $(maxId);
-  const minLabel = $(minLabelId);
-  const maxLabel = $(maxLabelId);
-
-  if (!minEl || !maxEl) return;
-
-  let lo = Number(minEl.value);
-  let hi = Number(maxEl.value);
-
-  if (lo > hi) {
-    if (document.activeElement === minEl) {
-      hi = lo;
-      maxEl.value = hi;
-    } else {
-      lo = hi;
-      minEl.value = lo;
-    }
-  }
-
-  if (minLabel) minLabel.textContent = formatValShort(lo);
-  if (maxLabel) maxLabel.textContent = formatValShort(hi);
+function getCheckedLayers() {
+  return [...document.querySelectorAll(".layer-check:checked")].map(el => Number(el.value));
 }
 
-export function syncRangePairs(formatValShort) {
-  syncOneRangePair("crystMin", "crystMax", "crystMinVal", "crystMaxVal", formatValShort);
-  syncOneRangePair("protMin", "protMax", "protMinVal", "protMaxVal", formatValShort);
+function getPhaseThresholds() {
+  const result = {};
+  document.querySelectorAll(".phase-slider").forEach((slider) => {
+    const phase = slider.dataset.phase;
+    const checked = document.querySelector(`.phase-check[data-phase="${phase}"]`)?.checked;
+    const threshold = Number(slider.value || 0);
+    if (checked) result[phase] = threshold / 100;
+  });
+  return result;
+}
+
+function getPositionMarker() {
+  const metal = $("posMetal")?.value;
+  const ligand = $("posLigand")?.value;
+  const bsa = $("posBsa")?.value;
+  const concentration = $("posConcentration")?.value;
+
+  const m = Number(metal);
+  const l = Number(ligand);
+  const b = Number(bsa);
+  const c = Number(concentration);
+
+  if (![m, l, b, c].every(Number.isFinite)) return null;
+
+  // hard range validation
+  if ([m, l, b].some(v => v < 0 || v > 100)) return null;
+
+  // sum must be 100
+  if (Math.abs((m + l + b) - 100) > 0.25) return null;
+
+  return { metal: m, ligand: l, bsa: b, concentration: c };
 }
 
 export function readFiltersFromDom() {
-  const mode = $("viewMode")?.value || "3d";
+  const mode = getCheckedRadio("viewMode", "3d");
+  const washing = getCheckedRadio("washing", "all");
+  const colourBy = getCheckedRadio("colourBy", "phase");
 
   return {
     mode,
-    search: ($("searchBox")?.value || "").trim().toLowerCase(),
-    selectedPhases: getSelectedMulti("phaseMulti"),
-    selectedLayers: mode === "3d" ? getSelectedMulti("layerMulti").map(Number) : [],
-    washEW: $("washEW")?.checked ?? true,
-    washWW: $("washWW")?.checked ?? true,
-    colourBy: $("colourBy")?.value || "phase",
-    crystMin: Number($("crystMin")?.value ?? -Infinity),
-    crystMax: Number($("crystMax")?.value ?? Infinity),
-    protMin: Number($("protMin")?.value ?? -Infinity),
-    protMax: Number($("protMax")?.value ?? Infinity)
+    washing,
+    colourBy,
+    searchPosition: getPositionMarker(),
+    selectedLayers: mode === "3d" ? getCheckedLayers() : [],
+    crystBalance: Number($("crystBalance")?.value ?? 0) / 100,
+    proteinThreshold: Number($("proteinThreshold")?.value ?? 0),
+    eeThreshold: Number($("eeThreshold")?.value ?? 0),
+    phaseThresholds: getPhaseThresholds(),
   };
 }
 
 export function filterPoints(points, filters) {
   return points.filter((p) => {
-    const sid = String(p.id || "").toLowerCase();
-    const phaseRaw = String(p.phase || "").trim();
-    const phaseLower = phaseRaw.toLowerCase();
-    const detectedLower = String(p.detected_phases || "").toLowerCase();
     const conc = Number(p.concentration);
+    const wash = String(p.wash_code || p.wash || "").toUpperCase();
     const cryst = Number(p.crystallinity);
-    const prot = Number(p.protein_ratio);
-    const wash = normaliseWash(p);
+    const protein = Number(p.protein_ratio);
+    const ee = Number(p.encapsulation_efficiency ?? p.ee);
+    const phaseComp = p.phase_composition || {};
 
-    if (
-      filters.search &&
-      !sid.includes(filters.search) &&
-      !phaseLower.includes(filters.search) &&
-      !detectedLower.includes(filters.search)
-    ) return false;
-
-    if (filters.selectedPhases.length && !filters.selectedPhases.includes(phaseRaw)) return false;
     if (filters.selectedLayers.length && !filters.selectedLayers.includes(conc)) return false;
 
-    if (filters.washEW || filters.washWW) {
-      if (wash === "EW" && !filters.washEW) return false;
-      if (wash === "WW" && !filters.washWW) return false;
-    }
+    if (filters.washing === "ethanol" && wash !== "EW") return false;
+    if (filters.washing === "water" && wash !== "WW") return false;
 
-    if (Number.isFinite(cryst) && (cryst < filters.crystMin || cryst > filters.crystMax)) return false;
-    if (Number.isFinite(prot) && (prot < filters.protMin || prot > filters.protMax)) return false;
+    if (filters.crystBalance > 0 && Number.isFinite(cryst) && cryst < filters.crystBalance) return false;
+    if (Number.isFinite(protein) && protein < filters.proteinThreshold) return false;
+    if (Number.isFinite(ee) && ee < filters.eeThreshold) return false;
+
+    for (const [phase, minFrac] of Object.entries(filters.phaseThresholds)) {
+      const pointFrac = Number(phaseComp?.[phase]?.mean ?? 0);
+      if (pointFrac < minFrac) return false;
+    }
 
     return true;
   });
