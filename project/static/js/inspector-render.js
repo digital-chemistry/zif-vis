@@ -225,7 +225,7 @@ export function renderLinePlotElement(target, x, y, xlabel, ylabel) {
         y,
         type: "scatter",
         mode: "lines",
-        line: { width: 2, color: "#50667f" }
+        line: { width: 2.4, color: "#df4b61" }
       }
     ],
     {
@@ -243,8 +243,8 @@ export function renderLinePlotElement(target, x, y, xlabel, ylabel) {
         showgrid: false,
         zeroline: false,
         showline: true,
-        linecolor: "#cfd9e4",
-        tickcolor: "#cfd9e4",
+        linecolor: "rgba(223, 75, 97, 0.24)",
+        tickcolor: "rgba(223, 75, 97, 0.24)",
         ticks: "outside",
         automargin: true
       },
@@ -253,8 +253,8 @@ export function renderLinePlotElement(target, x, y, xlabel, ylabel) {
         showgrid: false,
         zeroline: false,
         showline: true,
-        linecolor: "#cfd9e4",
-        tickcolor: "#cfd9e4",
+        linecolor: "rgba(223, 75, 97, 0.24)",
+        tickcolor: "rgba(223, 75, 97, 0.24)",
         ticks: "outside",
         automargin: true
       },
