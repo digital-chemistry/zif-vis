@@ -1,4 +1,4 @@
-﻿import { $, updateViewControls } from "./dom.js";
+import { $, updateViewControls } from "./dom.js";
 import { formatValShort } from "./formatters.js";
 import { readFiltersFromDom, filterPoints } from "./filters.js";
 import { renderPlot3D } from "./plot3d.js";
