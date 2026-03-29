@@ -232,10 +232,19 @@ class CompositionPredictor:
         wash: str,
         concentrations: list[float] | None = None,
         composition_step: float = 5.0,
+        include_intermediate_layers: bool = False,
     ) -> list[dict]:
         wash_value = normalise_wash(wash)
         step = float(composition_step)
         layers = concentrations or self.available_concentrations
+        if include_intermediate_layers and len(layers) > 1:
+            expanded_layers: list[float] = []
+            for index, layer in enumerate(layers[:-1]):
+                next_layer = layers[index + 1]
+                expanded_layers.append(float(layer))
+                expanded_layers.append(float((layer + next_layer) / 2))
+            expanded_layers.append(float(layers[-1]))
+            layers = expanded_layers
 
         if step <= 0:
             raise ValueError("composition_step must be positive")
@@ -316,6 +325,7 @@ class CompositionPredictor:
                             "prediction_confidence": float(phase_scores.get(preds["top_phase"], 0.0)),
                             "distance_to_known": prediction["trust"]["distance_to_known"],
                             "trust_band": prediction["trust"]["confidence_band"],
+                            "is_intermediate_layer": concentration not in self.available_concentrations,
                         }
                     )
 

@@ -33,13 +33,18 @@ export function buildLayout(currentCamera) {
       },
 
       camera: currentCamera || {
-        eye: { x: 0.92, y: -1.02, z: 0.62 },
+        eye: { x: 0.0, y: -1.72, z: 0.66 },
         up: { x: 0, y: 0, z: 1 },
-        center: { x: 0.08, y: 0.03, z: 0 },
+        center: { x: 0.0, y: 0.01, z: 0 },
         projection: { type: "orthographic" }
       },
 
-      aspectmode: "data"
+      aspectmode: "manual",
+      aspectratio: {
+        x: 1,
+        y: 1,
+        z: 0.95
+      }
     },
 
     annotations: [

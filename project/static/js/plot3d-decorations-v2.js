@@ -206,26 +206,54 @@ export function buildTriangleGrid(orderedLayers, concToZ) {
 export function buildInterlayerGuides3D(orderedLayers, concToZ) {
   if (orderedLayers.length < 2) return [];
 
-  const anchors = [
-    TRIANGLE.A,
-    TRIANGLE.B,
-    TRIANGLE.C,
-    midpoint(TRIANGLE.A, TRIANGLE.B),
-    midpoint(TRIANGLE.A, TRIANGLE.C),
-    midpoint(TRIANGLE.B, TRIANGLE.C),
-    ternaryPoint(1, 1, 1),
-  ];
+  const anchors = [];
+  const step = 0.1;
 
-  return anchors.map((anchor) => ({
-    type: "scatter3d",
-    mode: "lines",
-    x: orderedLayers.map(() => anchor.x),
-    y: orderedLayers.map(() => anchor.y),
-    z: orderedLayers.map((layer) => concToZ.get(layer)),
-    hoverinfo: "skip",
-    showlegend: false,
-    line: { color: "rgba(38, 47, 59, 0.14)", width: 2 }
-  }));
+  for (let metal = 0; metal <= 1.0001; metal += step) {
+    for (let ligand = 0; ligand <= 1.0001 - metal; ligand += step) {
+      const bsa = 1 - metal - ligand;
+      if (bsa < -1e-9) continue;
+      anchors.push(ternaryPoint(metal, ligand, Math.max(0, bsa)));
+    }
+  }
+
+  const traces = [];
+
+  for (let i = 0; i < orderedLayers.length - 1; i++) {
+    const z1 = concToZ.get(orderedLayers[i]);
+    const z2 = concToZ.get(orderedLayers[i + 1]);
+    const intermediateSteps = 5;
+
+    anchors.forEach((anchor, idx) => {
+      const x = [];
+      const y = [];
+      const z = [];
+
+      for (let j = 1; j < intermediateSteps; j++) {
+        const t = j / intermediateSteps;
+        x.push(anchor.x);
+        y.push(anchor.y);
+        z.push(z1 + (z2 - z1) * t);
+      }
+
+      traces.push({
+        type: "scatter3d",
+        mode: "markers",
+        x,
+        y,
+        z,
+        hoverinfo: "skip",
+        showlegend: false,
+        marker: {
+          size: idx % 2 === 0 ? 2.8 : 2.2,
+          color: "rgba(95, 111, 133, 0.42)",
+          line: { width: 0, color: "rgba(0,0,0,0)" }
+        }
+      });
+    });
+  }
+
+  return traces;
 }
 
 export function buildLayerLabels3D(orderedLayers, concToZ) {

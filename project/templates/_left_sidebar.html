@@ -38,7 +38,7 @@
         </span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">Switch between measured samples, a machine-learned prediction grid, or both together.</span>
+          <span class="info-tip-popover">Switch between measured samples, prediction-only points generated inside the experimentally supported domain, or both together.</span>
         </span>
       </div>
       <div class="segmented-control" id="dataLayerGroup">
@@ -48,7 +48,7 @@
         </label>
         <label class="seg-chip">
           <input type="radio" name="dataLayer" value="predicted">
-          <span>Predicted grid</span>
+          <span>Prediction</span>
         </label>
         <label class="seg-chip">
           <input type="radio" name="dataLayer" value="both">
@@ -59,15 +59,15 @@
 
     <div class="control-block" id="interlayerGuideCard">
       <div class="control-label label-with-help">
-        <span>Inter-layer guides</span>
+        <span>Intermediate prediction layers</span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">Show subtle guide lines between concentration layers to help read the stacked structure in 3D.</span>
+          <span class="info-tip-popover">In prediction mode, add extra predicted concentration layers between the measured ones so the stack is filled with predicted dots through the space, not just at the measured layer heights.</span>
         </span>
       </div>
       <label class="simple-check">
         <input type="checkbox" id="showInterlayerGuides">
-        <span>Show guides between layers</span>
+        <span>Add predicted dots between layers</span>
       </label>
     </div>
 
@@ -104,7 +104,7 @@
         </span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">Change the marker coloring to emphasize phase identity, phase-presence probability, crystallinity, encapsulation efficiency, ATR-derived estimated ratio, or the uncertainty in EE and crystallinity assignment. Predicted phase probability views indicate the likelihood of finding that phase contribution there, not necessarily a phase-pure material.</span>
+          <span class="info-tip-popover">Change the marker coloring to emphasize phase identity, phase-presence probability, crystallinity, encapsulation efficiency, ATR-derived estimated ratio, or the uncertainty in EE and crystallinity assignment. In prediction views, probability means the likelihood of finding that phase contribution there, not necessarily a phase-pure material.</span>
         </span>
       </label>
       <select id="colourBy">

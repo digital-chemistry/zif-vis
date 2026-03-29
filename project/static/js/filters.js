@@ -68,6 +68,20 @@ export function readFiltersFromDom() {
 }
 
 export function filterPoints(points, filters) {
+  const sortedSelectedLayers = [...filters.selectedLayers].sort((a, b) => a - b);
+
+  function allowIntermediateLayer(pointConc) {
+    if (!sortedSelectedLayers.length) return true;
+    for (let i = 0; i < sortedSelectedLayers.length - 1; i++) {
+      const lower = sortedSelectedLayers[i];
+      const upper = sortedSelectedLayers[i + 1];
+      if (pointConc > lower && pointConc < upper) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   return points.filter((p) => {
     const conc = Number(p.concentration);
     const wash = String(p.wash_code || p.wash || "").toUpperCase();
@@ -76,7 +90,13 @@ export function filterPoints(points, filters) {
     const ee = Number(p.encapsulation_efficiency ?? p.ee);
     const phaseComp = p.phase_composition || {};
 
-    if (filters.selectedLayers.length && !filters.selectedLayers.includes(conc)) return false;
+    if (filters.selectedLayers.length) {
+      if (p.is_intermediate_layer) {
+        if (!allowIntermediateLayer(conc)) return false;
+      } else if (!filters.selectedLayers.includes(conc)) {
+        return false;
+      }
+    }
 
     if (filters.washing === "ethanol" && wash !== "EW") return false;
     if (filters.washing === "water" && wash !== "WW") return false;

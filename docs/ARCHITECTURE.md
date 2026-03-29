@@ -13,6 +13,7 @@ Main user-facing goals:
 - inspect phase assignment and crystallinity
 - compare encapsulation efficiency and an ATR-derived estimated ratio
 - open sample-specific ATR-IR and repeated XRD measurements in the inspector
+- optionally compare measured data with a predicted composition grid
 
 ## 2. Runtime flow
 
@@ -40,6 +41,8 @@ The runtime is intentionally simple:
   App entry point. Minimal by design.
 - `project/routes.py`
   Route registration. This is the first file to edit when adding a new API endpoint.
+- `project/predictor.py`
+  Prototype nearest-neighbor prediction layer for single-query predictions and predicted grid generation.
 - `project/data_loader.py`
   Core transformation layer from raw JSON into UI-friendly objects.
 - `project/config.py`
@@ -65,11 +68,11 @@ The runtime is intentionally simple:
 ### JavaScript
 
 - `project/static/js/app.js`
-  Frontend entry point. If a control should trigger a re-render, it is usually wired here.
+  Frontend entry point. If a control should trigger a re-render, it is usually wired here. It also manages the measured/predicted data-layer switching.
 - `project/static/js/filters.js`
   Reads DOM control state and filters the full point list.
 - `project/static/js/plot3d.js`
-  Coordinates the 3D scene.
+  Coordinates the 3D scene, including optional inter-layer guides.
 - `project/static/js/plot3d-points.js`
   Marker appearance, hover content, colorbar logic, and the special search-position marker.
 - `project/static/js/plot2d.js`
@@ -115,6 +118,8 @@ Important fields:
 - `protein_ratio`
 - `experiment_ids`
 - `has_atr`, `has_xrd`
+- `is_predicted` for generated prediction-grid points
+- `prediction_confidence`, `distance_to_known`, `trust_band` for predicted points
 
 ### `point_details`
 
@@ -158,6 +163,29 @@ These are not accidental. They were chosen deliberately during the recent UI cle
   Uses a single full-size colored marker.
 - `None`
   Uses a neutral full-size marker.
+
+### Data layers
+
+- `Experimental`
+  Uses only measured points loaded from the JSON summary.
+- `Prediction`
+  Uses only generated prediction-grid points.
+- `Both`
+  Overlays measured and prediction-grid points.
+
+Prediction-grid points are intentionally restricted to the experimentally covered composition domain. The app should not predict outside the physical/input region represented in the measured dataset.
+
+### Prediction probability semantics
+
+The prediction probability color modes are intended as contribution-presence maps:
+
+- `Sodalite probability`
+- `ZIF-C probability`
+- etc.
+
+These should be described as the likelihood of finding that phase contribution at a location, not as the probability of obtaining a phase-pure material.
+
+Probability-like scales are clamped to `0..1` so they remain visually honest and comparable.
 
 Reason:
 The dual-marker model is helpful for phase because it simultaneously shows amorphous background and crystalline assignment. For the scalar quantities, a single full-size color mapping reads more clearly and already has a scale bar.
@@ -210,6 +238,12 @@ This is handled entirely in `project/static/js/inspector.js` via `Blob` download
 3. Wire updates in `project/static/js/app.js`
 4. Reflect any needed styling in `project/static/styles/forms.css`
 
+### Change the prediction domain or predicted-grid density
+
+- `project/predictor.py`
+- `project/routes.py`
+- `project/static/js/app.js`
+
 ### Change marker logic or colorbar behavior
 
 - `project/static/js/plot3d-points.js`
@@ -243,6 +277,7 @@ If you see garbled scientific symbols, treat it as an encoding cleanup task rath
 Reasonable future work items:
 
 - refine the scientific wording of help popovers with domain-reviewed language
+- add confidence masking or fading for predicted-grid points that are far from known measured space
 - export ATR and XRD plots as images in addition to CSV
 - add a compact glossary for terms such as EE, crystallinity, amorphous fraction, and ATR ratio
 - add tests for data loading and endpoint behavior

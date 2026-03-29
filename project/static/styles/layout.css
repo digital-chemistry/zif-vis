@@ -1,6 +1,6 @@
 .layout {
   display: grid;
-  grid-template-columns: 300px minmax(520px, 1fr) 380px;
+  grid-template-columns: 336px minmax(520px, 1fr) 380px;
   gap: 12px;
   min-height: 100vh;
   padding: 12px;

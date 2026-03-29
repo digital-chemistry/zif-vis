@@ -176,13 +176,16 @@ async function loadPoints() {
   }
 }
 
-async function getPredictedGridPoints(wash) {
-  const key = String(wash || "ethanol");
+async function getPredictedGridPoints(wash, includeIntermediateLayers = false) {
+  const key = `${String(wash || "ethanol")}::${includeIntermediateLayers ? "mid" : "base"}`;
   if (predictedGridCache.has(key)) {
     return predictedGridCache.get(key);
   }
 
-  const res = await fetch(`/api/prediction-grid?wash=${encodeURIComponent(key)}`);
+  const washValue = String(wash || "ethanol");
+  const res = await fetch(
+    `/api/prediction-grid?wash=${encodeURIComponent(washValue)}&intermediate=${includeIntermediateLayers ? "1" : "0"}`
+  );
   if (!res.ok) {
     throw new Error(`Failed to load /api/prediction-grid (${res.status})`);
   }
@@ -197,7 +200,12 @@ async function getDisplayPoints(filters) {
     return allPoints;
   }
 
-  const predicted = await getPredictedGridPoints(filters.washing);
+  const includeIntermediateLayers =
+    filters.mode === "3d" &&
+    filters.dataLayer !== "experimental" &&
+    Boolean($("showInterlayerGuides")?.checked);
+
+  const predicted = await getPredictedGridPoints(filters.washing, includeIntermediateLayers);
   if (filters.dataLayer === "predicted") {
     return predicted;
   }
@@ -519,7 +527,7 @@ function renderCompositionPrediction(payload) {
         .map(
           (neighbor) => `
           <div class="prediction-neighbor">
-            <strong>${neighbor.point_id}</strong> · ${neighbor.phase} · d=${formatValShort(neighbor.distance, 3)}
+            <strong>${neighbor.point_id}</strong> | ${neighbor.phase} | d=${formatValShort(neighbor.distance, 3)}
           </div>
         `
         )
@@ -528,7 +536,7 @@ function renderCompositionPrediction(payload) {
 
   card.innerHTML = `
     <div class="prediction-eyebrow">Prototype prediction</div>
-    <div class="prediction-title">${topPhase}${confidence == null ? "" : ` · ${formatValShort(confidence * 100, 1)}%`}</div>
+    <div class="prediction-title">${topPhase}${confidence == null ? "" : ` | ${formatValShort(confidence * 100, 1)}%`}</div>
     <div class="prediction-copy">${payload?.method || "Prediction from nearby measured points."}</div>
     <div class="prediction-grid">
       <div class="prediction-item">
@@ -720,3 +728,4 @@ async function handlePointClick(sampleId) {
   if (!sampleId || String(sampleId).startsWith("pred_")) return;
   await loadInspector(sampleId);
 }
+

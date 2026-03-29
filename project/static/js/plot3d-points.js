@@ -49,7 +49,9 @@ function get3DSearchMarkerScale() {
 }
 
 function pointScaleFactor(point) {
-  return point?.is_predicted ? PREDICTED_MARKER_SCALE : 1;
+  if (!point?.is_predicted) return 1;
+  if (point?.is_intermediate_layer) return PREDICTED_MARKER_SCALE * 1.18;
+  return PREDICTED_MARKER_SCALE;
 }
 
 function baseMarkerSize3D(point) {
@@ -58,6 +60,18 @@ function baseMarkerSize3D(point) {
 
 function coreMarkerSize3D(point) {
   return crystallinityToCoreSize3D(point.crystallinity) * pointScaleFactor(point);
+}
+
+function pointOpacity3D(point, isPhaseBase = false) {
+  if (!point?.is_predicted) {
+    return isPhaseBase ? getAmorphousBaseOpacity() : 0.95;
+  }
+
+  if (point?.is_intermediate_layer) {
+    return isPhaseBase ? 0.6 : 0.92;
+  }
+
+  return isPhaseBase ? 0.42 : 0.8;
 }
 
 function scalarValueForMode(point, colourBy) {
@@ -289,7 +303,7 @@ export function buildPointTraces(points, concToZ, colourBy) {
     hoverlabel: hoverLabelStyle,
     marker: {
       size: points.map(baseMarkerSize3D),
-      opacity: amorphousBaseOpacity,
+      opacity: points.map((p) => p?.is_predicted ? pointOpacity3D(p, true) : amorphousBaseOpacity),
       color: AMORPHOUS_BASE_COLOR,
       line: { width: 0.25, color: "rgba(70,70,70,0.18)" }
     },
@@ -310,7 +324,7 @@ export function buildPointTraces(points, concToZ, colourBy) {
       size: isPhaseView
         ? points.map(coreMarkerSize3D)
         : points.map(baseMarkerSize3D),
-      opacity: 0.95,
+      opacity: points.map((p) => pointOpacity3D(p, false)),
       color: isPhaseView
         ? points.map(blendPhaseColor)
         : markerStyle.color,

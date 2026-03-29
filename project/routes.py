@@ -119,6 +119,7 @@ def register_routes(app, points, point_details, experiment_details, predictor, b
     def api_prediction_grid():
         wash = request.args.get("wash", "ethanol")
         step_raw = request.args.get("step", "5")
+        include_intermediate = request.args.get("intermediate", "0") in {"1", "true", "yes"}
 
         try:
             step = float(step_raw)
@@ -128,7 +129,11 @@ def register_routes(app, points, point_details, experiment_details, predictor, b
         if step <= 0 or step > 25:
             return jsonify({"error": "Composition step must be between 0 and 25."}), 400
 
-        grid = predictor.build_grid(wash=wash, composition_step=step)
+        grid = predictor.build_grid(
+            wash=wash,
+            composition_step=step,
+            include_intermediate_layers=include_intermediate,
+        )
         return jsonify(grid)
 
     @app.route("/api/debug/files")

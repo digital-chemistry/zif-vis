@@ -13,6 +13,14 @@ The explorer combines a summary dataset with repeat-level ATR-IR and XRD measure
 
 The interface is intentionally usable for both domain experts and first-time visitors, so several controls now include short help popovers and the inspector carries the heavier detail.
 
+The explorer also now supports a prediction layer:
+
+- `Experimental` shows only measured samples.
+- `Prediction` shows machine-learned grid points only within the experimentally supported composition domain.
+- `Both` overlays measured and predicted points together.
+
+Prediction phase-probability views should be interpreted as the likelihood of finding that phase contribution at a location, not necessarily the likelihood of a phase-pure material.
+
 ## Quick start
 
 1. Create a virtual environment:
@@ -46,9 +54,11 @@ python -m project.app
 - `project/app.py`
   Flask entry point. Loads the data once and registers routes.
 - `project/routes.py`
-  HTML page route plus JSON endpoints for points, sample details, spectra, and images.
+  HTML page route plus JSON endpoints for points, prediction grid data, sample details, spectra, and images.
 - `project/data_loader.py`
   Builds the frontend-friendly point summaries, detailed sample records, and experiment index.
+- `project/predictor.py`
+  Lightweight nearest-neighbor prototype predictor used for single-point prediction and predicted-grid generation.
 - `project/templates/`
   Main layout and the three panel partials:
   - `_left_sidebar.html`
@@ -87,6 +97,8 @@ At runtime the flow is:
 These decisions are intentional and should generally be preserved unless the visualization strategy changes:
 
 - `Color by = Phase` uses a two-layer marker model in 3D so amorphous content remains visible beneath the phase-colored core.
+- Prediction grids are restricted to the experimentally covered composition domain rather than the full ternary simplex.
+- Probability-like prediction views are displayed on a fixed `0..1` scale.
 - `Crystallinity`, `Encapsulation efficiency`, `Estimated ATR ratio`, and `None` use single full-size colored markers instead of the two-layer phase encoding.
 - Hover cards are kept compact and composition-focused. Detailed metrics belong in the right inspector.
 - Help popovers are used for novice-facing controls and scientific terms.

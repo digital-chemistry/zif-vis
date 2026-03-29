@@ -39,7 +39,9 @@ function getAmorphousBaseOpacity() {
 }
 
 function pointScaleFactor(point) {
-  return point?.is_predicted ? PREDICTED_MARKER_SCALE : 1;
+  if (!point?.is_predicted) return 1;
+  if (point?.is_intermediate_layer) return PREDICTED_MARKER_SCALE * 1.18;
+  return PREDICTED_MARKER_SCALE;
 }
 
 function baseMarkerSize2D(point) {
@@ -48,6 +50,18 @@ function baseMarkerSize2D(point) {
 
 function coreMarkerSize2D(point) {
   return crystallinityToCoreSize2D(point.crystallinity) * pointScaleFactor(point);
+}
+
+function pointOpacity2D(point, isPhaseBase = false) {
+  if (!point?.is_predicted) {
+    return isPhaseBase ? getAmorphousBaseOpacity() : 0.95;
+  }
+
+  if (point?.is_intermediate_layer) {
+    return isPhaseBase ? 0.6 : 0.92;
+  }
+
+  return isPhaseBase ? 0.42 : 0.8;
 }
 
 function scalarValueForMode(point, colourBy) {
@@ -326,166 +340,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
     plotDiv.innerHTML = `<div style="padding:24px;color:#777;">No points found for this layer.</div>`;
     return;
   }
-
-  const realTernary = layerPoints.every((p) =>
-    Number.isFinite(Number(p.metal)) &&
-    Number.isFinite(Number(p.ligand)) &&
-    Number.isFinite(Number(p.bsa))
-  );
-
-  if (!realTernary) {
-    return renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, searchPosition);
-  }
-
-  let markerColor = "#9c9c9c";
-  let colorscale = WARM_SCALAR_SCALE;
-  let showscale = false;
-  let colorbar = undefined;
-
-  if (colourBy === "phase") {
-    markerColor = layerPoints.map((p) => {
-      const key = normalisePhase(p.phase);
-      return PHASE_COLORS[key] || "#111111";
-    });
-    colorscale = undefined;
-  } else if (colourBy === "ee") {
-    markerColor = layerPoints.map((p) => numericOrNull(p.ee));
-    showscale = true;
-    colorbar = { title: "Encapsulation efficiency" };
-  } else if (colourBy === "ee_error") {
-    markerColor = layerPoints.map((p) => numericOrNull(p.ee_error ?? p.ee_std));
-    colorscale = WARM_SCALAR_SCALE;
-    showscale = true;
-    colorbar = { title: "EE standard deviation" };
-  } else if (colourBy === "crystallinity") {
-    markerColor = layerPoints.map((p) => numericOrNull(p.crystallinity));
-    showscale = true;
-    colorbar = { title: "Crystallinity" };
-  } else if (colourBy === "crystallinity_uncertainty") {
-    markerColor = layerPoints.map((p) =>
-      numericOrNull(
-        p.crystallinity_uncertainty ??
-        p.crystallinity_std ??
-        p.amorphousness_std
-      )
-    );
-    colorscale = WARM_SCALAR_SCALE;
-    showscale = true;
-    colorbar = { title: "Crystallinity standard deviation" };
-  } else if (colourBy === "protein_ratio") {
-    markerColor = layerPoints.map((p) => numericOrNull(p.protein_ratio));
-    showscale = true;
-    colorbar = { title: "Estimated ATR ratio" };
-  } else if (PHASE_PROBABILITY_MODES[colourBy]) {
-    markerColor = layerPoints.map((p) => scalarValueForMode(p, colourBy));
-    showscale = true;
-    colorbar = { title: PHASE_PROBABILITY_MODES[colourBy].title };
-  }
-
-  const isPhaseView = colourBy === "phase";
-  const amorphousBaseOpacity = getAmorphousBaseOpacity();
-  const scalarBounds = scalarBoundsForMode(colourBy);
-
-  const baseTrace = {
-    type: "scatterternary",
-    mode: "markers",
-    a: layerPoints.map((p) => Number(p.metal)),
-    b: layerPoints.map((p) => Number(p.ligand)),
-    c: layerPoints.map((p) => Number(p.bsa)),
-    customdata: layerPoints.map((p) => (p.is_predicted ? null : p.id)),
-    text: layerPoints.map(buildPointHoverText),
-    hovertemplate: "%{text}<extra></extra>",
-    hoverlabel: hoverLabelStyle,
-    marker: {
-      size: layerPoints.map(baseMarkerSize2D),
-      opacity: amorphousBaseOpacity,
-      color: AMORPHOUS_BASE_COLOR,
-      line: { width: 0.3, color: "rgba(50,50,50,0.20)" }
-    },
-    showlegend: false
-  };
-
-  const colorTrace = {
-    type: "scatterternary",
-    mode: "markers",
-    a: layerPoints.map((p) => Number(p.metal)),
-    b: layerPoints.map((p) => Number(p.ligand)),
-    c: layerPoints.map((p) => Number(p.bsa)),
-    customdata: layerPoints.map((p) => (p.is_predicted ? null : p.id)),
-    text: layerPoints.map(buildPointHoverText),
-    hovertemplate: "%{text}<extra></extra>",
-    hoverlabel: hoverLabelStyle,
-    marker: {
-      size: isPhaseView
-        ? layerPoints.map(coreMarkerSize2D)
-        : layerPoints.map(baseMarkerSize2D),
-      opacity: 0.95,
-      color: isPhaseView
-        ? layerPoints.map(blendPhaseColor)
-        : markerColor,
-      colorscale: isPhaseView ? undefined : colorscale,
-      showscale: isPhaseView ? false : showscale,
-      colorbar: isPhaseView ? undefined : colorbar,
-      cmin: isPhaseView ? undefined : scalarBounds.cmin,
-      cmax: isPhaseView ? undefined : scalarBounds.cmax,
-      line: { width: isPhaseView ? 0 : 0.3, color: "rgba(50,50,50,0.20)" }
-    },
-    showlegend: false
-  };
-
-  const searchTrace = markerForSearchPosition2D(searchPosition, layer);
-  const pointTraces = isPhaseView ? [baseTrace, colorTrace] : [colorTrace];
-  const traces = searchTrace ? [...pointTraces, ...searchTrace] : pointTraces;
-
-  const layout = {
-    margin: { l: 40, r: 40, t: 40, b: 40 },
-    paper_bgcolor: "white",
-    plot_bgcolor: "white",
-    annotations: [{
-      x: 0.5,
-      y: 1.06,
-      xref: "paper",
-      yref: "paper",
-      text: `Layer ${layer}`,
-      showarrow: false,
-      font: { size: 18, color: "#333" }
-    }],
-    ternary: {
-      sum: 100,
-      bgcolor: "white",
-      aaxis: {
-        title: { text: "Metal" },
-        min: 0,
-        ticks: "outside",
-        gridcolor: "rgba(45,45,45,0.1)",
-        linecolor: "rgba(25,25,25,0.45)"
-      },
-      baxis: {
-        title: { text: "Ligand" },
-        min: 0,
-        ticks: "outside",
-        gridcolor: "rgba(45,45,45,0.1)",
-        linecolor: "rgba(25,25,25,0.45)"
-      },
-      caxis: {
-        title: { text: "BSA" },
-        min: 0,
-        ticks: "outside",
-        gridcolor: "rgba(45,45,45,0.1)",
-        linecolor: "rgba(25,25,25,0.45)"
-      }
-    },
-    showlegend: false,
-    uirevision: "stay2d"
-  };
-
-  Plotly.react(plotDiv, traces, layout, { responsive: true, displaylogo: false });
-
-  plotDiv.removeAllListeners?.("plotly_click");
-  plotDiv.on("plotly_click", async (ev) => {
-    const sampleId = ev.points?.[0]?.customdata;
-    if (sampleId) await onPointClick(sampleId);
-  });
+  return renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, searchPosition);
 }
 
 function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, searchPosition = null) {
@@ -551,7 +406,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
     hoverlabel: hoverLabelStyle,
     marker: {
       size: layerPoints.map(baseMarkerSize2D),
-      opacity: amorphousBaseOpacity,
+      opacity: layerPoints.map((p) => p?.is_predicted ? pointOpacity2D(p, true) : amorphousBaseOpacity),
       color: AMORPHOUS_BASE_COLOR,
       line: { width: 0.3, color: "rgba(50,50,50,0.20)" }
     },
@@ -571,7 +426,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
       size: isPhaseView
         ? layerPoints.map(coreMarkerSize2D)
         : layerPoints.map(baseMarkerSize2D),
-      opacity: 0.95,
+      opacity: layerPoints.map((p) => pointOpacity2D(p, false)),
       color: isPhaseView
         ? layerPoints.map(blendPhaseColor)
         : markerColor,
