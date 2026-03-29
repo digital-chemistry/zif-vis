@@ -21,6 +21,18 @@ const WARM_SCALAR_SCALE = [
 ];
 
 const SEARCH_MARKER_COLOR = "#d85b72";
+const PREDICTED_MARKER_SCALE = 0.72;
+
+const PHASE_PROBABILITY_MODES = {
+  phase_prob_amorphous: { title: "Amorphous probability", key: "Amorphous" },
+  phase_prob_sodalite: { title: "Sodalite probability", key: "Sodalite" },
+  phase_prob_diamondoid: { title: "Diamondoid probability", key: "Diamondoid" },
+  phase_prob_u12: { title: "U12 probability", key: "U12" },
+  phase_prob_u13: { title: "U13 probability", key: "U13" },
+  phase_prob_zif_ec_1: { title: "ZIF-EC-1 probability", key: "ZIF-EC-1" },
+  phase_prob_zif_c: { title: "ZIF-C probability", key: "ZIF-C" },
+  phase_prob_zif_l: { title: "ZIF-L probability", key: "ZIF-L" }
+};
 
 function getAmorphousBaseOpacity() {
   const v = Number($("amorphousOpacity")?.value ?? 0.7);
@@ -34,6 +46,39 @@ function get3DMarkerScale() {
 
 function get3DSearchMarkerScale() {
   return Math.max(1.2, get3DMarkerScale() * 0.8);
+}
+
+function pointScaleFactor(point) {
+  return point?.is_predicted ? PREDICTED_MARKER_SCALE : 1;
+}
+
+function baseMarkerSize3D(point) {
+  return SAMPLE_MARKER_SIZE_3D * get3DMarkerScale() * pointScaleFactor(point);
+}
+
+function coreMarkerSize3D(point) {
+  return crystallinityToCoreSize3D(point.crystallinity) * pointScaleFactor(point);
+}
+
+function scalarValueForMode(point, colourBy) {
+  const phaseMode = PHASE_PROBABILITY_MODES[colourBy];
+  if (phaseMode) {
+    if (phaseMode.key === "Amorphous") {
+      return numericOrNull(
+        point.amorphousness ??
+        point.phase_probabilities?.Amorphous
+      );
+    }
+
+    const phaseComp = point.phase_composition?.[phaseMode.key];
+    return numericOrNull(
+      phaseComp?.mean ??
+      phaseComp ??
+      point.phase_probabilities?.[phaseMode.key]
+    );
+  }
+
+  return null;
 }
 
 function crystallinityToCoreSize3D(c) {
@@ -102,9 +147,13 @@ function buildHoverText(p) {
   const composition = `M ${formatValShort(m, 1)}% | L ${formatValShort(l, 1)}% | BSA ${formatValShort(b, 1)}%`;
   const concentrationLabel = `${formatValShort(conc, 1)} mg mL^-1`;
   const eeLabel = eeMean == null ? "N/A" : formatMeanPm(eeMean, eeErr, 2);
+  const sourceLabel = p.is_predicted
+    ? `Predicted grid · ${escapeHtml(p.trust_band || "prototype")}`
+    : "Measured sample";
 
   return (
     `<span style="font-size:14px;"><b>${escapeHtml(p.id)}</b></span><br>` +
+    `<span style="color:#7a8594;">${sourceLabel}</span><br>` +
     `<span style="color:#20242a;">${escapeHtml(composition)}</span><br>` +
     `${formatHoverLine("Layer", concentrationLabel)}<br>` +
     `${formatHoverLine("Wash", wash)}<br>` +
@@ -123,6 +172,16 @@ function getMarkerStyle(points, colourBy) {
       colorscale: undefined,
       showscale: false,
       colorbar: undefined
+    };
+  }
+
+  const phaseMode = PHASE_PROBABILITY_MODES[colourBy];
+  if (phaseMode) {
+    return {
+      color: points.map((p) => scalarValueForMode(p, colourBy)),
+      colorscale: WARM_SCALAR_SCALE,
+      showscale: true,
+      colorbar: { title: phaseMode.title }
     };
   }
 
@@ -199,7 +258,7 @@ export function buildPointTraces(points, concToZ, colourBy) {
   const xs = points.map((p) => ternaryXYFromPoint(p).x);
   const ys = points.map((p) => ternaryXYFromPoint(p).y);
   const zs = points.map((p) => concToZ.get(Number(p.concentration)) ?? 0);
-  const ids = points.map((p) => p.id);
+  const ids = points.map((p) => (p.is_predicted ? null : p.id));
   const texts = points.map(buildHoverText);
 
   const baseTrace = {
@@ -213,7 +272,7 @@ export function buildPointTraces(points, concToZ, colourBy) {
     hovertemplate: "%{text}<extra></extra>",
     hoverlabel: hoverLabelStyle,
     marker: {
-      size: SAMPLE_MARKER_SIZE_3D * get3DMarkerScale(),
+      size: points.map(baseMarkerSize3D),
       opacity: amorphousBaseOpacity,
       color: AMORPHOUS_BASE_COLOR,
       line: { width: 0.25, color: "rgba(70,70,70,0.18)" }
@@ -233,8 +292,8 @@ export function buildPointTraces(points, concToZ, colourBy) {
     hoverlabel: hoverLabelStyle,
     marker: {
       size: isPhaseView
-        ? points.map((p) => crystallinityToCoreSize3D(p.crystallinity))
-        : SAMPLE_MARKER_SIZE_3D * get3DMarkerScale(),
+        ? points.map(coreMarkerSize3D)
+        : points.map(baseMarkerSize3D),
       opacity: 0.95,
       color: isPhaseView
         ? points.map(blendPhaseColor)

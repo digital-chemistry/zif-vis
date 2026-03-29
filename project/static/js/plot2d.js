@@ -20,10 +20,55 @@ const WARM_SCALAR_SCALE = [
 ];
 
 const SEARCH_MARKER_COLOR = "#d85b72";
+const PREDICTED_MARKER_SCALE = 0.76;
+
+const PHASE_PROBABILITY_MODES = {
+  phase_prob_amorphous: { title: "Amorphous probability", key: "Amorphous" },
+  phase_prob_sodalite: { title: "Sodalite probability", key: "Sodalite" },
+  phase_prob_diamondoid: { title: "Diamondoid probability", key: "Diamondoid" },
+  phase_prob_u12: { title: "U12 probability", key: "U12" },
+  phase_prob_u13: { title: "U13 probability", key: "U13" },
+  phase_prob_zif_ec_1: { title: "ZIF-EC-1 probability", key: "ZIF-EC-1" },
+  phase_prob_zif_c: { title: "ZIF-C probability", key: "ZIF-C" },
+  phase_prob_zif_l: { title: "ZIF-L probability", key: "ZIF-L" }
+};
 
 function getAmorphousBaseOpacity() {
   const v = Number($("amorphousOpacity")?.value ?? 0.7);
   return Number.isFinite(v) ? Math.max(0.1, Math.min(1, v)) : 0.7;
+}
+
+function pointScaleFactor(point) {
+  return point?.is_predicted ? PREDICTED_MARKER_SCALE : 1;
+}
+
+function baseMarkerSize2D(point) {
+  return SAMPLE_MARKER_SIZE_2D * pointScaleFactor(point);
+}
+
+function coreMarkerSize2D(point) {
+  return crystallinityToCoreSize2D(point.crystallinity) * pointScaleFactor(point);
+}
+
+function scalarValueForMode(point, colourBy) {
+  const phaseMode = PHASE_PROBABILITY_MODES[colourBy];
+  if (phaseMode) {
+    if (phaseMode.key === "Amorphous") {
+      return numericOrNull(
+        point.amorphousness ??
+        point.phase_probabilities?.Amorphous
+      );
+    }
+
+    const phaseComp = point.phase_composition?.[phaseMode.key];
+    return numericOrNull(
+      phaseComp?.mean ??
+      phaseComp ??
+      point.phase_probabilities?.[phaseMode.key]
+    );
+  }
+
+  return null;
 }
 
 function crystallinityToCoreSize2D(c) {
@@ -73,9 +118,13 @@ function buildPointHoverText(p) {
   const phase = displayPhase(p.phase || p.primary_phase || "N/A");
   const wash = p.washing || p.wash || "N/A";
   const ee = numericOrNull(p.ee);
+  const sourceLabel = p.is_predicted
+    ? `Predicted grid | ${p.trust_band || "prototype"}`
+    : "Measured sample";
 
   return (
     `<span style="font-size:14px;"><b>${escapeHtml(p.id)}</b></span><br>` +
+    `<span style="color:#7a8594;">${escapeHtml(sourceLabel)}</span><br>` +
     `<span style="color:#20242a;">${escapeHtml(composition)}</span><br>` +
     `${formatHoverLine("Layer", layer)}<br>` +
     `${formatHoverLine("Wash", wash)}<br>` +
@@ -310,6 +359,10 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
     markerColor = layerPoints.map((p) => numericOrNull(p.protein_ratio));
     showscale = true;
     colorbar = { title: "Estimated ATR ratio" };
+  } else if (PHASE_PROBABILITY_MODES[colourBy]) {
+    markerColor = layerPoints.map((p) => scalarValueForMode(p, colourBy));
+    showscale = true;
+    colorbar = { title: PHASE_PROBABILITY_MODES[colourBy].title };
   }
 
   const isPhaseView = colourBy === "phase";
@@ -321,12 +374,12 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
     a: layerPoints.map((p) => Number(p.metal)),
     b: layerPoints.map((p) => Number(p.ligand)),
     c: layerPoints.map((p) => Number(p.bsa)),
-    customdata: layerPoints.map((p) => p.id),
+    customdata: layerPoints.map((p) => (p.is_predicted ? null : p.id)),
     text: layerPoints.map(buildPointHoverText),
     hovertemplate: "%{text}<extra></extra>",
     hoverlabel: hoverLabelStyle,
     marker: {
-      size: SAMPLE_MARKER_SIZE_2D,
+      size: layerPoints.map(baseMarkerSize2D),
       opacity: amorphousBaseOpacity,
       color: AMORPHOUS_BASE_COLOR,
       line: { width: 0.3, color: "rgba(50,50,50,0.20)" }
@@ -340,14 +393,14 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
     a: layerPoints.map((p) => Number(p.metal)),
     b: layerPoints.map((p) => Number(p.ligand)),
     c: layerPoints.map((p) => Number(p.bsa)),
-    customdata: layerPoints.map((p) => p.id),
+    customdata: layerPoints.map((p) => (p.is_predicted ? null : p.id)),
     text: layerPoints.map(buildPointHoverText),
     hovertemplate: "%{text}<extra></extra>",
     hoverlabel: hoverLabelStyle,
     marker: {
       size: isPhaseView
-        ? layerPoints.map((p) => crystallinityToCoreSize2D(p.crystallinity))
-        : SAMPLE_MARKER_SIZE_2D,
+        ? layerPoints.map(coreMarkerSize2D)
+        : layerPoints.map(baseMarkerSize2D),
       opacity: 0.95,
       color: isPhaseView
         ? layerPoints.map(blendPhaseColor)
@@ -457,6 +510,10 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
     markerColor = layerPoints.map((p) => numericOrNull(p.protein_ratio));
     showscale = true;
     colorbar = { title: "Estimated ATR ratio" };
+  } else if (PHASE_PROBABILITY_MODES[colourBy]) {
+    markerColor = layerPoints.map((p) => scalarValueForMode(p, colourBy));
+    showscale = true;
+    colorbar = { title: PHASE_PROBABILITY_MODES[colourBy].title };
   }
 
   const isPhaseView = colourBy === "phase";
@@ -467,12 +524,12 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
     mode: "markers",
     x: layerPoints.map((p) => Number(p.x)),
     y: layerPoints.map((p) => Number(p.y)),
-    customdata: layerPoints.map((p) => p.id),
+    customdata: layerPoints.map((p) => (p.is_predicted ? null : p.id)),
     text: layerPoints.map(buildPointHoverText),
     hovertemplate: "%{text}<extra></extra>",
     hoverlabel: hoverLabelStyle,
     marker: {
-      size: SAMPLE_MARKER_SIZE_2D,
+      size: layerPoints.map(baseMarkerSize2D),
       opacity: amorphousBaseOpacity,
       color: AMORPHOUS_BASE_COLOR,
       line: { width: 0.3, color: "rgba(50,50,50,0.20)" }
@@ -485,14 +542,14 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
     mode: "markers",
     x: layerPoints.map((p) => Number(p.x)),
     y: layerPoints.map((p) => Number(p.y)),
-    customdata: layerPoints.map((p) => p.id),
+    customdata: layerPoints.map((p) => (p.is_predicted ? null : p.id)),
     text: layerPoints.map(buildPointHoverText),
     hovertemplate: "%{text}<extra></extra>",
     hoverlabel: hoverLabelStyle,
     marker: {
       size: isPhaseView
-        ? layerPoints.map((p) => crystallinityToCoreSize2D(p.crystallinity))
-        : SAMPLE_MARKER_SIZE_2D,
+        ? layerPoints.map(coreMarkerSize2D)
+        : layerPoints.map(baseMarkerSize2D),
       opacity: 0.95,
       color: isPhaseView
         ? layerPoints.map(blendPhaseColor)

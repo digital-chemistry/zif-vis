@@ -16,6 +16,16 @@ PHASES = [
     "ZIF-L",
 ]
 
+PHASES_WITH_CRYSTALLINE_COMPONENTS = [
+    "Sodalite",
+    "Diamondoid",
+    "U12",
+    "U13",
+    "ZIF-EC-1",
+    "ZIF-C",
+    "ZIF-L",
+]
+
 
 def normalise_wash(raw: str) -> str:
     text = str(raw or "").strip().lower()
@@ -86,6 +96,13 @@ class CompositionPredictor:
             self.feature_max - self.feature_min,
         )
         self.scaled_features = (self.feature_matrix - self.feature_min) / self.feature_span
+        self.available_concentrations = sorted(
+            {
+                float(row["concentration"])
+                for row in usable
+                if row.get("concentration") is not None
+            }
+        )
 
     def _scale_query(self, metal_pct: float, ligand_pct: float, bsa_pct: float, concentration: float, wash: str) -> np.ndarray:
         wash_code = 1.0 if normalise_wash(wash) == "ethanol" else 0.0
@@ -172,3 +189,89 @@ class CompositionPredictor:
             "neighbors": nearest,
             "method": "Prototype prediction from nearby measured compositions",
         }
+
+    def build_grid(
+        self,
+        wash: str,
+        concentrations: list[float] | None = None,
+        composition_step: float = 5.0,
+    ) -> list[dict]:
+        wash_value = normalise_wash(wash)
+        step = float(composition_step)
+        layers = concentrations or self.available_concentrations
+
+        if step <= 0:
+            raise ValueError("composition_step must be positive")
+
+        grid_points: list[dict] = []
+        scaled = int(round(100 / step))
+        composition_values = [round(i * step, 6) for i in range(scaled + 1)]
+
+        for concentration in layers:
+            for metal_pct in composition_values:
+                remaining = 100.0 - metal_pct
+                ligand_steps = int(round(remaining / step))
+
+                for j in range(ligand_steps + 1):
+                    ligand_pct = round(j * step, 6)
+                    bsa_pct = round(100.0 - metal_pct - ligand_pct, 6)
+                    if bsa_pct < -1e-9:
+                        continue
+
+                    bsa_pct = max(0.0, bsa_pct)
+                    prediction = self.predict(
+                        metal_pct=metal_pct,
+                        ligand_pct=ligand_pct,
+                        bsa_pct=bsa_pct,
+                        concentration=float(concentration),
+                        wash=wash_value,
+                    )
+
+                    preds = prediction["predictions"]
+                    phase_scores = preds["phase_probabilities"]
+
+                    phase_composition = {
+                        phase: {"mean": float(phase_scores.get(phase, 0.0)), "std": None}
+                        for phase in PHASES_WITH_CRYSTALLINE_COMPONENTS
+                    }
+
+                    grid_points.append(
+                        {
+                            "id": f"pred_{wash_value}_{concentration}_{metal_pct}_{ligand_pct}_{bsa_pct}",
+                            "label": "Predicted grid point",
+                            "is_predicted": True,
+                            "x": None,
+                            "y": None,
+                            "z": float(concentration),
+                            "metal": float(metal_pct),
+                            "ligand": float(ligand_pct),
+                            "bsa": float(bsa_pct),
+                            "uses_real_ternary": True,
+                            "conc": str(concentration),
+                            "concentration": float(concentration),
+                            "concentration_label": str(concentration),
+                            "wash_code": "EW" if wash_value == "ethanol" else "WW",
+                            "wash": "EW" if wash_value == "ethanol" else "WW",
+                            "washing": "ethanol washing" if wash_value == "ethanol" else "water washing",
+                            "layer": str(concentration),
+                            "phase": preds["top_phase"],
+                            "primary_phase": preds["top_phase"],
+                            "detected_phases": preds["top_phase"],
+                            "phase_composition": phase_composition,
+                            "phase_probabilities": phase_scores,
+                            "ee": preds["encapsulation_efficiency_mean"],
+                            "ee_error": preds["encapsulation_efficiency_std"],
+                            "protein_ratio": preds["atr_ratio_mean"],
+                            "crystallinity": preds["crystalline_fraction_mean"],
+                            "crystallinity_std": preds["crystalline_fraction_std"],
+                            "amorphousness": preds["amorphous_fraction_mean"],
+                            "amorphousness_std": preds["amorphous_fraction_std"],
+                            "crystallinity_uncertainty": preds["crystalline_fraction_std"],
+                            "relative_crystallinity": preds["crystalline_fraction_mean"],
+                            "prediction_confidence": float(phase_scores.get(preds["top_phase"], 0.0)),
+                            "distance_to_known": prediction["trust"]["distance_to_known"],
+                            "trust_band": prediction["trust"]["confidence_band"],
+                        }
+                    )
+
+        return grid_points

@@ -46,6 +46,7 @@ function getPositionMarker() {
 
 export function readFiltersFromDom() {
   const mode = getCheckedRadio("viewMode", "3d");
+  const dataLayer = getCheckedRadio("dataLayer", "experimental");
   
   // UPDATED: Now uses the radio button helper instead of looking for an ID
   const washing = getCheckedRadio("washing", "ethanol"); 
@@ -54,6 +55,7 @@ export function readFiltersFromDom() {
 
   return {
     mode,
+    dataLayer,
     washing,
     colourBy,
     searchPosition: getPositionMarker(),

@@ -6,6 +6,7 @@ import { renderPlot2D } from "./plot2d.js";
 import { loadInspector } from "./inspector.js";
 
 let allPoints = [];
+let predictedGridCache = new Map();
 let currentCamera = null;
 let predictionRequestToken = 0;
 
@@ -113,6 +114,14 @@ function wireControls() {
     });
   });
 
+  document.querySelectorAll('input[name="dataLayer"]').forEach((el) => {
+    el.addEventListener("change", () => {
+      updateViewControls();
+      toggleModeDependentCards();
+      applyFiltersAndRender();
+    });
+  });
+
   document.querySelectorAll('input[name="washing"]').forEach((el) => {
     el.addEventListener("change", () => {
       updateDerivedReadouts();
@@ -164,6 +173,35 @@ async function loadPoints() {
       plotDiv.innerHTML = `<div style="padding:24px;color:#a33;">Failed to load point data.</div>`;
     }
   }
+}
+
+async function getPredictedGridPoints(wash) {
+  const key = String(wash || "ethanol");
+  if (predictedGridCache.has(key)) {
+    return predictedGridCache.get(key);
+  }
+
+  const res = await fetch(`/api/prediction-grid?wash=${encodeURIComponent(key)}`);
+  if (!res.ok) {
+    throw new Error(`Failed to load /api/prediction-grid (${res.status})`);
+  }
+
+  const payload = await res.json();
+  predictedGridCache.set(key, payload);
+  return payload;
+}
+
+async function getDisplayPoints(filters) {
+  if (filters.dataLayer === "experimental") {
+    return allPoints;
+  }
+
+  const predicted = await getPredictedGridPoints(filters.washing);
+  if (filters.dataLayer === "predicted") {
+    return predicted;
+  }
+
+  return [...allPoints, ...predicted];
 }
 
 function initSliderRanges() {
@@ -636,26 +674,37 @@ function toggleModeDependentCards() {
   }
 }
 
-function applyFiltersAndRender() {
+async function applyFiltersAndRender() {
   const filters = readFiltersFromDom();
-  const filtered = filterPoints(allPoints, filters);
+  const plotDiv = $("plot");
 
-  if (filters.mode === "2d") {
-    renderPlot2D(filtered, filters.colourBy, handlePointClick, filters.searchPosition);
-  } else {
-    renderPlot3D(
-      filtered,
-      filters.colourBy,
-      currentCamera,
-      (camera) => {
-        currentCamera = camera;
-      },
-      handlePointClick,
-      filters.searchPosition
-    );
+  try {
+    const displayPoints = await getDisplayPoints(filters);
+    const filtered = filterPoints(displayPoints, filters);
+
+    if (filters.mode === "2d") {
+      renderPlot2D(filtered, filters.colourBy, handlePointClick, filters.searchPosition);
+    } else {
+      renderPlot3D(
+        filtered,
+        filters.colourBy,
+        currentCamera,
+        (camera) => {
+          currentCamera = camera;
+        },
+        handlePointClick,
+        filters.searchPosition
+      );
+    }
+  } catch (err) {
+    console.error("applyFiltersAndRender failed:", err);
+    if (plotDiv) {
+      plotDiv.innerHTML = `<div style="padding:24px;color:#a33;">Failed to load the selected data layer.</div>`;
+    }
   }
 }
 
 async function handlePointClick(sampleId) {
+  if (!sampleId || String(sampleId).startsWith("pred_")) return;
   await loadInspector(sampleId);
 }

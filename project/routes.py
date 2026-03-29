@@ -112,6 +112,22 @@ def register_routes(app, points, point_details, experiment_details, predictor, b
         )
         return jsonify(prediction)
 
+    @app.route("/api/prediction-grid")
+    def api_prediction_grid():
+        wash = request.args.get("wash", "ethanol")
+        step_raw = request.args.get("step", "5")
+
+        try:
+            step = float(step_raw)
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid composition step."}), 400
+
+        if step <= 0 or step > 25:
+            return jsonify({"error": "Composition step must be between 0 and 25."}), 400
+
+        grid = predictor.build_grid(wash=wash, composition_step=step)
+        return jsonify(grid)
+
     @app.route("/api/debug/files")
     def api_debug_files():
         atr_index = build_atr_index()
