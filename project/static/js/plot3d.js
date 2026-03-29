@@ -9,7 +9,7 @@ import {
   buildConcentrationGuide3D,
   buildPerLayerDirectionArrows3D,
   buildSideLabels3D
-} from "./plot3d-decorations.js";
+} from "./plot3d-decorations-v2.js";
 import { buildPointTraces, markerForSearchPosition3D } from "./plot3d-points.js";
 import { buildLayout } from "./plot3d-layout.js";
 
@@ -46,7 +46,7 @@ export function renderPlot3D(
     buildLayerLabels3D(orderedLayers, concToZ),
     ...buildConcentrationGuide3D(orderedLayers, concToZ),
     ...buildPerLayerDirectionArrows3D(orderedLayers, concToZ),
-    buildSideLabels3D(orderedLayers, concToZ),
+    ...buildSideLabels3D(orderedLayers, concToZ),
     ...buildPointTraces(points, concToZ, colourBy),
     ...(searchMarker ? [searchMarker] : [])
   ].filter(Boolean);

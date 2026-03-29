@@ -26,14 +26,18 @@
 }
 
 .plot-area.merged-plot-card {
-  padding: 12px 14px 6px 14px;
+  padding: 14px 16px 8px 16px;
 }
 
 .plot-shell {
   min-height: 720px;
-  border-radius: 14px;
+  border-radius: 28px;
   overflow: hidden;
-  background: #fcfcfd;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(245, 249, 252, 0.92)),
+    radial-gradient(circle at top left, rgba(211, 224, 237, 0.24), transparent 34%);
+  border: 1px solid rgba(188, 202, 218, 0.55);
+  box-shadow: 0 18px 44px rgba(108, 129, 153, 0.12);
 }
 
 #plot {

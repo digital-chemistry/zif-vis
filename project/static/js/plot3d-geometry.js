@@ -11,20 +11,20 @@ export const TRIANGLE = {
 };
 
 export const ARROW_STYLE = {
-  headLen: 0.06,
-  wing: 0.028,
-  width: 5,
+  headLen: 0.045,
+  wing: 0.02,
+  width: 4,
   colours: {
-    ligand: "rgba(110,110,110,0.75)",
-    metal: "rgba(210,120,120,0.75)",
-    bsa: "rgba(110,200,120,0.78)"
+    ligand: "rgba(102, 116, 132, 0.84)",
+    metal: "rgba(210, 126, 114, 0.84)",
+    bsa: "rgba(115, 191, 132, 0.84)"
   }
 };
 
 export const EDGE_STYLE = {
-  base: "rgba(110,110,110,0.65)",
-  left: "rgba(210,120,120,0.55)",
-  right: "rgba(110,200,120,0.55)"
+  base: "rgba(102, 116, 132, 0.42)",
+  left: "rgba(210, 126, 114, 0.42)",
+  right: "rgba(115, 191, 132, 0.42)"
 };
 
 export function vec(from, to) {

@@ -2,9 +2,9 @@ import { TRI_H } from "./plot3d-geometry.js";
 
 export function buildLayout(currentCamera) {
   return {
-    margin: { l: 0, r: 0, t: 0, b: 0 },
-    paper_bgcolor: "white",
-    plot_bgcolor: "white",
+    margin: { l: 0, r: 0, t: 8, b: 0 },
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
     uirevision: null,
 
     scene: {
@@ -13,7 +13,7 @@ export function buildLayout(currentCamera) {
         showbackground: false,
         showgrid: false,
         zeroline: false,
-        range: [-0.32, 1.02]
+        range: [-0.22, 1.26]
       },
 
       yaxis: {
@@ -21,7 +21,7 @@ export function buildLayout(currentCamera) {
         showbackground: false,
         showgrid: false,
         zeroline: false,
-        range: [-0.12, TRI_H + 0.05]
+        range: [-0.16, TRI_H + 0.12]
       },
 
       zaxis: {
@@ -33,9 +33,9 @@ export function buildLayout(currentCamera) {
       },
 
       camera: currentCamera || {
-        eye: { x: 0.72, y: -0.74, z: 0.50 },
+        eye: { x: 0.92, y: -1.02, z: 0.62 },
         up: { x: 0, y: 0, z: 1 },
-        center: { x: 0.06, y: 0.02, z: 0 },
+        center: { x: 0.08, y: 0.03, z: 0 },
         projection: { type: "orthographic" }
       },
 
@@ -46,11 +46,21 @@ export function buildLayout(currentCamera) {
       {
         xref: "paper",
         yref: "paper",
-        x: 0.02,
-        y: 0.98,
-        text: "Stacked ternary maps across concentration levels",
+        x: 0.025,
+        y: 0.975,
+        text: "Stacked ternary composition map",
         showarrow: false,
-        font: { size: 12, color: "#6c645d" },
+        font: { size: 14, color: "#516274" },
+        align: "left"
+      },
+      {
+        xref: "paper",
+        yref: "paper",
+        x: 0.025,
+        y: 0.935,
+        text: "Layered by concentration with anchored ternary axes",
+        showarrow: false,
+        font: { size: 11, color: "#8a95a3" },
         align: "left"
       }
     ],
