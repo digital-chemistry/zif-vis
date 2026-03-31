@@ -14,6 +14,7 @@ Main user-facing goals:
 - compare encapsulation efficiency and an ATR-derived estimated ratio
 - open sample-specific ATR-IR and repeated XRD measurements in the inspector
 - optionally compare measured data with a predicted composition grid
+- optionally switch between the primary and manual experimental summary datasets
 
 ## 2. Runtime flow
 
@@ -40,11 +41,11 @@ The runtime is intentionally simple:
 ## 3. Backend file map
 
 - `project/app.py`
-  Flask app factory and local dev entry point.
+  Flask app factory and local dev entry point. It now loads both the primary and manual summary datasets when available.
 - `project/wsgi.py`
   Production WSGI entry point used by Docker and Gunicorn. Mounts the explorer at `/zif`.
 - `project/routes.py`
-  Route registration. This is the first file to edit when adding a new API endpoint.
+  Route registration. This is the first file to edit when adding a new API endpoint or a new dataset-aware query parameter.
 - `project/predictor.py`
   Prototype nearest-neighbor prediction layer for single-query predictions and predicted grid generation.
 - `project/data_loader.py`
@@ -178,6 +179,22 @@ These are not accidental. They were chosen deliberately during the recent UI cle
   Overlays measured and prediction-grid points.
 
 Prediction-grid points are intentionally restricted to the experimentally covered composition domain. The app should not predict outside the physical/input region represented in the measured dataset.
+
+### Experimental source
+
+The left sidebar can now switch between:
+
+- `Primary`
+- `Manual`
+
+when `project/zif_biocomposite_summary_manual.json` exists.
+
+This source selection affects:
+
+- measured points
+- inspector sample payloads
+- predictor inputs
+- predicted grid generation
 
 ### Prediction probability semantics
 

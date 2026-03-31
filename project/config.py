@@ -3,6 +3,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
 MASTER_JSON = BASE_DIR / "zif_biocomposite_summary_by_point.json"
+MANUAL_JSON = BASE_DIR / "zif_biocomposite_summary_manual.json"
 ATR_DIR = BASE_DIR / "ATR_xy"
 XRD_DIR = BASE_DIR / "XRD_xy"
 IMG_DIR = BASE_DIR / "images"

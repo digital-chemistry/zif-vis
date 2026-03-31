@@ -38,13 +38,17 @@
         </span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">Switch between measured samples, prediction-only points generated inside the experimentally supported domain, or both together.</span>
+          <span class="info-tip-popover">Switch between the original measured dataset, the alternative manual ground-truth dataset from Xue, prediction-only points generated inside the experimentally supported domain, or the original measured data together with predictions.</span>
         </span>
       </div>
       <div class="segmented-control" id="dataLayerGroup">
         <label class="seg-chip">
           <input type="radio" name="dataLayer" value="experimental" checked>
           <span>Experimental</span>
+        </label>
+        <label class="seg-chip">
+          <input type="radio" name="dataLayer" value="experimental_xue">
+          <span>Experimental-Xue</span>
         </label>
         <label class="seg-chip">
           <input type="radio" name="dataLayer" value="predicted">

@@ -4,8 +4,26 @@ from .config import ATR_DIR, XRD_DIR, IMG_DIR
 from .io_utils import read_xy, find_existing_file
 
 
-def register_routes(app, points, point_details, experiment_details, predictor, build_atr_index, build_full_experiment_index):
+def register_routes(app, datasets, build_atr_index, build_full_experiment_index):
+    dataset_meta = [
+        {
+            "key": key,
+            "label": value.get("label", key.title()),
+        }
+        for key, value in datasets.items()
+    ]
+
+    def get_dataset_bundle():
+        requested = (request.args.get("dataset") or "primary").strip().lower()
+        if requested not in datasets:
+            requested = "primary"
+        return datasets[requested]
+
     def resolve_best_experiment_for_kind(identifier: str, kind: str):
+        bundle = get_dataset_bundle()
+        point_details = bundle["point_details"]
+        experiment_details = bundle["experiment_details"]
+
         if identifier in experiment_details:
             return experiment_details[identifier]
 
@@ -32,14 +50,21 @@ def register_routes(app, points, point_details, experiment_details, predictor, b
 
     @app.route("/")
     def index():
-        return render_template("index.html")
+        return render_template("index.html", dataset_options=dataset_meta)
+
+    @app.route("/api/datasets")
+    def api_datasets():
+        return jsonify(dataset_meta)
 
     @app.route("/api/points")
     def api_points():
-        return jsonify(points)
+        bundle = get_dataset_bundle()
+        return jsonify(bundle["points"])
 
     @app.route("/api/sample/<point_id>")
     def api_sample(point_id):
+        bundle = get_dataset_bundle()
+        point_details = bundle["point_details"]
         sample = point_details.get(point_id)
         if not sample:
             abort(404)
@@ -47,6 +72,8 @@ def register_routes(app, points, point_details, experiment_details, predictor, b
 
     @app.route("/api/experiment/<experiment_id>")
     def api_experiment(experiment_id):
+        bundle = get_dataset_bundle()
+        experiment_details = bundle["experiment_details"]
         exp = experiment_details.get(experiment_id)
         if not exp:
             abort(404)
@@ -86,6 +113,8 @@ def register_routes(app, points, point_details, experiment_details, predictor, b
 
     @app.route("/api/predict", methods=["POST"])
     def api_predict():
+        bundle = get_dataset_bundle()
+        predictor = bundle["predictor"]
         payload = request.get_json(silent=True) or {}
 
         try:
@@ -117,6 +146,8 @@ def register_routes(app, points, point_details, experiment_details, predictor, b
 
     @app.route("/api/prediction-grid")
     def api_prediction_grid():
+        bundle = get_dataset_bundle()
+        predictor = bundle["predictor"]
         wash = request.args.get("wash", "ethanol")
         step_raw = request.args.get("step", "5")
         include_intermediate = request.args.get("intermediate", "0") in {"1", "true", "yes"}
@@ -138,6 +169,9 @@ def register_routes(app, points, point_details, experiment_details, predictor, b
 
     @app.route("/api/debug/files")
     def api_debug_files():
+        bundle = get_dataset_bundle()
+        points = bundle["points"]
+        experiment_details = bundle["experiment_details"]
         atr_index = build_atr_index()
         xrd_index = build_full_experiment_index(XRD_DIR)
         img_index = build_full_experiment_index(IMG_DIR)
@@ -156,6 +190,8 @@ def register_routes(app, points, point_details, experiment_details, predictor, b
 
     @app.route("/api/debug/experiment/<experiment_id>")
     def api_debug_experiment(experiment_id):
+        bundle = get_dataset_bundle()
+        experiment_details = bundle["experiment_details"]
         exp = experiment_details.get(experiment_id)
         if not exp:
             abort(404)

@@ -136,12 +136,14 @@ function extractSpectrumXY(data, mode = "generic") {
   };
 }
 
-export async function loadInspector(sampleId) {
+export async function loadInspector(sampleId, dataset = "primary") {
   const token = ++currentInspectorToken;
   setInspectorLoading(sampleId);
 
   try {
-    const res = await fetch(apiUrl(`/api/sample/${encodeURIComponent(sampleId)}`));
+    const res = await fetch(
+      apiUrl(`/api/sample/${encodeURIComponent(sampleId)}?dataset=${encodeURIComponent(dataset)}`)
+    );
     if (!res.ok) {
       throw new Error(`Failed sample load: ${res.status}`);
     }

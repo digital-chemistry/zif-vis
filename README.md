@@ -18,6 +18,7 @@ The explorer also now supports a prediction layer:
 - `Experimental` shows only measured samples.
 - `Prediction` shows machine-learned grid points only within the experimentally supported composition domain.
 - `Both` overlays measured and predicted points together.
+- `Experimental source` can switch between the primary summary JSON and the manual summary JSON when both are present in `project/`.
 
 Prediction phase-probability views should be interpreted as the likelihood of finding that phase contribution at a location, not necessarily the likelihood of a phase-pure material.
 
@@ -87,6 +88,7 @@ Production handoff notes live in [`DEPLOY.md`](DEPLOY.md).
 - `project/static/styles/`
   Token, layout, panel, form, inspector, and responsive styles.
 - `project/zif_biocomposite_summary_by_point.json`
+- `project/zif_biocomposite_summary_manual.json`
   Main summary dataset used to build points and inspector content.
 
 ## Data and local assets

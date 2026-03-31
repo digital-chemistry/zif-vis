@@ -6,6 +6,7 @@ import { renderPlot2D } from "./plot2d.js";
 import { loadInspector } from "./inspector.js";
 
 let allPoints = [];
+let manualPoints = [];
 let predictedGridCache = new Map();
 let currentCamera = null;
 let predictionRequestToken = 0;
@@ -150,12 +151,19 @@ function wireControls() {
 
 async function loadPoints() {
   try {
-    const res = await fetch(apiUrl("/api/points"));
-    if (!res.ok) {
-      throw new Error(`Failed to load ${apiUrl("/api/points")} (${res.status})`);
+    const [primaryRes, manualRes] = await Promise.all([
+      fetch(apiUrl("/api/points?dataset=primary")),
+      fetch(apiUrl("/api/points?dataset=manual"))
+    ]);
+
+    if (!primaryRes.ok) {
+      throw new Error(`Failed to load ${apiUrl("/api/points?dataset=primary")} (${primaryRes.status})`);
+    }
+    if (!manualRes.ok) {
+      throw new Error(`Failed to load ${apiUrl("/api/points?dataset=manual")} (${manualRes.status})`);
     }
 
-    allPoints = await res.json();
+    [allPoints, manualPoints] = await Promise.all([primaryRes.json(), manualRes.json()]);
 
     buildLayerOptions();
     buildPhaseFilters();
@@ -182,7 +190,7 @@ async function loadPoints() {
 }
 
 async function getPredictedGridPoints(wash, includeIntermediateLayers = false) {
-  const key = `${String(wash || "ethanol")}::${includeIntermediateLayers ? "mid" : "base"}`;
+  const key = `primary::${String(wash || "ethanol")}::${includeIntermediateLayers ? "mid" : "base"}`;
   if (predictedGridCache.has(key)) {
     return predictedGridCache.get(key);
   }
@@ -190,7 +198,7 @@ async function getPredictedGridPoints(wash, includeIntermediateLayers = false) {
   const washValue = String(wash || "ethanol");
   const res = await fetch(
     apiUrl(
-      `/api/prediction-grid?wash=${encodeURIComponent(washValue)}&intermediate=${includeIntermediateLayers ? "1" : "0"}`
+      `/api/prediction-grid?wash=${encodeURIComponent(washValue)}&intermediate=${includeIntermediateLayers ? "1" : "0"}&dataset=primary`
     )
   );
   if (!res.ok) {
@@ -205,6 +213,9 @@ async function getPredictedGridPoints(wash, includeIntermediateLayers = false) {
 async function getDisplayPoints(filters) {
   if (filters.dataLayer === "experimental") {
     return allPoints;
+  }
+  if (filters.dataLayer === "experimental_xue") {
+    return manualPoints;
   }
 
   const includeIntermediateLayers =
@@ -604,7 +615,7 @@ async function updateCompositionPrediction() {
   const token = ++predictionRequestToken;
 
   try {
-    const res = await fetch(apiUrl("/api/predict"), {
+    const res = await fetch(apiUrl("/api/predict?dataset=primary"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -733,6 +744,10 @@ async function applyFiltersAndRender() {
 
 async function handlePointClick(sampleId) {
   if (!sampleId || String(sampleId).startsWith("pred_")) return;
-  await loadInspector(sampleId);
+  const dataset =
+    document.querySelector('input[name="dataLayer"]:checked')?.value === "experimental_xue"
+      ? "manual"
+      : "primary";
+  await loadInspector(sampleId, dataset);
 }
 

@@ -1,5 +1,6 @@
 import json
 from copy import deepcopy
+from pathlib import Path
 
 from .config import MASTER_JSON, ATR_DIR, XRD_DIR
 from .io_utils import find_existing_file
@@ -55,11 +56,12 @@ def resolve_atr_file(concentration, wash_code, round_no):
     return find_existing_file(ATR_DIR, stem)
 
 
-def load_data():
-    if not MASTER_JSON.exists():
-        raise FileNotFoundError(f"Missing JSON file: {MASTER_JSON}")
+def load_data(json_path: str | Path | None = None):
+    source_path = Path(json_path) if json_path is not None else MASTER_JSON
+    if not source_path.exists():
+        raise FileNotFoundError(f"Missing JSON file: {source_path}")
 
-    with open(MASTER_JSON, "r", encoding="utf-8") as f:
+    with open(source_path, "r", encoding="utf-8") as f:
         raw = json.load(f)
 
     xrd_index = build_full_experiment_index(XRD_DIR)

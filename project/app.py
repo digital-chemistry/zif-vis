@@ -4,6 +4,7 @@ from pathlib import Path
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from .config import MASTER_JSON, MANUAL_JSON
 from .data_loader import load_data, build_atr_index, build_full_experiment_index
 from .predictor import CompositionPredictor
 from .routes import register_routes
@@ -21,15 +22,27 @@ def create_app():
     # Honor reverse-proxy scheme/host headers in production.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-    points, point_details, experiment_details = load_data()
-    predictor = CompositionPredictor(points)
+    datasets = {}
+
+    def register_dataset(key, path):
+        points, point_details, experiment_details = load_data(path)
+        datasets[key] = {
+            "key": key,
+            "label": "Manual" if key == "manual" else "Primary",
+            "json_path": str(path),
+            "points": points,
+            "point_details": point_details,
+            "experiment_details": experiment_details,
+            "predictor": CompositionPredictor(points),
+        }
+
+    register_dataset("primary", MASTER_JSON)
+    if MANUAL_JSON.exists():
+        register_dataset("manual", MANUAL_JSON)
 
     register_routes(
         app,
-        points,
-        point_details,
-        experiment_details,
-        predictor,
+        datasets,
         build_atr_index,
         build_full_experiment_index,
     )
