@@ -21,6 +21,7 @@ const WARM_SCALAR_SCALE = [
 ];
 
 const SEARCH_MARKER_COLOR = "#d85b72";
+const SEARCH_MARKER_CORE_COLOR = "#111111";
 const PREDICTED_MARKER_SCALE = 0.72;
 
 const PHASE_PROBABILITY_MODES = {
@@ -413,7 +414,7 @@ export function markerForSearchPosition3D(searchPosition, concToZ) {
       },
       marker: {
         size: 8.5 * get3DSearchMarkerScale(),
-        color: SEARCH_MARKER_COLOR,
+        color: SEARCH_MARKER_CORE_COLOR,
         symbol: "circle",
         line: { width: 2, color: "#ffffff" }
       },

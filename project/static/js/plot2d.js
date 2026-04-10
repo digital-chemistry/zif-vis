@@ -20,6 +20,7 @@ const WARM_SCALAR_SCALE = [
 ];
 
 const SEARCH_MARKER_COLOR = "#d85b72";
+const SEARCH_MARKER_CORE_COLOR = "#111111";
 const PREDICTED_MARKER_SCALE = 0.76;
 
 const PHASE_PROBABILITY_MODES = {
@@ -233,7 +234,7 @@ function markerForSearchPosition2D(searchPosition, layer) {
       },
       marker: {
         size: 12,
-        color: SEARCH_MARKER_COLOR,
+        color: SEARCH_MARKER_CORE_COLOR,
         symbol: "circle",
         line: { width: 2, color: "#ffffff" }
       },
@@ -310,7 +311,7 @@ function markerForSearchPosition2DFallback(searchPosition, layer) {
       },
       marker: {
         size: 12,
-        color: SEARCH_MARKER_COLOR,
+        color: SEARCH_MARKER_CORE_COLOR,
         symbol: "circle",
         line: { width: 2, color: "#ffffff" }
       },
