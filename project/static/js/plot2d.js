@@ -14,9 +14,9 @@ import {
 } from "./formatters.js";
 
 const WARM_SCALAR_SCALE = [
-  [0, "#d9482b"],
-  [0.5, "#f3a64a"],
-  [1, "#fff2a8"]
+  [0, "#ffffff"],
+  [0.5, "#f2c75c"],
+  [1, "#c72222"]
 ];
 
 const SEARCH_MARKER_COLOR = "#d85b72";
