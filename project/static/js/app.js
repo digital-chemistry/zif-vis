@@ -21,6 +21,45 @@ function apiUrl(path) {
   return `${ZIF_BASE_PATH}${path}`;
 }
 
+function isCurrentMode3D() {
+  return (
+    document.querySelector('input[name="viewMode"]:checked')?.value || "3d"
+  ) === "3d";
+}
+
+function restyleCurrent3DMarkers() {
+  const plotDiv = $("plot");
+  if (!plotDiv || !isCurrentMode3D() || !plotDiv.data?.length) return false;
+
+  const pointIndices = plotDiv.__zif3DPointTraceIndices;
+  const pointUpdatesFactory = plotDiv.__zif3DPointMarkerUpdates;
+  if (!Array.isArray(pointIndices) || typeof pointUpdatesFactory !== "function") {
+    return false;
+  }
+
+  const pointUpdates = pointUpdatesFactory();
+  pointIndices.forEach((traceIndex, idx) => {
+    const update = pointUpdates[idx];
+    if (update) {
+      Plotly.restyle(plotDiv, update, [traceIndex]);
+    }
+  });
+
+  const searchIndices = plotDiv.__zif3DSearchTraceIndices;
+  const searchUpdatesFactory = plotDiv.__zif3DSearchMarkerUpdates;
+  if (Array.isArray(searchIndices) && typeof searchUpdatesFactory === "function") {
+    const searchUpdates = searchUpdatesFactory();
+    searchIndices.forEach((traceIndex, idx) => {
+      const update = searchUpdates[idx];
+      if (update) {
+        Plotly.restyle(plotDiv, update, [traceIndex]);
+      }
+    });
+  }
+
+  return true;
+}
+
 function readSavedLayerSelection() {
   try {
     const raw = window.localStorage.getItem(LAYER_SELECTION_STORAGE_KEY);
@@ -200,8 +239,6 @@ function wireControls() {
   [
     "layerFocus",
     "spacingScale",
-    "markerScale3D",
-    "amorphousOpacity",
     "showInterlayerGuides",
     "crystBalance",
     "proteinThreshold",
@@ -218,6 +255,20 @@ function wireControls() {
       updateViewControls();
       toggleModeDependentCards();
       scheduleRender();
+    });
+  });
+
+  ["markerScale3D", "amorphousOpacity"].forEach((id) => {
+    const el = $(id);
+    if (!el) return;
+
+    el.addEventListener("input", () => {
+      updateDerivedReadouts();
+      updateViewControls();
+      toggleModeDependentCards();
+      if (!restyleCurrent3DMarkers()) {
+        scheduleRender();
+      }
     });
   });
 

@@ -342,6 +342,41 @@ export function buildPointTraces(points, concToZ, colourBy) {
   return isPhaseView ? [baseTrace, colorTrace] : [colorTrace];
 }
 
+export function buildPointMarkerUpdates3D(points, colourBy) {
+  const isPhaseView = colourBy === "phase";
+  const updates = [];
+
+  if (isPhaseView) {
+    updates.push({
+      "marker.size": [points.map(baseMarkerSize3D)],
+      "marker.opacity": [
+        points.map((p) =>
+          p?.is_predicted ? pointOpacity3D(p, true) : getAmorphousBaseOpacity()
+        )
+      ]
+    });
+    updates.push({
+      "marker.size": [points.map(coreMarkerSize3D)],
+      "marker.opacity": [points.map((p) => pointOpacity3D(p, false))]
+    });
+    return updates;
+  }
+
+  updates.push({
+    "marker.size": [points.map(baseMarkerSize3D)],
+    "marker.opacity": [points.map((p) => pointOpacity3D(p, false))]
+  });
+  return updates;
+}
+
+export function buildSearchMarkerUpdates3D() {
+  return [
+    { "marker.size": [[22 * get3DSearchMarkerScale()]] },
+    { "marker.size": [[15 * get3DSearchMarkerScale()]] },
+    { "marker.size": [[8.5 * get3DSearchMarkerScale()]] }
+  ];
+}
+
 export function markerForSearchPosition3D(searchPosition, concToZ) {
   if (!searchPosition) return null;
 

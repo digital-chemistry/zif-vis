@@ -1,6 +1,19 @@
 import { TRI_H } from "./plot3d-geometry.js";
 
-export function buildLayout(currentCamera, orderedLayers = [], concToZ = new Map()) {
+const DEFAULT_3D_CAMERA = {
+  eye: { x: 0.0, y: -1.72, z: 0.66 },
+  up: { x: 0, y: 0, z: 1 },
+  center: { x: 0.0, y: 0.01, z: 0 },
+  projection: { type: "orthographic" }
+};
+
+export function buildLayout(
+  currentCamera,
+  orderedLayers = [],
+  concToZ = new Map(),
+  options = {}
+) {
+  const { preserveExistingCamera = false } = options;
   const xMin = -0.14;
   const xMax = 1.14;
   const span = xMax - xMin;
@@ -46,13 +59,6 @@ export function buildLayout(currentCamera, orderedLayers = [], concToZ = new Map
         range: [zMin - zPad, zMax + zPad]
       },
 
-      camera: currentCamera || {
-        eye: { x: 0.0, y: -1.72, z: 0.66 },
-        up: { x: 0, y: 0, z: 1 },
-        center: { x: 0.0, y: 0.01, z: 0 },
-        projection: { type: "orthographic" }
-      },
-
       aspectmode: "manual",
       aspectratio: {
         x: 1,
@@ -86,4 +92,10 @@ export function buildLayout(currentCamera, orderedLayers = [], concToZ = new Map
 
     showlegend: false
   };
+
+  if (!preserveExistingCamera) {
+    layout.scene.camera = currentCamera || DEFAULT_3D_CAMERA;
+  }
+
+  return layout;
 }

@@ -10,7 +10,12 @@ import {
   buildPerLayerDirectionArrows3D,
   buildSideLabels3D
 } from "./plot3d-decorations-v2.js";
-import { buildPointTraces, markerForSearchPosition3D } from "./plot3d-points.js";
+import {
+  buildPointTraces,
+  markerForSearchPosition3D,
+  buildPointMarkerUpdates3D,
+  buildSearchMarkerUpdates3D
+} from "./plot3d-points.js";
 import { buildLayout } from "./plot3d-layout.js";
 
 export { getOrderedLayers, buildLayerZMap };
@@ -36,36 +41,52 @@ export function renderPlot3D(
   const spacingScale = Number($("spacingScale")?.value || 0.17);
   const orderedLayers = getOrderedLayers(points);
   const concToZ = buildLayerZMap(orderedLayers, spacingScale);
+  const preserveExistingCamera = Boolean(plotDiv?.data?.length && plotDiv?._fullLayout?.scene);
 
-  const searchMarker = markerForSearchPosition3D(searchPosition, concToZ);
-
-  const traces = [
+  const staticTraces = [
     ...buildLayerPlanes(orderedLayers, concToZ),
     buildTriangleGrid(orderedLayers, concToZ),
     ...buildTriangleEdges(orderedLayers, concToZ),
     buildLayerLabels3D(orderedLayers, concToZ),
     ...buildConcentrationGuide3D(orderedLayers, concToZ),
     ...buildPerLayerDirectionArrows3D(orderedLayers, concToZ),
-    ...buildSideLabels3D(orderedLayers, concToZ),
-    ...buildPointTraces(points, concToZ, colourBy),
-    ...(searchMarker || [])
+    ...buildSideLabels3D(orderedLayers, concToZ)
+  ].filter(Boolean);
+  const pointTraces = buildPointTraces(points, concToZ, colourBy);
+  const searchTraces = markerForSearchPosition3D(searchPosition, concToZ) || [];
+
+  const traces = [
+    ...staticTraces,
+    ...pointTraces,
+    ...searchTraces
   ].filter(Boolean);
 
   Plotly.react(
     plotDiv,
     traces,
-    buildLayout(currentCamera, orderedLayers, concToZ),
+    buildLayout(currentCamera, orderedLayers, concToZ, { preserveExistingCamera }),
     { responsive: true, displaylogo: false }
   );
 
   updateTernaryInset();
   updatePhaseLegend(colourBy);
 
+  plotDiv.__zif3DPointTraceIndices = pointTraces.map(
+    (_trace, index) => staticTraces.length + index
+  );
+  plotDiv.__zif3DSearchTraceIndices = searchTraces.map(
+    (_trace, index) => staticTraces.length + pointTraces.length + index
+  );
+  plotDiv.__zif3DPointMarkerUpdates = () => buildPointMarkerUpdates3D(points, colourBy);
+  plotDiv.__zif3DSearchMarkerUpdates = () => buildSearchMarkerUpdates3D();
+
   plotDiv.removeAllListeners?.("plotly_relayout");
   plotDiv.removeAllListeners?.("plotly_click");
 
   plotDiv.on("plotly_relayout", (ev) => {
-    if (ev["scene.camera"]) onCameraChange(ev["scene.camera"]);
+    if (ev["scene.camera"]) {
+      onCameraChange(JSON.parse(JSON.stringify(ev["scene.camera"])));
+    }
   });
 
   plotDiv.on("plotly_click", async (ev) => {
