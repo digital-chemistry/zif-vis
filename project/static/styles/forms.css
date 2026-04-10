@@ -280,6 +280,14 @@ input.is-auto {
   align-items: center;
 }
 
+.phase-filter-check {
+  font-weight: 600;
+}
+
+.phase-filter-name {
+  color: var(--phase-accent, var(--text));
+}
+
 .phase-slider-wrap {
   display: flex;
   flex-direction: column;
@@ -290,6 +298,11 @@ input.is-auto {
 .single-slider-readout {
   font-size: 12px;
   color: var(--muted);
+}
+
+.phase-filter-row .phase-slider-readout {
+  color: color-mix(in srgb, var(--phase-accent, var(--muted)) 70%, #4a5564 30%);
+  font-weight: 600;
 }
 
 .slider-help {

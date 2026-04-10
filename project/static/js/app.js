@@ -1,5 +1,6 @@
 import { $, updateViewControls } from "./dom.js";
-import { formatValShort } from "./formatters.js";
+import { displayPhase, formatValShort, normalisePhase } from "./formatters.js";
+import { PHASE_COLORS } from "./constants.js";
 import { readFiltersFromDom, filterPoints } from "./filters.js";
 import { renderPlot3D } from "./plot3d.js";
 import { renderPlot2D } from "./plot2d.js";
@@ -478,11 +479,16 @@ function buildPhaseFilters(sourcePoints = allPoints) {
 
   wrap.innerHTML = phaseNames
     .map(
-      (phase) => `
-      <div class="phase-filter-row">
-        <label class="simple-check">
-          <input type="checkbox" class="phase-check" data-phase="${phase}">
-          <span>${phase}</span>
+      (phase) => {
+        const phaseKey = normalisePhase(phase);
+        const phaseColor = PHASE_COLORS[phaseKey] || PHASE_COLORS.unknown || "#8B8B8B";
+        const phaseLabel = displayPhase(phase);
+
+        return `
+      <div class="phase-filter-row" style="--phase-accent:${phaseColor};">
+        <label class="simple-check phase-filter-check">
+          <input type="checkbox" class="phase-check" data-phase="${phase}" style="accent-color:${phaseColor};">
+          <span class="phase-filter-name">${phaseLabel}</span>
         </label>
         <div class="phase-slider-wrap">
           <input
@@ -493,11 +499,13 @@ function buildPhaseFilters(sourcePoints = allPoints) {
             max="100"
             step="1"
             value="0"
+            style="accent-color:${phaseColor};"
           >
           <div class="phase-slider-readout" id="phaseReadout_${cssSafe(phase)}">>= 0%</div>
         </div>
       </div>
-    `
+    `;
+      }
     )
     .join("");
 
