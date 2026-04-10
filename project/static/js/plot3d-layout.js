@@ -1,12 +1,18 @@
 import { TRI_H } from "./plot3d-geometry.js";
 
-export function buildLayout(currentCamera) {
+export function buildLayout(currentCamera, orderedLayers = [], concToZ = new Map()) {
   const xMin = -0.14;
   const xMax = 1.14;
   const span = xMax - xMin;
   const yCenter = TRI_H / 2;
   const yMin = yCenter - span / 2;
   const yMax = yCenter + span / 2;
+  const zValues = orderedLayers
+    .map((layer) => Number(concToZ.get(layer)))
+    .filter((value) => Number.isFinite(value));
+  const zMin = zValues.length ? Math.min(...zValues) : 0;
+  const zMax = zValues.length ? Math.max(...zValues) : 1;
+  const zPad = zValues.length <= 1 ? 0.08 : Math.max(0.08, (zMax - zMin) * 0.14);
 
   return {
     margin: { l: 0, r: 0, t: 8, b: 0 },
@@ -36,7 +42,8 @@ export function buildLayout(currentCamera) {
         showticklabels: false,
         showgrid: false,
         zeroline: false,
-        showbackground: false
+        showbackground: false,
+        range: [zMin - zPad, zMax + zPad]
       },
 
       camera: currentCamera || {

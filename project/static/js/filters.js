@@ -12,7 +12,22 @@ function getCheckedRadio(name, fallback) {
 }
 
 function getCheckedLayers() {
-  return [...document.querySelectorAll(".layer-check:checked")].map(el => Number(el.value));
+  const domSelected = [...document.querySelectorAll(".layer-check")]
+    .filter(el => el.checked)
+    .map(el => Number(el.value))
+    .filter(value => Number.isFinite(value));
+
+  const fromState = window.__zifLayerSelectionState;
+  if (Array.isArray(fromState)) {
+    if (domSelected.length !== fromState.length) {
+      return domSelected;
+    }
+    return fromState
+      .map(value => Number(value))
+      .filter(value => Number.isFinite(value));
+  }
+
+  return domSelected;
 }
 
 function getPhaseThresholds() {
@@ -52,6 +67,11 @@ export function readFiltersFromDom() {
   const washing = getCheckedRadio("washing", "ethanol"); 
   
   const colourBy = $("colourBy")?.value || "phase";
+  const selectedLayers = mode === "3d" ? getCheckedLayers() : [];
+  const layerCheckboxCount = document.querySelectorAll(".layer-check").length;
+  const layerState = Array.isArray(window.__zifLayerSelectionState)
+    ? window.__zifLayerSelectionState
+    : null;
 
   return {
     mode,
@@ -59,7 +79,11 @@ export function readFiltersFromDom() {
     washing,
     colourBy,
     searchPosition: getPositionMarker(),
-    selectedLayers: mode === "3d" ? getCheckedLayers() : [],
+    selectedLayers,
+    selectedLayersExplicitlyEmpty:
+      mode === "3d" &&
+      layerCheckboxCount > 0 &&
+      (layerState ? layerState.length === 0 : selectedLayers.length === 0),
     crystBalance: Number($("crystBalance")?.value ?? 0) / 100,
     proteinThreshold: Number($("proteinThreshold")?.value ?? 0),
     eeThreshold: Number($("eeThreshold")?.value ?? 0),
@@ -68,35 +92,12 @@ export function readFiltersFromDom() {
 }
 
 export function filterPoints(points, filters) {
-  const sortedSelectedLayers = [...filters.selectedLayers].sort((a, b) => a - b);
-
-  function allowIntermediateLayer(pointConc) {
-    if (!sortedSelectedLayers.length) return true;
-    for (let i = 0; i < sortedSelectedLayers.length - 1; i++) {
-      const lower = sortedSelectedLayers[i];
-      const upper = sortedSelectedLayers[i + 1];
-      if (pointConc > lower && pointConc < upper) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   return points.filter((p) => {
-    const conc = Number(p.concentration);
     const wash = String(p.wash_code || p.wash || "").toUpperCase();
     const cryst = Number(p.crystallinity);
     const protein = Number(p.protein_ratio);
     const ee = Number(p.encapsulation_efficiency ?? p.ee);
     const phaseComp = p.phase_composition || {};
-
-    if (filters.selectedLayers.length) {
-      if (p.is_intermediate_layer) {
-        if (!allowIntermediateLayer(conc)) return false;
-      } else if (!filters.selectedLayers.includes(conc)) {
-        return false;
-      }
-    }
 
     if (filters.washing === "ethanol" && wash !== "EW") return false;
     if (filters.washing === "water" && wash !== "WW") return false;

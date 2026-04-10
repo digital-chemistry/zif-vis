@@ -54,7 +54,7 @@ export function renderPlot3D(
   Plotly.react(
     plotDiv,
     traces,
-    buildLayout(currentCamera),
+    buildLayout(currentCamera, orderedLayers, concToZ),
     { responsive: true, displaylogo: false }
   );
 

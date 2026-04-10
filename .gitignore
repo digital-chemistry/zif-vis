@@ -12,3 +12,6 @@ old/
 project/ATR_xy/
 project/XRD_xy/
 project/images/
+
+# Local backup/original JSON snapshots
+project/*_org.json

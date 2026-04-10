@@ -289,7 +289,7 @@ export function buildLayerLabels3D(orderedLayers, concToZ) {
 }
 
 export function buildConcentrationGuide3D(orderedLayers, concToZ) {
-  if (!orderedLayers.length) return [];
+  if (orderedLayers.length < 2) return [];
 
   const x = 1.03;
   const y = 0.06;
@@ -345,7 +345,7 @@ export function buildPerLayerDirectionArrows3D(orderedLayers, concToZ) {
 
   const traces = [];
   const frontLayer = orderedLayers[0];
-  const z = (concToZ.get(frontLayer) ?? 0) + 0.012;
+  const z = concToZ.get(frontLayer) ?? 0;
 
   addArrowTrace(traces, ligandArrow.start, ligandArrow.end, z, ARROW_STYLE.colours.ligand);
   addArrowTrace(traces, metalArrow.start, metalArrow.end, z, ARROW_STYLE.colours.metal);
@@ -358,7 +358,7 @@ export function buildSideLabels3D(orderedLayers, concToZ) {
   if (!orderedLayers.length) return [];
 
   const frontLayer = orderedLayers[0];
-  const z = (concToZ.get(frontLayer) ?? 0) - 0.012;
+  const z = concToZ.get(frontLayer) ?? 0;
 
   const { A, B, C } = TRIANGLE;
   const leftAnchor = midpoint(A, C);

@@ -6,14 +6,159 @@ import { renderPlot2D } from "./plot2d.js";
 import { loadInspector } from "./inspector.js";
 
 let allPoints = [];
-let manualPoints = [];
+const datasetPointsCache = new Map();
 let predictedGridCache = new Map();
 let currentCamera = null;
 let predictionRequestToken = 0;
+let renderRequestToken = 0;
 const ZIF_BASE_PATH = String(window.ZIF_BASE_PATH || "");
+const LAYER_SELECTION_STORAGE_KEY = "zifExplorer.visibleLayers";
+let scheduledRenderHandle = null;
+let layerSelectionState = null;
 
 function apiUrl(path) {
   return `${ZIF_BASE_PATH}${path}`;
+}
+
+function readSavedLayerSelection() {
+  try {
+    const raw = window.localStorage.getItem(LAYER_SELECTION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    return parsed
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value));
+  } catch (_err) {
+    return null;
+  }
+}
+
+function saveLayerSelection() {
+  try {
+    const selected = Array.isArray(layerSelectionState)
+      ? layerSelectionState
+      : [...document.querySelectorAll(".layer-check:checked")]
+          .map((el) => Number(el.value))
+          .filter((value) => Number.isFinite(value));
+    window.localStorage.setItem(
+      LAYER_SELECTION_STORAGE_KEY,
+      JSON.stringify(selected)
+    );
+  } catch (_err) {
+    // Ignore storage failures and keep the UI working.
+  }
+}
+
+function setLayerSelectionState(values) {
+  layerSelectionState = (Array.isArray(values) ? values : [])
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+  window.__zifLayerSelectionState = [...layerSelectionState];
+}
+
+function readLayerSelectionFromDom() {
+  return [...document.querySelectorAll(".layer-check")]
+    .filter((el) => el.checked)
+    .map((el) => Number(el.value))
+    .filter((value) => Number.isFinite(value))
+    .sort((a, b) => a - b);
+}
+
+function syncLayerSelectionFromDom() {
+  setLayerSelectionState(readLayerSelectionFromDom());
+  saveLayerSelection();
+}
+
+function applyLayerVisibility(points, filters) {
+  if (filters.mode !== "3d") return points;
+  if (filters.selectedLayersExplicitlyEmpty) return [];
+  if (!filters.selectedLayers.length) return points;
+
+  const sortedSelectedLayers = [...filters.selectedLayers].sort((a, b) => a - b);
+
+  function allowIntermediateLayer(pointConc) {
+    for (let i = 0; i < sortedSelectedLayers.length - 1; i++) {
+      const lower = sortedSelectedLayers[i];
+      const upper = sortedSelectedLayers[i + 1];
+      if (pointConc > lower && pointConc < upper) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  return points.filter((point) => {
+    const conc = Number(point.concentration);
+    if (point.is_intermediate_layer) {
+      return allowIntermediateLayer(conc);
+    }
+    return sortedSelectedLayers.includes(conc);
+  });
+}
+
+function scheduleRender() {
+  if (scheduledRenderHandle != null) {
+    window.cancelAnimationFrame(scheduledRenderHandle);
+  }
+  scheduledRenderHandle = window.requestAnimationFrame(() => {
+    scheduledRenderHandle = null;
+    applyFiltersAndRender();
+  });
+}
+
+function resetTransientControlsToDefaults() {
+  const viewMode = document.querySelector('input[name="viewMode"][value="3d"]');
+  if (viewMode) viewMode.checked = true;
+
+  const dataLayer = document.querySelector('input[name="dataLayer"][value="experimental"]');
+  if (dataLayer) dataLayer.checked = true;
+
+  const washing = document.querySelector('input[name="washing"][value="ethanol"]');
+  if (washing) washing.checked = true;
+
+  const colourBy = $("colourBy");
+  if (colourBy) colourBy.value = "phase";
+
+  const layerFocus = $("layerFocus");
+  if (layerFocus) layerFocus.value = "";
+
+  const showInterlayerGuides = $("showInterlayerGuides");
+  if (showInterlayerGuides) showInterlayerGuides.checked = false;
+
+  const crystBalance = $("crystBalance");
+  if (crystBalance) crystBalance.value = 0;
+
+  const proteinThreshold = $("proteinThreshold");
+  if (proteinThreshold) proteinThreshold.value = 0;
+
+  const eeThreshold = $("eeThreshold");
+  if (eeThreshold) eeThreshold.value = eeThreshold.min || -0.2;
+
+  const spacingScale = $("spacingScale");
+  if (spacingScale) spacingScale.value = 0.2;
+
+  const markerScale3D = $("markerScale3D");
+  if (markerScale3D) markerScale3D.value = 1.8;
+
+  const amorphousOpacity = $("amorphousOpacity");
+  if (amorphousOpacity) amorphousOpacity.value = 0.7;
+}
+
+async function fetchDatasetPoints(dataset) {
+  const key = String(dataset || "primary");
+  if (datasetPointsCache.has(key)) {
+    return datasetPointsCache.get(key);
+  }
+
+  const res = await fetch(apiUrl(`/api/points?dataset=${encodeURIComponent(key)}`));
+  if (!res.ok) {
+    throw new Error(`Failed to load ${apiUrl(`/api/points?dataset=${encodeURIComponent(key)}`)} (${res.status})`);
+  }
+
+  const payload = await res.json();
+  datasetPointsCache.set(key, payload);
+  return payload;
 }
 
 document.addEventListener("DOMContentLoaded", initApp);
@@ -22,8 +167,23 @@ async function initApp() {
   if (window.__zifExplorerLoaded) return;
   window.__zifExplorerLoaded = true;
 
+  resetTransientControlsToDefaults();
   wireControls();
   await loadPoints();
+}
+
+function currentExperimentalDatasetKey() {
+  const dataLayer =
+    document.querySelector('input[name="dataLayer"]:checked')?.value || "experimental";
+  return dataLayer === "experimental_xue" ? "manual" : "primary";
+}
+
+async function syncControlsToActiveExperimentalDataset() {
+  const points = await fetchDatasetPoints(currentExperimentalDatasetKey());
+  buildLayerOptions(points);
+  buildPhaseFilters(points);
+  initSliderRanges(points);
+  resetAdvancedPhaseFilters();
 }
 
 function wireControls() {
@@ -56,7 +216,7 @@ function wireControls() {
       updateDerivedReadouts();
       updateViewControls();
       toggleModeDependentCards();
-      applyFiltersAndRender();
+      scheduleRender();
     });
   });
 
@@ -69,7 +229,7 @@ function wireControls() {
       validatePositionInputs();
       updatePositionNote();
       updateCompositionPrediction();
-      applyFiltersAndRender();
+      scheduleRender();
     });
 
     el.addEventListener("change", () => {
@@ -77,7 +237,7 @@ function wireControls() {
       autoFillPosition();
       updateDerivedReadouts();
       updateCompositionPrediction();
-      applyFiltersAndRender();
+      scheduleRender();
     });
   });
 
@@ -110,22 +270,25 @@ function wireControls() {
     validatePositionInputs();
     updatePositionNote();
     clearCompositionPrediction();
-    applyFiltersAndRender();
+    scheduleRender();
   });
 
   document.querySelectorAll('input[name="viewMode"]').forEach((el) => {
     el.addEventListener("change", () => {
       updateViewControls();
       toggleModeDependentCards();
-      applyFiltersAndRender();
+      scheduleRender();
     });
   });
 
   document.querySelectorAll('input[name="dataLayer"]').forEach((el) => {
-    el.addEventListener("change", () => {
+    el.addEventListener("change", async () => {
       updateViewControls();
       toggleModeDependentCards();
-      applyFiltersAndRender();
+      if (el.value === "experimental" || el.value === "experimental_xue") {
+        await syncControlsToActiveExperimentalDataset();
+      }
+      scheduleRender();
     });
   });
 
@@ -138,7 +301,7 @@ function wireControls() {
         $("posWash").value = el.value;
         updateCompositionPrediction();
       }
-      applyFiltersAndRender();
+      scheduleRender();
     });
   });
 
@@ -151,23 +314,9 @@ function wireControls() {
 
 async function loadPoints() {
   try {
-    const [primaryRes, manualRes] = await Promise.all([
-      fetch(apiUrl("/api/points?dataset=primary")),
-      fetch(apiUrl("/api/points?dataset=manual"))
-    ]);
+    allPoints = await fetchDatasetPoints("primary");
 
-    if (!primaryRes.ok) {
-      throw new Error(`Failed to load ${apiUrl("/api/points?dataset=primary")} (${primaryRes.status})`);
-    }
-    if (!manualRes.ok) {
-      throw new Error(`Failed to load ${apiUrl("/api/points?dataset=manual")} (${manualRes.status})`);
-    }
-
-    [allPoints, manualPoints] = await Promise.all([primaryRes.json(), manualRes.json()]);
-
-    buildLayerOptions();
-    buildPhaseFilters();
-    initSliderRanges();
+    await syncControlsToActiveExperimentalDataset();
 
     updateDerivedReadouts();
     const posWash = $("posWash");
@@ -212,10 +361,10 @@ async function getPredictedGridPoints(wash, includeIntermediateLayers = false) {
 
 async function getDisplayPoints(filters) {
   if (filters.dataLayer === "experimental") {
-    return allPoints;
+    return fetchDatasetPoints("primary");
   }
   if (filters.dataLayer === "experimental_xue") {
-    return manualPoints;
+    return fetchDatasetPoints("manual");
   }
 
   const includeIntermediateLayers =
@@ -231,12 +380,12 @@ async function getDisplayPoints(filters) {
   return [...allPoints, ...predicted];
 }
 
-function initSliderRanges() {
-  const proteins = allPoints
+function initSliderRanges(sourcePoints = allPoints) {
+  const proteins = sourcePoints
     .map((p) => Number(p.protein_ratio))
     .filter(Number.isFinite);
 
-  const ees = allPoints
+  const ees = sourcePoints
     .map((p) => Number(p.encapsulation_efficiency ?? p.ee))
     .filter(Number.isFinite);
 
@@ -264,12 +413,21 @@ function initSliderRanges() {
   }
 }
 
-function buildLayerOptions() {
+function buildLayerOptions(sourcePoints = allPoints) {
   const layers = [
     ...new Set(
-      allPoints.map((p) => Number(p.concentration)).filter(Number.isFinite)
+      sourcePoints.map((p) => Number(p.concentration)).filter(Number.isFinite)
     )
   ].sort((a, b) => a - b);
+  const savedSelection = readSavedLayerSelection();
+  const availableSet = new Set(layers);
+  const initialSelection =
+    savedSelection == null
+      ? [...layers]
+      : savedSelection.filter((value) => availableSet.has(Number(value)));
+
+  setLayerSelectionState(initialSelection);
+  const selectedSet = new Set(layerSelectionState);
 
   const wrap = $("layerCheckboxes");
   const focus = $("layerFocus");
@@ -279,16 +437,24 @@ function buildLayerOptions() {
       .map(
         (v) => `
       <label class="simple-check">
-        <input type="checkbox" class="layer-check" value="${v}" checked>
+        <input type="checkbox" class="layer-check" value="${v}" ${selectedSet == null || selectedSet.has(Number(v)) ? "checked" : ""}>
         <span>${formatValShort(v, 1)} mg mL^-1</span>
       </label>
     `
       )
       .join("");
 
-    wrap.querySelectorAll(".layer-check").forEach((el) => {
-      el.addEventListener("change", applyFiltersAndRender);
-    });
+    const resyncAndRenderLayers = () => {
+      window.requestAnimationFrame(() => {
+        syncLayerSelectionFromDom();
+        currentCamera = null;
+        scheduleRender();
+      });
+    };
+
+    wrap.onchange = resyncAndRenderLayers;
+    wrap.oninput = resyncAndRenderLayers;
+    wrap.onclick = resyncAndRenderLayers;
   }
 
   if (focus) {
@@ -298,14 +464,16 @@ function buildLayerOptions() {
         .map((v) => `<option value="${v}">${formatValShort(v, 1)} mg mL^-1</option>`)
         .join("");
   }
+
+  saveLayerSelection();
 }
 
-function buildPhaseFilters() {
+function buildPhaseFilters(sourcePoints = allPoints) {
   const wrap = $("phaseFilters");
   if (!wrap) return;
 
   const phaseNames = [
-    ...new Set(allPoints.flatMap((p) => Object.keys(p.phase_composition || {})))
+    ...new Set(sourcePoints.flatMap((p) => Object.keys(p.phase_composition || {})))
   ].sort();
 
   wrap.innerHTML = phaseNames
@@ -341,7 +509,7 @@ function buildPhaseFilters() {
         slider.value = 0;
       }
       updatePhaseReadouts();
-      applyFiltersAndRender();
+      scheduleRender();
     });
   });
 
@@ -353,7 +521,7 @@ function buildPhaseFilters() {
         check.checked = true;
       }
       updatePhaseReadouts();
-      applyFiltersAndRender();
+      scheduleRender();
     });
   });
 
@@ -372,6 +540,18 @@ function updatePhaseReadouts() {
       out.textContent = `>= ${slider.value}%`;
     }
   });
+}
+
+function resetAdvancedPhaseFilters() {
+  document.querySelectorAll(".phase-check").forEach((check) => {
+    check.checked = false;
+  });
+
+  document.querySelectorAll(".phase-slider").forEach((slider) => {
+    slider.value = 0;
+  });
+
+  updatePhaseReadouts();
 }
 
 function readPositionNumber(id) {
@@ -712,13 +892,91 @@ function toggleModeDependentCards() {
   }
 }
 
+function formatRenderDebugFilters(filters) {
+  const layers =
+    filters.mode === "3d"
+      ? filters.selectedLayersExplicitlyEmpty
+        ? "none selected"
+        : filters.selectedLayers.length
+          ? filters.selectedLayers.map((value) => formatValShort(value, 1)).join(", ")
+          : "all layers"
+      : "2D view";
+
+  const phaseFilters = Object.entries(filters.phaseThresholds || {});
+  const phaseSummary = phaseFilters.length
+    ? phaseFilters
+        .map(([phase, threshold]) => `${phase} >= ${Math.round(Number(threshold || 0) * 100)}%`)
+        .join(", ")
+    : "none";
+
+  return {
+    mode: filters.mode === "3d" ? "3D stacked" : "2D ternary",
+    dataLayer: filters.dataLayer,
+    wash: filters.washing,
+    colourBy: filters.colourBy,
+    layers,
+    crystallinity: filters.crystBalance > 0 ? `>= ${Math.round(filters.crystBalance * 100)}%` : "Any",
+    atrRatio: formatValShort(filters.proteinThreshold, 3),
+    ee: formatValShort(filters.eeThreshold, 2),
+    phaseSummary
+  };
+}
+
+function renderNoPointsMarkup(diagnostics) {
+  const debug = diagnostics?.filters || {};
+  return `
+    <div style="padding:24px;color:#555;display:flex;flex-direction:column;gap:12px;">
+      <div style="font-size:16px;color:#666;">No points match the current filters.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;font-size:13px;color:#596273;">
+        <div>
+          <div><strong>Source points:</strong> ${diagnostics?.sourceCount ?? 0}</div>
+          <div><strong>After wash/value filters:</strong> ${diagnostics?.propertyCount ?? 0}</div>
+          <div><strong>After layer visibility:</strong> ${diagnostics?.visibleCount ?? 0}</div>
+        </div>
+        <div>
+          <div><strong>Mode:</strong> ${debug.mode || "N/A"}</div>
+          <div><strong>Data layer:</strong> ${debug.dataLayer || "N/A"}</div>
+          <div><strong>Wash:</strong> ${debug.wash || "N/A"}</div>
+          <div><strong>Layers:</strong> ${debug.layers || "N/A"}</div>
+        </div>
+        <div>
+          <div><strong>Color by:</strong> ${debug.colourBy || "N/A"}</div>
+          <div><strong>Min crystallinity:</strong> ${debug.crystallinity || "N/A"}</div>
+          <div><strong>Estimated ratio min:</strong> ${debug.atrRatio || "N/A"}</div>
+          <div><strong>Min EE:</strong> ${debug.ee || "N/A"}</div>
+          <div><strong>Phase filters:</strong> ${debug.phaseSummary || "none"}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 async function applyFiltersAndRender() {
   const filters = readFiltersFromDom();
   const plotDiv = $("plot");
+  const token = ++renderRequestToken;
 
   try {
     const displayPoints = await getDisplayPoints(filters);
-    const filtered = filterPoints(displayPoints, filters);
+    if (token !== renderRequestToken) return;
+    const propertyFiltered = filterPoints(displayPoints, filters);
+    const filtered = applyLayerVisibility(propertyFiltered, filters);
+    if (token !== renderRequestToken) return;
+
+    const diagnostics = {
+      sourceCount: displayPoints.length,
+      propertyCount: propertyFiltered.length,
+      visibleCount: filtered.length,
+      filters: formatRenderDebugFilters(filters)
+    };
+    window.__zifLastRenderDiagnostics = diagnostics;
+
+    if (!filtered.length) {
+      if (plotDiv) {
+        plotDiv.innerHTML = renderNoPointsMarkup(diagnostics);
+      }
+      return;
+    }
 
     if (filters.mode === "2d") {
       renderPlot2D(filtered, filters.colourBy, handlePointClick, filters.searchPosition);
@@ -735,6 +993,7 @@ async function applyFiltersAndRender() {
       );
     }
   } catch (err) {
+    if (token !== renderRequestToken) return;
     console.error("applyFiltersAndRender failed:", err);
     if (plotDiv) {
       plotDiv.innerHTML = `<div style="padding:24px;color:#a33;">Failed to load the selected data layer.</div>`;
