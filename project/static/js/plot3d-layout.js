@@ -18,7 +18,7 @@ export function buildLayout(currentCamera, orderedLayers = [], concToZ = new Map
     margin: { l: 0, r: 0, t: 8, b: 0 },
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
-    uirevision: null,
+    uirevision: "zif-3d-scene",
 
     scene: {
       xaxis: {
