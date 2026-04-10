@@ -1,6 +1,6 @@
 import { $, updateViewControls } from "./dom.js";
 import { displayPhase, formatValShort, normalisePhase } from "./formatters.js";
-import { PHASE_COLORS } from "./constants.js";
+import { PHASE_COLORS, HIDDEN_USER_PHASE_KEYS } from "./constants.js";
 import { readFiltersFromDom, filterPoints } from "./filters.js";
 import { renderPlot3D } from "./plot3d.js";
 import { renderPlot2D } from "./plot2d.js";
@@ -526,7 +526,9 @@ function buildPhaseFilters(sourcePoints = allPoints) {
 
   const phaseNames = [
     ...new Set(sourcePoints.flatMap((p) => Object.keys(p.phase_composition || {})))
-  ].sort();
+  ]
+    .filter((phase) => !HIDDEN_USER_PHASE_KEYS.includes(normalisePhase(phase)))
+    .sort();
 
   wrap.innerHTML = phaseNames
     .map(

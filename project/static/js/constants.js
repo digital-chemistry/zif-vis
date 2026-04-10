@@ -27,11 +27,10 @@ export const OFFICIAL_PHASE_ORDER = [
   "zif-c",
   "sod",
   "dia",
-  "u13",
-  "u12",
-  "zif-ec-1",
-  "zif-l"
+  "u13"
 ];
+
+export const HIDDEN_USER_PHASE_KEYS = ["u12", "zif-ec-1", "zif-l"];
 
 export const BASE_LAYER_Z = {
   12.5: 0.0,
