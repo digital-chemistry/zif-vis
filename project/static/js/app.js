@@ -14,6 +14,10 @@ let renderRequestToken = 0;
 const ZIF_BASE_PATH = String(window.ZIF_BASE_PATH || "");
 const LAYER_SELECTION_STORAGE_KEY = "zifExplorer.visibleLayers";
 let scheduledRenderHandle = null;
+const SPACING_UI_MIN = 0;
+const SPACING_UI_MAX = 1;
+const SPACING_ACTUAL_MIN = 0.02;
+const SPACING_ACTUAL_MAX = 0.2;
 const viewerState = {
   selectedLayers: [],
   camera3D: null
@@ -21,6 +25,15 @@ const viewerState = {
 
 function apiUrl(path) {
   return `${ZIF_BASE_PATH}${path}`;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function getNormalizedSpacingValue() {
+  const raw = Number($("spacingScale")?.value ?? 1);
+  return Number.isFinite(raw) ? clamp(raw, SPACING_UI_MIN, SPACING_UI_MAX) : 1;
 }
 
 function isCurrentMode3D() {
@@ -223,7 +236,7 @@ function resetTransientControlsToDefaults() {
   if (eeThreshold) eeThreshold.value = eeThreshold.min || -0.2;
 
   const spacingScale = $("spacingScale");
-  if (spacingScale) spacingScale.value = 0.2;
+  if (spacingScale) spacingScale.value = 1;
 
   const markerScale3D = $("markerScale3D");
   if (markerScale3D) markerScale3D.value = 1.8;
@@ -948,7 +961,7 @@ function updateDerivedReadouts() {
   const cryst = Number($("crystBalance")?.value ?? 0);
   const protein = Number($("proteinThreshold")?.value ?? 0);
   const ee = Number($("eeThreshold")?.value ?? 0);
-  const spacing = Number($("spacingScale")?.value ?? 0.2);
+  const spacing = getNormalizedSpacingValue();
   const markerScale = Number($("markerScale3D")?.value ?? 1.8);
   const amorphousOpacity = Number($("amorphousOpacity")?.value ?? 0.7);
 

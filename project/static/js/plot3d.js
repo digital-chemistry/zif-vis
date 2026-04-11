@@ -21,6 +21,9 @@ import { buildLayout } from "./plot3d-layout.js";
 
 export { getOrderedLayers, buildLayerZMap };
 
+const SPACING_ACTUAL_MIN = 0.02;
+const SPACING_ACTUAL_MAX = 0.2;
+
 function clearPlotContainer(plotDiv) {
   if (!plotDiv) return;
   Plotly.purge?.(plotDiv);
@@ -30,6 +33,12 @@ function clearPlotContainer(plotDiv) {
 
 function cloneCamera(camera) {
   return camera ? JSON.parse(JSON.stringify(camera)) : null;
+}
+
+function getActualSpacingScale() {
+  const raw = Number($("spacingScale")?.value ?? 1);
+  const normalized = Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 1;
+  return SPACING_ACTUAL_MIN + normalized * (SPACING_ACTUAL_MAX - SPACING_ACTUAL_MIN);
 }
 
 function extractCameraFromRelayoutEvent(ev, fallbackCamera = null) {
@@ -93,7 +102,7 @@ export function renderPlot3D(
     return;
   }
 
-  const spacingScale = Number($("spacingScale")?.value || 0.17);
+  const spacingScale = getActualSpacingScale();
   const orderedLayers = getOrderedLayers(points);
   const concToZ = buildLayerZMap(orderedLayers, spacingScale);
   const preserveExistingCamera = Boolean(plotDiv?.data?.length && plotDiv?._fullLayout?.scene);
