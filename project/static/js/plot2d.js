@@ -23,6 +23,13 @@ const SEARCH_MARKER_COLOR = "#d85b72";
 const SEARCH_MARKER_CORE_COLOR = "#111111";
 const PREDICTED_MARKER_SCALE = 0.76;
 
+function clearPlotContainer(plotDiv) {
+  if (!plotDiv) return;
+  Plotly.purge?.(plotDiv);
+  plotDiv.replaceChildren();
+  plotDiv.textContent = "";
+}
+
 const PHASE_PROBABILITY_MODES = {
   phase_prob_amorphous: { title: "Amorphous probability", key: "Amorphous" },
   phase_prob_sodalite: { title: "Sodalite probability", key: "Sodalite" },
@@ -330,6 +337,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
     .sort((a, b) => b - a);
 
   if (!availableLayers.length) {
+    clearPlotContainer(plotDiv);
     plotDiv.innerHTML = `<div style="padding:24px;color:#777;">No points match the current filters.</div>`;
     return;
   }
@@ -338,6 +346,7 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
   const layerPoints = points.filter((p) => Number(p.concentration) === layer);
 
   if (!layerPoints.length) {
+    clearPlotContainer(plotDiv);
     plotDiv.innerHTML = `<div style="padding:24px;color:#777;">No points found for this layer.</div>`;
     return;
   }

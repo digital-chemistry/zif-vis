@@ -27,13 +27,14 @@ export function buildLayout(
   const zMax = zValues.length ? Math.max(...zValues) : 1;
   const zPad = zValues.length <= 1 ? 0.08 : Math.max(0.08, (zMax - zMin) * 0.14);
 
-  return {
+  const layout = {
     margin: { l: 0, r: 0, t: 8, b: 0 },
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
     uirevision: "zif-3d-scene",
 
     scene: {
+      uirevision: "zif-3d-scene",
       xaxis: {
         visible: false,
         showbackground: false,
@@ -93,8 +94,10 @@ export function buildLayout(
     showlegend: false
   };
 
-  if (!preserveExistingCamera) {
-    layout.scene.camera = currentCamera || DEFAULT_3D_CAMERA;
+  if (currentCamera) {
+    layout.scene.camera = currentCamera;
+  } else if (!preserveExistingCamera) {
+    layout.scene.camera = DEFAULT_3D_CAMERA;
   }
 
   return layout;

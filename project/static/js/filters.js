@@ -11,25 +11,6 @@ function getCheckedRadio(name, fallback) {
   return document.querySelector(`input[name="${name}"]:checked`)?.value || fallback;
 }
 
-function getCheckedLayers() {
-  const domSelected = [...document.querySelectorAll(".layer-check")]
-    .filter(el => el.checked)
-    .map(el => Number(el.value))
-    .filter(value => Number.isFinite(value));
-
-  const fromState = window.__zifLayerSelectionState;
-  if (Array.isArray(fromState)) {
-    if (domSelected.length !== fromState.length) {
-      return domSelected;
-    }
-    return fromState
-      .map(value => Number(value))
-      .filter(value => Number.isFinite(value));
-  }
-
-  return domSelected;
-}
-
 function getPhaseThresholds() {
   const result = {};
   document.querySelectorAll(".phase-slider").forEach((slider) => {
@@ -59,19 +40,19 @@ function getPositionMarker() {
   return { metal: m, ligand: l, bsa: b, concentration: c };
 }
 
-export function readFiltersFromDom() {
+export function readFiltersFromState(viewerState = {}) {
   const mode = getCheckedRadio("viewMode", "3d");
   const dataLayer = getCheckedRadio("dataLayer", "experimental");
-  
-  // UPDATED: Now uses the radio button helper instead of looking for an ID
-  const washing = getCheckedRadio("washing", "ethanol"); 
-  
+  const washing = getCheckedRadio("washing", "ethanol");
+
   const colourBy = $("colourBy")?.value || "phase";
-  const selectedLayers = mode === "3d" ? getCheckedLayers() : [];
+  const selectedLayers =
+    mode === "3d"
+      ? (Array.isArray(viewerState.selectedLayers) ? viewerState.selectedLayers : [])
+          .map(value => Number(value))
+          .filter(value => Number.isFinite(value))
+      : [];
   const layerCheckboxCount = document.querySelectorAll(".layer-check").length;
-  const layerState = Array.isArray(window.__zifLayerSelectionState)
-    ? window.__zifLayerSelectionState
-    : null;
 
   return {
     mode,
@@ -83,7 +64,7 @@ export function readFiltersFromDom() {
     selectedLayersExplicitlyEmpty:
       mode === "3d" &&
       layerCheckboxCount > 0 &&
-      (layerState ? layerState.length === 0 : selectedLayers.length === 0),
+      selectedLayers.length === 0,
     crystBalance: Number($("crystBalance")?.value ?? 0) / 100,
     proteinThreshold: Number($("proteinThreshold")?.value ?? 0),
     eeThreshold: Number($("eeThreshold")?.value ?? 0),

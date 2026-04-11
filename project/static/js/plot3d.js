@@ -20,6 +20,59 @@ import { buildLayout } from "./plot3d-layout.js";
 
 export { getOrderedLayers, buildLayerZMap };
 
+function clearPlotContainer(plotDiv) {
+  if (!plotDiv) return;
+  Plotly.purge?.(plotDiv);
+  plotDiv.replaceChildren();
+  plotDiv.textContent = "";
+}
+
+function cloneCamera(camera) {
+  return camera ? JSON.parse(JSON.stringify(camera)) : null;
+}
+
+function extractCameraFromRelayoutEvent(ev, fallbackCamera = null) {
+  if (!ev || typeof ev !== "object") return fallbackCamera;
+  if (ev["scene.camera"]) return cloneCamera(ev["scene.camera"]);
+
+  const base = cloneCamera(fallbackCamera) || {
+    eye: { x: 0.0, y: -1.72, z: 0.66 },
+    up: { x: 0, y: 0, z: 1 },
+    center: { x: 0.0, y: 0.01, z: 0 },
+    projection: { type: "orthographic" }
+  };
+
+  let changed = false;
+  const mappings = [
+    ["scene.camera.eye.x", ["eye", "x"]],
+    ["scene.camera.eye.y", ["eye", "y"]],
+    ["scene.camera.eye.z", ["eye", "z"]],
+    ["scene.camera.up.x", ["up", "x"]],
+    ["scene.camera.up.y", ["up", "y"]],
+    ["scene.camera.up.z", ["up", "z"]],
+    ["scene.camera.center.x", ["center", "x"]],
+    ["scene.camera.center.y", ["center", "y"]],
+    ["scene.camera.center.z", ["center", "z"]]
+  ];
+
+  mappings.forEach(([key, path]) => {
+    if (key in ev && Number.isFinite(Number(ev[key]))) {
+      const [group, axis] = path;
+      if (!base[group]) base[group] = {};
+      base[group][axis] = Number(ev[key]);
+      changed = true;
+    }
+  });
+
+  if ("scene.camera.projection.type" in ev) {
+    base.projection = base.projection || {};
+    base.projection.type = ev["scene.camera.projection.type"];
+    changed = true;
+  }
+
+  return changed ? base : fallbackCamera;
+}
+
 export function renderPlot3D(
   points,
   colourBy,
@@ -32,6 +85,7 @@ export function renderPlot3D(
   if (!plotDiv) return;
 
   if (!points.length) {
+    clearPlotContainer(plotDiv);
     plotDiv.innerHTML = `<div style="padding:24px;color:#777;">No points match the current filters.</div>`;
     updateTernaryInset();
     updatePhaseLegend(colourBy);
@@ -60,11 +114,13 @@ export function renderPlot3D(
     ...pointTraces,
     ...searchTraces
   ].filter(Boolean);
+  const liveCamera = cloneCamera(plotDiv?._fullLayout?.scene?.camera);
+  const effectiveCamera = liveCamera || currentCamera;
 
   Plotly.react(
     plotDiv,
     traces,
-    buildLayout(currentCamera, orderedLayers, concToZ, { preserveExistingCamera }),
+    buildLayout(effectiveCamera, orderedLayers, concToZ, { preserveExistingCamera }),
     { responsive: true, displaylogo: false }
   );
 
@@ -84,8 +140,12 @@ export function renderPlot3D(
   plotDiv.removeAllListeners?.("plotly_click");
 
   plotDiv.on("plotly_relayout", (ev) => {
-    if (ev["scene.camera"]) {
-      onCameraChange(JSON.parse(JSON.stringify(ev["scene.camera"])));
+    const nextCamera = extractCameraFromRelayoutEvent(
+      ev,
+      plotDiv?._fullLayout?.scene?.camera || effectiveCamera
+    );
+    if (nextCamera) {
+      onCameraChange(nextCamera);
     }
   });
 

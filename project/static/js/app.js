@@ -1,7 +1,7 @@
 import { $, updateViewControls } from "./dom.js";
 import { displayPhase, formatValShort, normalisePhase } from "./formatters.js";
 import { PHASE_COLORS, HIDDEN_USER_PHASE_KEYS } from "./constants.js";
-import { readFiltersFromDom, filterPoints } from "./filters.js";
+import { readFiltersFromState, filterPoints } from "./filters.js";
 import { renderPlot3D } from "./plot3d.js";
 import { renderPlot2D } from "./plot2d.js";
 import { loadInspector } from "./inspector.js";
@@ -9,13 +9,15 @@ import { loadInspector } from "./inspector.js";
 let allPoints = [];
 const datasetPointsCache = new Map();
 let predictedGridCache = new Map();
-let currentCamera = null;
 let predictionRequestToken = 0;
 let renderRequestToken = 0;
 const ZIF_BASE_PATH = String(window.ZIF_BASE_PATH || "");
 const LAYER_SELECTION_STORAGE_KEY = "zifExplorer.visibleLayers";
 let scheduledRenderHandle = null;
-let layerSelectionState = null;
+const viewerState = {
+  selectedLayers: [],
+  camera3D: null
+};
 
 function apiUrl(path) {
   return `${ZIF_BASE_PATH}${path}`;
@@ -30,6 +32,9 @@ function isCurrentMode3D() {
 function restyleCurrent3DMarkers() {
   const plotDiv = $("plot");
   if (!plotDiv || !isCurrentMode3D() || !plotDiv.data?.length) return false;
+  const liveCamera = plotDiv?._fullLayout?.scene?.camera
+    ? JSON.parse(JSON.stringify(plotDiv._fullLayout.scene.camera))
+    : null;
 
   const pointIndices = plotDiv.__zif3DPointTraceIndices;
   const pointUpdatesFactory = plotDiv.__zif3DPointMarkerUpdates;
@@ -37,11 +42,12 @@ function restyleCurrent3DMarkers() {
     return false;
   }
 
+  const pendingUpdates = [];
   const pointUpdates = pointUpdatesFactory();
   pointIndices.forEach((traceIndex, idx) => {
     const update = pointUpdates[idx];
     if (update) {
-      Plotly.restyle(plotDiv, update, [traceIndex]);
+      pendingUpdates.push(Plotly.restyle(plotDiv, update, [traceIndex]));
     }
   });
 
@@ -52,8 +58,14 @@ function restyleCurrent3DMarkers() {
     searchIndices.forEach((traceIndex, idx) => {
       const update = searchUpdates[idx];
       if (update) {
-        Plotly.restyle(plotDiv, update, [traceIndex]);
+        pendingUpdates.push(Plotly.restyle(plotDiv, update, [traceIndex]));
       }
+    });
+  }
+
+  if (liveCamera) {
+    Promise.allSettled(pendingUpdates).then(() => {
+      Plotly.relayout(plotDiv, { "scene.camera": liveCamera }).catch?.(() => {});
     });
   }
 
@@ -76,11 +88,9 @@ function readSavedLayerSelection() {
 
 function saveLayerSelection() {
   try {
-    const selected = Array.isArray(layerSelectionState)
-      ? layerSelectionState
-      : [...document.querySelectorAll(".layer-check:checked")]
-          .map((el) => Number(el.value))
-          .filter((value) => Number.isFinite(value));
+    const selected = Array.isArray(viewerState.selectedLayers)
+      ? viewerState.selectedLayers
+      : [];
     window.localStorage.setItem(
       LAYER_SELECTION_STORAGE_KEY,
       JSON.stringify(selected)
@@ -91,10 +101,9 @@ function saveLayerSelection() {
 }
 
 function setLayerSelectionState(values) {
-  layerSelectionState = (Array.isArray(values) ? values : [])
+  viewerState.selectedLayers = (Array.isArray(values) ? values : [])
     .map((value) => Number(value))
     .filter((value) => Number.isFinite(value));
-  window.__zifLayerSelectionState = [...layerSelectionState];
 }
 
 function readLayerSelectionFromDom() {
@@ -385,6 +394,7 @@ async function loadPoints() {
 
     const plotDiv = $("plot");
     if (plotDiv) {
+      clearPlotContainer(plotDiv);
       plotDiv.innerHTML = `<div style="padding:24px;color:#a33;">Failed to load point data.</div>`;
     }
   }
@@ -479,7 +489,7 @@ function buildLayerOptions(sourcePoints = allPoints) {
       : savedSelection.filter((value) => availableSet.has(Number(value)));
 
   setLayerSelectionState(initialSelection);
-  const selectedSet = new Set(layerSelectionState);
+  const selectedSet = new Set(viewerState.selectedLayers);
 
   const wrap = $("layerCheckboxes");
   const focus = $("layerFocus");
@@ -496,17 +506,12 @@ function buildLayerOptions(sourcePoints = allPoints) {
       )
       .join("");
 
-    const resyncAndRenderLayers = () => {
-      window.requestAnimationFrame(() => {
+    wrap.querySelectorAll(".layer-check").forEach((checkbox) => {
+      checkbox.addEventListener("change", () => {
         syncLayerSelectionFromDom();
-        currentCamera = null;
         scheduleRender();
       });
-    };
-
-    wrap.onchange = resyncAndRenderLayers;
-    wrap.oninput = resyncAndRenderLayers;
-    wrap.onclick = resyncAndRenderLayers;
+    });
   }
 
   if (focus) {
@@ -1012,8 +1017,18 @@ function renderNoPointsMarkup(diagnostics) {
   `;
 }
 
+function clearPlotContainer(plotDiv) {
+  if (!plotDiv) return;
+  Plotly.purge?.(plotDiv);
+  plotDiv.replaceChildren();
+  plotDiv.textContent = "";
+}
+
 async function applyFiltersAndRender() {
-  const filters = readFiltersFromDom();
+  if (document.querySelectorAll(".layer-check").length) {
+    syncLayerSelectionFromDom();
+  }
+  const filters = readFiltersFromState(viewerState);
   const plotDiv = $("plot");
   const token = ++renderRequestToken;
 
@@ -1034,6 +1049,7 @@ async function applyFiltersAndRender() {
 
     if (!filtered.length) {
       if (plotDiv) {
+        clearPlotContainer(plotDiv);
         plotDiv.innerHTML = renderNoPointsMarkup(diagnostics);
       }
       return;
@@ -1042,21 +1058,22 @@ async function applyFiltersAndRender() {
     if (filters.mode === "2d") {
       renderPlot2D(filtered, filters.colourBy, handlePointClick, filters.searchPosition);
     } else {
-      renderPlot3D(
-        filtered,
-        filters.colourBy,
-        currentCamera,
-        (camera) => {
-          currentCamera = camera;
-        },
-        handlePointClick,
-        filters.searchPosition
+        renderPlot3D(
+          filtered,
+          filters.colourBy,
+          viewerState.camera3D,
+          (camera) => {
+            viewerState.camera3D = camera;
+          },
+          handlePointClick,
+          filters.searchPosition
       );
     }
   } catch (err) {
     if (token !== renderRequestToken) return;
     console.error("applyFiltersAndRender failed:", err);
     if (plotDiv) {
+      clearPlotContainer(plotDiv);
       plotDiv.innerHTML = `<div style="padding:24px;color:#a33;">Failed to load the selected data layer.</div>`;
     }
   }
