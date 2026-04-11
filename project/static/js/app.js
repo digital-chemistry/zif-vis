@@ -394,8 +394,7 @@ async function loadPoints() {
 
     const plotDiv = $("plot");
     if (plotDiv) {
-      clearPlotContainer(plotDiv);
-      plotDiv.innerHTML = `<div style="padding:24px;color:#a33;">Failed to load point data.</div>`;
+      showPlotEmptyState(`<div style="padding:24px;color:#a33;">Failed to load point data.</div>`);
     }
   }
 }
@@ -989,6 +988,15 @@ function formatRenderDebugFilters(filters) {
 }
 
 function renderNoPointsMarkup(diagnostics) {
+  return `
+    <div style="padding:24px;color:#555;">
+      <div style="font-size:16px;color:#666;">No points match the current filters.</div>
+      <div style="margin-top:8px;font-size:13px;color:#7a8393;">Adjust the visible layers or relax one of the filters to see samples again.</div>
+    </div>
+  `;
+}
+
+function renderNoPointsMarkupWithDiagnostics(diagnostics) {
   const debug = diagnostics?.filters || {};
   return `
     <div style="padding:24px;color:#555;display:flex;flex-direction:column;gap:12px;">
@@ -1024,6 +1032,31 @@ function clearPlotContainer(plotDiv) {
   plotDiv.textContent = "";
 }
 
+function showPlotEmptyState(markup) {
+  const plotDiv = $("plot");
+  const emptyState = $("plotEmptyState");
+  if (plotDiv) {
+    clearPlotContainer(plotDiv);
+    plotDiv.style.display = "none";
+  }
+  if (emptyState) {
+    emptyState.innerHTML = markup;
+    emptyState.classList.remove("is-hidden");
+  }
+}
+
+function hidePlotEmptyState() {
+  const plotDiv = $("plot");
+  const emptyState = $("plotEmptyState");
+  if (plotDiv) {
+    plotDiv.style.display = "";
+  }
+  if (emptyState) {
+    emptyState.innerHTML = "";
+    emptyState.classList.add("is-hidden");
+  }
+}
+
 async function applyFiltersAndRender() {
   if (document.querySelectorAll(".layer-check").length) {
     syncLayerSelectionFromDom();
@@ -1048,12 +1081,11 @@ async function applyFiltersAndRender() {
     window.__zifLastRenderDiagnostics = diagnostics;
 
     if (!filtered.length) {
-      if (plotDiv) {
-        clearPlotContainer(plotDiv);
-        plotDiv.innerHTML = renderNoPointsMarkup(diagnostics);
-      }
+      showPlotEmptyState(renderNoPointsMarkup(diagnostics));
       return;
     }
+
+    hidePlotEmptyState();
 
     if (filters.mode === "2d") {
       renderPlot2D(filtered, filters.colourBy, handlePointClick, filters.searchPosition);
@@ -1072,10 +1104,7 @@ async function applyFiltersAndRender() {
   } catch (err) {
     if (token !== renderRequestToken) return;
     console.error("applyFiltersAndRender failed:", err);
-    if (plotDiv) {
-      clearPlotContainer(plotDiv);
-      plotDiv.innerHTML = `<div style="padding:24px;color:#a33;">Failed to load the selected data layer.</div>`;
-    }
+    showPlotEmptyState(`<div style="padding:24px;color:#a33;">Failed to load the selected data layer.</div>`);
   }
 }
 
