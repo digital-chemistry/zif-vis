@@ -22,6 +22,13 @@ def create_app():
     # Honor reverse-proxy scheme/host headers in production.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+    @app.after_request
+    def add_security_headers(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
+        return response
+
     datasets = {}
 
     def register_dataset(key, path):

@@ -50,6 +50,28 @@ python -m project.app
 
 5. Open `http://127.0.0.1:8000`
 
+## Quality checks
+
+Run the lightweight backend smoke tests:
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+Check the Python package syntax:
+
+```powershell
+python scripts/check_python_syntax.py
+```
+
+If `node` is available locally, check the frontend modules for syntax errors:
+
+```powershell
+Get-ChildItem project\static\js\*.js | ForEach-Object { node --check $_.FullName }
+```
+
+The repository also now includes a GitHub Actions workflow that runs these checks automatically on pushes and pull requests.
+
 ## Docker deployment at `/zif/`
 
 This repo is now packaged for deployment under `digital-chemistry.io/zif/`.
@@ -126,7 +148,7 @@ These decisions are intentional and should generally be preserved unless the vis
 
 ## Developer notes
 
-- The app currently runs with `debug=True`.
+- Local development can enable debug mode with `FLASK_DEBUG=1`.
 - Production Docker runs through `gunicorn` with the WSGI app mounted at `/zif`.
 - The frontend is intentionally modular; avoid moving styling back into inline template `<style>` blocks.
 - Be careful with file encoding when rewriting templates or static assets. A UTF-8 BOM at the start of an included template can visibly break the layout.
