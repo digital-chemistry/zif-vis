@@ -72,6 +72,41 @@ function pointOpacity2D(point, isPhaseBase = false) {
   return isPhaseBase ? 0.42 : 0.8;
 }
 
+function ternaryCartesianCoords(point) {
+  const rawX = point?.x;
+  const rawY = point?.y;
+  const hasStoredCoords =
+    rawX !== null &&
+    rawX !== undefined &&
+    rawX !== "" &&
+    rawY !== null &&
+    rawY !== undefined &&
+    rawY !== "";
+
+  const storedX = Number(rawX);
+  const storedY = Number(rawY);
+  if (hasStoredCoords && Number.isFinite(storedX) && Number.isFinite(storedY)) {
+    return { x: storedX, y: storedY };
+  }
+
+  const metal = Number(point?.metal);
+  const ligand = Number(point?.ligand);
+  const bsa = Number(point?.bsa);
+  const total = metal + ligand + bsa;
+
+  if (!Number.isFinite(total) || total <= 0) {
+    return { x: NaN, y: NaN };
+  }
+
+  const ll = ligand / total;
+  const bb = bsa / total;
+
+  return {
+    x: ll + 0.5 * bb,
+    y: (Math.sqrt(3) / 2) * bb
+  };
+}
+
 function scalarValueForMode(point, colourBy) {
   const phaseMode = PHASE_PROBABILITY_MODES[colourBy];
   if (phaseMode) {
@@ -404,12 +439,13 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
   const isPhaseView = colourBy === "phase";
   const amorphousBaseOpacity = getAmorphousBaseOpacity();
   const scalarBounds = scalarBoundsForMode(colourBy);
+  const coords = layerPoints.map(ternaryCartesianCoords);
 
   const baseTrace = {
     type: "scatter",
     mode: "markers",
-    x: layerPoints.map((p) => Number(p.x)),
-    y: layerPoints.map((p) => Number(p.y)),
+    x: coords.map((p) => p.x),
+    y: coords.map((p) => p.y),
     customdata: layerPoints.map((p) => (p.is_predicted ? null : p.id)),
     text: layerPoints.map(buildPointHoverText),
     hovertemplate: "%{text}<extra></extra>",
@@ -426,8 +462,8 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
   const colorTrace = {
     type: "scatter",
     mode: "markers",
-    x: layerPoints.map((p) => Number(p.x)),
-    y: layerPoints.map((p) => Number(p.y)),
+    x: coords.map((p) => p.x),
+    y: coords.map((p) => p.y),
     customdata: layerPoints.map((p) => (p.is_predicted ? null : p.id)),
     text: layerPoints.map(buildPointHoverText),
     hovertemplate: "%{text}<extra></extra>",
