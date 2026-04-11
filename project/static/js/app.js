@@ -998,7 +998,8 @@ function toggleModeDependentCards() {
     markerSizeCard.style.display = mode === "3d" ? "flex" : "none";
   }
   if (amorphousOpacityCard) {
-    amorphousOpacityCard.style.display = colourBy === "phase" ? "flex" : "none";
+    amorphousOpacityCard.style.display =
+      mode === "2d" && colourBy === "phase" ? "flex" : "none";
   }
   if (interlayerGuideCard) {
     interlayerGuideCard.style.display = mode === "3d" ? "flex" : "none";

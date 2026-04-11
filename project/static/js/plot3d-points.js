@@ -23,6 +23,7 @@ const WARM_SCALAR_SCALE = [
 const SEARCH_MARKER_COLOR = "#d85b72";
 const SEARCH_MARKER_CORE_COLOR = "#111111";
 const PREDICTED_MARKER_SCALE = 0.72;
+const FIXED_3D_AMORPHOUS_BASE_OPACITY = 1;
 
 const PHASE_PROBABILITY_MODES = {
   phase_prob_amorphous: { title: "Amorphous probability", key: "Amorphous" },
@@ -36,8 +37,7 @@ const PHASE_PROBABILITY_MODES = {
 };
 
 function getAmorphousBaseOpacity() {
-  const v = Number($("amorphousOpacity")?.value ?? 0.7);
-  return Number.isFinite(v) ? Math.max(0.1, Math.min(1, v)) : 0.7;
+  return FIXED_3D_AMORPHOUS_BASE_OPACITY;
 }
 
 function get3DMarkerScale() {
@@ -87,10 +87,15 @@ function pointOpacity3D(point, isPhaseBase = false) {
   return isPhaseBase ? 0.42 : 0.8;
 }
 
+function coreOpacity3D(point, colourBy) {
+  if (colourBy === "phase" && !point?.is_predicted) {
+    return 1;
+  }
+  return pointOpacity3D(point, false);
+}
+
 function baseShellColor3D(point) {
-  const alpha = point?.is_predicted
-    ? pointOpacity3D(point, true)
-    : getAmorphousBaseOpacity();
+  const alpha = getAmorphousBaseOpacity();
   const { r, g, b } = hexToRgb(AMORPHOUS_BASE_COLOR);
   return `rgba(${r}, ${g}, ${b}, ${Math.max(0.1, Math.min(1, alpha))})`;
 }
@@ -344,7 +349,7 @@ export function buildPointTraces(points, concToZ, colourBy) {
       size: isPhaseView
         ? points.map(coreMarkerSize3D)
         : points.map(baseMarkerSize3D),
-      opacity: points.map((p) => pointOpacity3D(p, false)),
+      opacity: points.map((p) => coreOpacity3D(p, colourBy)),
       color: isPhaseView
         ? points.map(blendPhaseColor)
         : markerStyle.color,
