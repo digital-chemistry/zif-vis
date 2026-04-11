@@ -29,47 +29,85 @@ function isCurrentMode3D() {
   ) === "3d";
 }
 
-function restyleCurrent3DMarkers() {
+function cloneCamera(camera) {
+  return camera ? JSON.parse(JSON.stringify(camera)) : null;
+}
+
+function queueGroupedRestyle(plotDiv, actualTraceIndices, groupedUpdate) {
+  if (
+    !plotDiv ||
+    !Array.isArray(actualTraceIndices) ||
+    !groupedUpdate ||
+    !Array.isArray(groupedUpdate.indices) ||
+    !groupedUpdate.update
+  ) {
+    return null;
+  }
+
+  const traceIndices = groupedUpdate.indices
+    .map((index) => actualTraceIndices[index])
+    .filter((value) => Number.isInteger(value));
+
+  if (!traceIndices.length) return null;
+  return Plotly.restyle(plotDiv, groupedUpdate.update, traceIndices);
+}
+
+function finalize3DTraceUpdates(plotDiv, pendingUpdates, liveCamera) {
+  if (!pendingUpdates.length) return false;
+
+  const cameraToRestore = cloneCamera(liveCamera);
+  Promise.allSettled(pendingUpdates).then(() => {
+    if (!cameraToRestore) return;
+    Plotly.relayout(plotDiv, { "scene.camera": cameraToRestore }).catch?.(() => {});
+  });
+
+  return true;
+}
+
+function restyleCurrent3DMarkerSize() {
   const plotDiv = $("plot");
   if (!plotDiv || !isCurrentMode3D() || !plotDiv.data?.length) return false;
-  const liveCamera = plotDiv?._fullLayout?.scene?.camera
-    ? JSON.parse(JSON.stringify(plotDiv._fullLayout.scene.camera))
-    : null;
+  const liveCamera = cloneCamera(plotDiv?._fullLayout?.scene?.camera);
 
   const pointIndices = plotDiv.__zif3DPointTraceIndices;
-  const pointUpdatesFactory = plotDiv.__zif3DPointMarkerUpdates;
-  if (!Array.isArray(pointIndices) || typeof pointUpdatesFactory !== "function") {
+  const pointUpdateFactory = plotDiv.__zif3DPointSizeUpdate;
+  if (!Array.isArray(pointIndices) || typeof pointUpdateFactory !== "function") {
     return false;
   }
 
   const pendingUpdates = [];
-  const pointUpdates = pointUpdatesFactory();
-  pointIndices.forEach((traceIndex, idx) => {
-    const update = pointUpdates[idx];
-    if (update) {
-      pendingUpdates.push(Plotly.restyle(plotDiv, update, [traceIndex]));
-    }
-  });
+  const pointUpdate = pointUpdateFactory();
+  const pointRestyle = queueGroupedRestyle(plotDiv, pointIndices, pointUpdate);
+  if (pointRestyle) pendingUpdates.push(pointRestyle);
 
   const searchIndices = plotDiv.__zif3DSearchTraceIndices;
-  const searchUpdatesFactory = plotDiv.__zif3DSearchMarkerUpdates;
-  if (Array.isArray(searchIndices) && typeof searchUpdatesFactory === "function") {
-    const searchUpdates = searchUpdatesFactory();
-    searchIndices.forEach((traceIndex, idx) => {
-      const update = searchUpdates[idx];
-      if (update) {
-        pendingUpdates.push(Plotly.restyle(plotDiv, update, [traceIndex]));
-      }
-    });
+  const searchUpdateFactory = plotDiv.__zif3DSearchSizeUpdate;
+  if (Array.isArray(searchIndices) && typeof searchUpdateFactory === "function") {
+    const searchUpdate = searchUpdateFactory();
+    const searchRestyle = queueGroupedRestyle(plotDiv, searchIndices, searchUpdate);
+    if (searchRestyle) pendingUpdates.push(searchRestyle);
   }
 
-  if (liveCamera) {
-    Promise.allSettled(pendingUpdates).then(() => {
-      Plotly.relayout(plotDiv, { "scene.camera": liveCamera }).catch?.(() => {});
-    });
+  return finalize3DTraceUpdates(plotDiv, pendingUpdates, liveCamera);
+}
+
+function restyleCurrent3DAmorphousOpacity() {
+  const plotDiv = $("plot");
+  if (!plotDiv || !isCurrentMode3D() || !plotDiv.data?.length) return false;
+  const liveCamera = cloneCamera(plotDiv?._fullLayout?.scene?.camera);
+
+  const pointIndices = plotDiv.__zif3DPointTraceIndices;
+  const pointUpdateFactory = plotDiv.__zif3DAmorphousOpacityUpdate;
+  if (!Array.isArray(pointIndices) || typeof pointUpdateFactory !== "function") {
+    return false;
   }
 
-  return true;
+  const pendingUpdates = [];
+  const pointUpdate = pointUpdateFactory();
+  const pointRestyle = queueGroupedRestyle(plotDiv, pointIndices, pointUpdate);
+  if (pointRestyle) pendingUpdates.push(pointRestyle);
+
+  return finalize3DTraceUpdates(plotDiv, pendingUpdates, liveCamera);
 }
 
 function readSavedLayerSelection() {
@@ -267,19 +305,29 @@ function wireControls() {
     });
   });
 
-  ["markerScale3D", "amorphousOpacity"].forEach((id) => {
-    const el = $(id);
-    if (!el) return;
-
-    el.addEventListener("input", () => {
+  const markerScale3D = $("markerScale3D");
+  if (markerScale3D) {
+    markerScale3D.addEventListener("input", () => {
       updateDerivedReadouts();
       updateViewControls();
       toggleModeDependentCards();
-      if (!restyleCurrent3DMarkers()) {
+      if (!restyleCurrent3DMarkerSize()) {
         scheduleRender();
       }
     });
-  });
+  }
+
+  const amorphousOpacity = $("amorphousOpacity");
+  if (amorphousOpacity) {
+    amorphousOpacity.addEventListener("input", () => {
+      updateDerivedReadouts();
+      updateViewControls();
+      toggleModeDependentCards();
+      if (!restyleCurrent3DAmorphousOpacity()) {
+        scheduleRender();
+      }
+    });
+  }
 
   ["posMetal", "posLigand", "posBsa"].forEach((id) => {
     const el = $(id);

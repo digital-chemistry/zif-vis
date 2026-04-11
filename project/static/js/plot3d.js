@@ -13,8 +13,9 @@ import {
 import {
   buildPointTraces,
   markerForSearchPosition3D,
-  buildPointMarkerUpdates3D,
-  buildSearchMarkerUpdates3D
+  buildPointSizeUpdate3D,
+  buildAmorphousOpacityUpdate3D,
+  buildSearchMarkerSizeUpdate3D
 } from "./plot3d-points.js";
 import { buildLayout } from "./plot3d-layout.js";
 
@@ -133,8 +134,10 @@ export function renderPlot3D(
   plotDiv.__zif3DSearchTraceIndices = searchTraces.map(
     (_trace, index) => staticTraces.length + pointTraces.length + index
   );
-  plotDiv.__zif3DPointMarkerUpdates = () => buildPointMarkerUpdates3D(points, colourBy);
-  plotDiv.__zif3DSearchMarkerUpdates = () => buildSearchMarkerUpdates3D();
+  plotDiv.__zif3DPointSizeUpdate = () => buildPointSizeUpdate3D(points, colourBy);
+  plotDiv.__zif3DAmorphousOpacityUpdate = () =>
+    buildAmorphousOpacityUpdate3D(points, colourBy);
+  plotDiv.__zif3DSearchSizeUpdate = () => buildSearchMarkerSizeUpdate3D();
 
   plotDiv.removeAllListeners?.("plotly_relayout");
   plotDiv.removeAllListeners?.("plotly_click");

@@ -49,6 +49,18 @@ function get3DSearchMarkerScale() {
   return Math.max(1.2, get3DMarkerScale() * 0.8);
 }
 
+function hexToRgb(hex) {
+  const value = String(hex || "").replace("#", "");
+  if (value.length !== 6) {
+    return { r: 178, g: 178, b: 178 };
+  }
+  return {
+    r: parseInt(value.slice(0, 2), 16),
+    g: parseInt(value.slice(2, 4), 16),
+    b: parseInt(value.slice(4, 6), 16)
+  };
+}
+
 function pointScaleFactor(point) {
   if (!point?.is_predicted) return 1;
   if (point?.is_intermediate_layer) return PREDICTED_MARKER_SCALE * 1.18;
@@ -73,6 +85,14 @@ function pointOpacity3D(point, isPhaseBase = false) {
   }
 
   return isPhaseBase ? 0.42 : 0.8;
+}
+
+function baseShellColor3D(point) {
+  const alpha = point?.is_predicted
+    ? pointOpacity3D(point, true)
+    : getAmorphousBaseOpacity();
+  const { r, g, b } = hexToRgb(AMORPHOUS_BASE_COLOR);
+  return `rgba(${r}, ${g}, ${b}, ${Math.max(0.1, Math.min(1, alpha))})`;
 }
 
 function scalarValueForMode(point, colourBy) {
@@ -304,8 +324,7 @@ export function buildPointTraces(points, concToZ, colourBy) {
     hoverlabel: hoverLabelStyle,
     marker: {
       size: points.map(baseMarkerSize3D),
-      opacity: points.map((p) => p?.is_predicted ? pointOpacity3D(p, true) : amorphousBaseOpacity),
-      color: AMORPHOUS_BASE_COLOR,
+      color: points.map(baseShellColor3D),
       line: { width: 0.25, color: "rgba(70,70,70,0.18)" }
     },
     showlegend: false
@@ -342,39 +361,50 @@ export function buildPointTraces(points, concToZ, colourBy) {
   return isPhaseView ? [baseTrace, colorTrace] : [colorTrace];
 }
 
-export function buildPointMarkerUpdates3D(points, colourBy) {
+export function buildPointSizeUpdate3D(points, colourBy) {
   const isPhaseView = colourBy === "phase";
-  const updates = [];
-
   if (isPhaseView) {
-    updates.push({
-      "marker.size": [points.map(baseMarkerSize3D)],
-      "marker.opacity": [
-        points.map((p) =>
-          p?.is_predicted ? pointOpacity3D(p, true) : getAmorphousBaseOpacity()
-        )
-      ]
-    });
-    updates.push({
-      "marker.size": [points.map(coreMarkerSize3D)],
-      "marker.opacity": [points.map((p) => pointOpacity3D(p, false))]
-    });
-    return updates;
+    return {
+      indices: [0, 1],
+      update: {
+        "marker.size": [
+          points.map(baseMarkerSize3D),
+          points.map(coreMarkerSize3D)
+        ]
+      }
+    };
   }
 
-  updates.push({
-    "marker.size": [points.map(baseMarkerSize3D)],
-    "marker.opacity": [points.map((p) => pointOpacity3D(p, false))]
-  });
-  return updates;
+  return {
+    indices: [0],
+    update: {
+      "marker.size": [points.map(baseMarkerSize3D)]
+    }
+  };
 }
 
-export function buildSearchMarkerUpdates3D() {
-  return [
-    { "marker.size": [[22 * get3DSearchMarkerScale()]] },
-    { "marker.size": [[15 * get3DSearchMarkerScale()]] },
-    { "marker.size": [[8.5 * get3DSearchMarkerScale()]] }
-  ];
+export function buildAmorphousOpacityUpdate3D(points, colourBy) {
+  if (colourBy !== "phase") return null;
+
+  return {
+    indices: [0],
+    update: {
+      "marker.color": [points.map(baseShellColor3D)]
+    }
+  };
+}
+
+export function buildSearchMarkerSizeUpdate3D() {
+  return {
+    indices: [0, 1, 2],
+    update: {
+      "marker.size": [
+        [22 * get3DSearchMarkerScale()],
+        [15 * get3DSearchMarkerScale()],
+        [8.5 * get3DSearchMarkerScale()]
+      ]
+    }
+  };
 }
 
 export function markerForSearchPosition3D(searchPosition, concToZ) {
