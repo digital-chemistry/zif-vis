@@ -240,16 +240,15 @@ export function getXrdExperiments(sample) {
     return explicitExperiments
       .filter((exp) => exp?.has_xrd && (exp?.xrd_file || exp?.experiment_id))
       .map((exp) => ({
-        experiment_id: exp?.xrd_file
-          ? String(exp.xrd_file).split(".")[0]
-          : exp.experiment_id
-      }));
+        experiment_id: stripExtension(exp?.xrd_file) || pickExperimentId(exp)
+      }))
+      .filter((exp) => exp.experiment_id);
   }
 
   if (sample?.measurements && typeof sample.measurements === "object") {
     return Object.values(sample.measurements)
       .map((value) => ({
-        experiment_id: String(value).split(".")[0]
+        experiment_id: stripExtension(value)
       }))
       .filter((exp) => exp.experiment_id);
   }
