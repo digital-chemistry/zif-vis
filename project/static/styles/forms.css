@@ -313,6 +313,63 @@ input.is-auto {
   margin-top: 2px;
 }
 
+.advanced-subsection {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e8edf3;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.advanced-subsection-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.advanced-subsection-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #526476;
+}
+
+.advanced-subsection-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid #d8e0ea;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 700;
+  color: #728092;
+}
+
+.slice-control-grid {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(150px, 1.3fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.compact-block,
+.compact-slider {
+  margin-bottom: 0;
+}
+
+.slice-summary {
+  min-height: 18px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #607184;
+}
+
 input[type="range"] {
   width: 100%;
   accent-color: var(--accent);

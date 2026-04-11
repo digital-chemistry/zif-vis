@@ -231,6 +231,60 @@
       <div class="accordion-body">
         <p class="helper-copy">Use these controls to require a minimum amount of specific crystalline phases in the selected samples.</p>
         <div id="phaseFilters"></div>
+        <div class="advanced-subsection" id="sliceFiltersBlock">
+          <div class="advanced-subsection-head">
+            <span class="advanced-subsection-title">Composition slices</span>
+            <span class="advanced-subsection-tag">3D only</span>
+          </div>
+          <p class="helper-copy">Fix one composition axis to show only a 2D cross-layer slice, or fix two axes to show only a 1D line of points through the visible layers.</p>
+
+          <div class="control-block compact-block">
+            <label class="control-label" for="sliceMode">Slice mode</label>
+            <select id="sliceMode">
+              <option value="off">Off</option>
+              <option value="plane">2D slice</option>
+              <option value="line">1D slice</option>
+            </select>
+          </div>
+
+          <div class="slice-control-grid">
+            <div class="control-block compact-block">
+              <label class="control-label" for="sliceAxisA">First component</label>
+              <select id="sliceAxisA">
+                <option value="metal">Metal</option>
+                <option value="ligand">Ligand</option>
+                <option value="bsa">BSA</option>
+              </select>
+            </div>
+            <div class="slider-group compact-slider">
+              <div class="slider-title">
+                <span>First value</span>
+              </div>
+              <div class="single-slider-readout"><span id="sliceValueAVal">50%</span></div>
+              <input type="range" id="sliceValueA" min="0" max="100" step="10" value="50">
+            </div>
+          </div>
+
+          <div id="sliceAxisBRow" class="slice-control-grid" style="display:none;">
+            <div class="control-block compact-block">
+              <label class="control-label" for="sliceAxisB">Second component</label>
+              <select id="sliceAxisB">
+                <option value="ligand">Ligand</option>
+                <option value="metal">Metal</option>
+                <option value="bsa">BSA</option>
+              </select>
+            </div>
+            <div class="slider-group compact-slider">
+              <div class="slider-title">
+                <span>Second value</span>
+              </div>
+              <div class="single-slider-readout"><span id="sliceValueBVal">20%</span></div>
+              <input type="range" id="sliceValueB" min="0" max="100" step="10" value="20">
+            </div>
+          </div>
+
+          <div class="slice-summary" id="sliceSummary">No composition slice is applied.</div>
+        </div>
       </div>
     </details>
   </div>

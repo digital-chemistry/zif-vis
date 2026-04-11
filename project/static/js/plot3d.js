@@ -89,7 +89,8 @@ export function renderPlot3D(
   currentCamera,
   onCameraChange,
   onPointClick,
-  searchPosition = null
+  searchPosition = null,
+  geometrySourcePoints = null
 ) {
   const plotDiv = $("plot");
   if (!plotDiv) return;
@@ -103,7 +104,11 @@ export function renderPlot3D(
   }
 
   const spacingScale = getActualSpacingScale();
-  const orderedLayers = getOrderedLayers(points);
+  const layerSourcePoints =
+    Array.isArray(geometrySourcePoints) && geometrySourcePoints.length
+      ? geometrySourcePoints
+      : points;
+  const orderedLayers = getOrderedLayers(layerSourcePoints);
   const concToZ = buildLayerZMap(orderedLayers, spacingScale);
   const preserveExistingCamera = Boolean(plotDiv?.data?.length && plotDiv?._fullLayout?.scene);
 

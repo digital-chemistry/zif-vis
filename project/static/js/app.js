@@ -5,6 +5,7 @@ import { readFiltersFromState, filterPoints } from "./filters.js";
 import { renderPlot3D } from "./plot3d.js";
 import { renderPlot2D } from "./plot2d.js";
 import { loadInspector } from "./inspector.js";
+import { applyCompositionSlice } from "./plot3d-slices.js";
 
 let allPoints = [];
 const datasetPointsCache = new Map();
@@ -18,6 +19,11 @@ const SPACING_UI_MIN = 0;
 const SPACING_UI_MAX = 1;
 const SPACING_ACTUAL_MIN = 0.02;
 const SPACING_ACTUAL_MAX = 0.2;
+const SLICE_AXIS_LABELS = {
+  metal: "Metal",
+  ligand: "Ligand",
+  bsa: "BSA"
+};
 const viewerState = {
   selectedLayers: [],
   camera3D: null
@@ -222,6 +228,11 @@ function applyLayerVisibility(points, filters) {
   });
 }
 
+function applySliceVisibility(points, filters, sliceState) {
+  if (filters.mode !== "3d") return points;
+  return applyCompositionSlice(points, sliceState);
+}
+
 function scheduleRender() {
   if (scheduledRenderHandle != null) {
     window.cancelAnimationFrame(scheduledRenderHandle);
@@ -268,6 +279,21 @@ function resetTransientControlsToDefaults() {
 
   const amorphousOpacity = $("amorphousOpacity");
   if (amorphousOpacity) amorphousOpacity.value = 0.7;
+
+  const sliceMode = $("sliceMode");
+  if (sliceMode) sliceMode.value = "off";
+
+  const sliceAxisA = $("sliceAxisA");
+  if (sliceAxisA) sliceAxisA.value = "metal";
+
+  const sliceValueA = $("sliceValueA");
+  if (sliceValueA) sliceValueA.value = 50;
+
+  const sliceAxisB = $("sliceAxisB");
+  if (sliceAxisB) sliceAxisB.value = "ligand";
+
+  const sliceValueB = $("sliceValueB");
+  if (sliceValueB) sliceValueB.value = 20;
 }
 
 async function fetchDatasetPoints(dataset) {
@@ -329,13 +355,29 @@ function wireControls() {
     "proteinThreshold",
     "eeThreshold",
     "colourBy",
-    "posConcentration"
+    "posConcentration",
+    "sliceMode",
+    "sliceValueA",
+    "sliceValueB"
   ].forEach((id) => {
     const el = $(id);
     if (!el) return;
 
     const evt = el.tagName === "SELECT" ? "change" : "input";
     el.addEventListener(evt, () => {
+      updateDerivedReadouts();
+      updateViewControls();
+      toggleModeDependentCards();
+      scheduleRender();
+    });
+  });
+
+  ["sliceAxisA", "sliceAxisB"].forEach((id) => {
+    const el = $(id);
+    if (!el) return;
+
+    el.addEventListener("change", () => {
+      ensureDistinctSliceAxes();
       updateDerivedReadouts();
       updateViewControls();
       toggleModeDependentCards();
@@ -679,6 +721,49 @@ function buildPhaseFilters(sourcePoints = allPoints) {
   updatePhaseReadouts();
 }
 
+function ensureDistinctSliceAxes() {
+  const axisA = $("sliceAxisA");
+  const axisB = $("sliceAxisB");
+  if (!axisA || !axisB) return;
+
+  if (axisA.value !== axisB.value) return;
+
+  const fallback = ["metal", "ligand", "bsa"].find((value) => value !== axisA.value);
+  if (fallback) {
+    axisB.value = fallback;
+  }
+}
+
+function readCompositionSliceState() {
+  const mode = $("sliceMode")?.value || "off";
+  if (mode === "off") return { mode: "off" };
+
+  const axisA = $("sliceAxisA")?.value || "metal";
+  const valueA = Number($("sliceValueA")?.value ?? 50);
+
+  if (mode !== "line") {
+    return {
+      mode: "plane",
+      axisA,
+      valueA: Number.isFinite(valueA) ? valueA : 50
+    };
+  }
+
+  let axisB = $("sliceAxisB")?.value || "ligand";
+  if (axisB === axisA) {
+    axisB = ["metal", "ligand", "bsa"].find((value) => value !== axisA) || "ligand";
+  }
+
+  const valueB = Number($("sliceValueB")?.value ?? 20);
+  return {
+    mode: "line",
+    axisA,
+    valueA: Number.isFinite(valueA) ? valueA : 50,
+    axisB,
+    valueB: Number.isFinite(valueB) ? valueB : 20
+  };
+}
+
 function cssSafe(text) {
   return String(text).replace(/[^a-zA-Z0-9_-]/g, "_");
 }
@@ -996,6 +1081,10 @@ function updateDerivedReadouts() {
   const spacingOut = $("spacingScaleVal");
   const markerScaleOut = $("markerScale3DVal");
   const amorphousOpacityOut = $("amorphousOpacityVal");
+  const sliceValueAOut = $("sliceValueAVal");
+  const sliceValueBOut = $("sliceValueBVal");
+  const sliceSummary = $("sliceSummary");
+  const sliceState = readCompositionSliceState();
 
   if (crystOut) {
     crystOut.textContent = cryst === 0 ? "Any" : `>= ${cryst}%`;
@@ -1015,6 +1104,24 @@ function updateDerivedReadouts() {
   if (amorphousOpacityOut) {
     amorphousOpacityOut.textContent = `${Math.round(amorphousOpacity * 100)}%`;
   }
+  if (sliceValueAOut) {
+    sliceValueAOut.textContent = `${Math.round(Number($("sliceValueA")?.value ?? 50))}%`;
+  }
+  if (sliceValueBOut) {
+    sliceValueBOut.textContent = `${Math.round(Number($("sliceValueB")?.value ?? 20))}%`;
+  }
+  if (sliceSummary) {
+    if (sliceState.mode === "off") {
+      sliceSummary.textContent = "No composition slice is applied.";
+    } else if (sliceState.mode === "line") {
+      sliceSummary.textContent =
+        `${SLICE_AXIS_LABELS[sliceState.axisA] || sliceState.axisA} = ${Math.round(sliceState.valueA)}%, ` +
+        `${SLICE_AXIS_LABELS[sliceState.axisB] || sliceState.axisB} = ${Math.round(sliceState.valueB)}% only across layers.`;
+    } else {
+      sliceSummary.textContent =
+        `${SLICE_AXIS_LABELS[sliceState.axisA] || sliceState.axisA} = ${Math.round(sliceState.valueA)}% only across layers.`;
+    }
+  }
 
   updatePositionNote();
 }
@@ -1027,7 +1134,10 @@ function toggleModeDependentCards() {
   const markerSizeCard = $("markerSizeCard");
   const amorphousOpacityCard = $("amorphousOpacityCard");
   const interlayerGuideCard = $("interlayerGuideCard");
+  const sliceFiltersBlock = $("sliceFiltersBlock");
+  const sliceAxisBRow = $("sliceAxisBRow");
   const colourBy = $("colourBy")?.value || "phase";
+  const sliceMode = $("sliceMode")?.value || "off";
 
   if (spacingCard) {
     spacingCard.style.display = mode === "3d" ? "flex" : "none";
@@ -1041,6 +1151,13 @@ function toggleModeDependentCards() {
   }
   if (interlayerGuideCard) {
     interlayerGuideCard.style.display = mode === "3d" ? "flex" : "none";
+  }
+  if (sliceFiltersBlock) {
+    sliceFiltersBlock.style.display = mode === "3d" ? "flex" : "none";
+  }
+  if (sliceAxisBRow) {
+    sliceAxisBRow.style.display =
+      mode === "3d" && sliceMode === "line" ? "grid" : "none";
   }
 }
 
@@ -1149,6 +1266,7 @@ async function applyFiltersAndRender() {
     syncLayerSelectionFromDom();
   }
   const filters = readFiltersFromState(viewerState);
+  const sliceState = readCompositionSliceState();
   const plotDiv = $("plot");
   const token = ++renderRequestToken;
 
@@ -1156,7 +1274,11 @@ async function applyFiltersAndRender() {
     const displayPoints = await getDisplayPoints(filters);
     if (token !== renderRequestToken) return;
     const propertyFiltered = filterPoints(displayPoints, filters);
-    const filtered = applyLayerVisibility(propertyFiltered, filters);
+    const layerVisiblePoints = applyLayerVisibility(propertyFiltered, filters);
+    const filtered =
+      filters.mode === "3d"
+        ? applySliceVisibility(layerVisiblePoints, filters, sliceState)
+        : layerVisiblePoints;
     if (token !== renderRequestToken) return;
 
     const diagnostics = {
@@ -1177,7 +1299,7 @@ async function applyFiltersAndRender() {
     if (filters.mode === "2d") {
       renderPlot2D(filtered, filters.colourBy, handlePointClick, filters.searchPosition);
     } else {
-        renderPlot3D(
+      renderPlot3D(
           filtered,
           filters.colourBy,
           viewerState.camera3D,
@@ -1185,7 +1307,8 @@ async function applyFiltersAndRender() {
             viewerState.camera3D = camera;
           },
           handlePointClick,
-          filters.searchPosition
+          filters.searchPosition,
+          layerVisiblePoints
       );
     }
   } catch (err) {
