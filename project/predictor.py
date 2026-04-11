@@ -315,6 +315,7 @@ class CompositionPredictor:
                             "phase_probabilities": phase_scores,
                             "ee": preds["encapsulation_efficiency_mean"],
                             "ee_error": preds["encapsulation_efficiency_std"],
+                            "lc_percent": None,
                             "protein_ratio": preds["atr_ratio_mean"],
                             "crystallinity": preds["crystalline_fraction_mean"],
                             "crystallinity_std": preds["crystalline_fraction_std"],

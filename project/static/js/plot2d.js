@@ -142,6 +142,10 @@ function scalarBoundsForMode(colourBy) {
     return { cmin: 0, cmax: undefined };
   }
 
+  if (colourBy === "lc_percent") {
+    return { cmin: 0, cmax: 100 };
+  }
+
   return { cmin: undefined, cmax: undefined };
 }
 
@@ -406,6 +410,10 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
     markerColor = layerPoints.map((p) => numericOrNull(p.ee));
     showscale = true;
     colorbar = { title: "Encapsulation efficiency" };
+  } else if (colourBy === "lc_percent") {
+    markerColor = layerPoints.map((p) => numericOrNull(p.lc_percent));
+    showscale = true;
+    colorbar = { title: "Loading capacity" };
   } else if (colourBy === "ee_error") {
     markerColor = layerPoints.map((p) => numericOrNull(p.ee_error ?? p.ee_std));
     colorscale = WARM_SCALAR_SCALE;

@@ -100,6 +100,11 @@ export function extractInspectorSummary(point) {
       point?.ee_std
     ),
 
+    lcPercent: firstDefinedNumeric(
+      point?.LC_percent,
+      point?.lc_percent
+    ),
+
     ratio: firstDefinedNumeric(
       point?.ir_data?.ratio_selected_peaks,
       point?.protein_ratio

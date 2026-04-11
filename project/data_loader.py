@@ -115,6 +115,7 @@ def load_data(json_path: str | Path | None = None):
             entry.get("encapsulation_efficiency", {})
             .get("mean")
         )
+        lc_percent = entry.get("LC_percent")
         ee_std = (
             entry.get("encapsulation_efficiency", {})
             .get("error_bar")
@@ -191,6 +192,7 @@ def load_data(json_path: str | Path | None = None):
                 "concentration_label": str(concentration),
                 "ee": ee_mean,
                 "ee_error": ee_std,
+                "lc_percent": lc_percent,
                 "protein_ratio": protein_ratio,
                 "round": round_name,
                 "round_no": round_no,
@@ -251,6 +253,7 @@ def load_data(json_path: str | Path | None = None):
             "phase_composition": deepcopy(phase_comp),
             "ee": ee_mean,
             "ee_error": ee_std,
+            "lc_percent": lc_percent,
             "protein_ratio": protein_ratio,
             "crystallinity": cryst_mean,
             "crystallinity_std": cryst_std,
@@ -293,6 +296,7 @@ def load_data(json_path: str | Path | None = None):
             "detected_phases": detected_phases,
             "ee": ee_mean,
             "ee_error": ee_std,
+            "lc_percent": lc_percent,
             "protein_ratio": protein_ratio,
             "crystallinity_mean": cryst_mean,
             "crystallinity_std": cryst_std,

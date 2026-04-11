@@ -183,10 +183,12 @@ function buildHoverText(p) {
 
   const eeMean = numericOrNull(p.ee);
   const eeErr = numericOrNull(p.ee_error ?? p.error_bar ?? p.ee_std);
+  const lcPercent = numericOrNull(p.lc_percent);
 
   const composition = `M ${formatValShort(m, 1)}% | L ${formatValShort(l, 1)}% | BSA ${formatValShort(b, 1)}%`;
   const concentrationLabel = `${formatValShort(conc, 1)} mg mL^-1`;
   const eeLabel = eeMean == null ? "N/A" : formatMeanPm(eeMean, eeErr, 2);
+  const lcLabel = lcPercent == null ? "N/A" : `${formatValShort(lcPercent, 2)}%`;
   const sourceLabel = p.is_predicted
     ? `Predicted grid | ${escapeHtml(p.trust_band || "prototype")}`
     : "Measured sample";
@@ -198,7 +200,8 @@ function buildHoverText(p) {
     `${formatHoverLine("Layer", concentrationLabel)}<br>` +
     `${formatHoverLine("Wash", wash)}<br>` +
     `${formatHoverLine("Phase", phase)}<br>` +
-    `${formatHoverLine("EE", eeLabel)}`
+    `${formatHoverLine("EE", eeLabel)}<br>` +
+    `${formatHoverLine("LC", lcLabel)}`
   );
 }
 
@@ -237,6 +240,17 @@ function getMarkerStyle(points, colourBy) {
       colorbar: { title: "Encapsulation efficiency" },
       cmin: undefined,
       cmax: undefined
+    };
+  }
+
+  if (colourBy === "lc_percent") {
+    return {
+      color: points.map((p) => numericOrNull(p.lc_percent)),
+      colorscale: WARM_SCALAR_SCALE,
+      showscale: true,
+      colorbar: { title: "Loading capacity" },
+      cmin: 0,
+      cmax: 100
     };
   }
 

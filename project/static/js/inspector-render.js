@@ -28,6 +28,10 @@ export function buildParameterRows(summary, topPhasesText, pointId) {
       value: formatPercentWithError(summary.eeMean, summary.eeErr, 2)
     },
     {
+      label: "Loading capacity",
+      value: formatPercentWithError(summary.lcPercent, null, 2)
+    },
+    {
       label: "ATR IR relative peaks",
       value: summary.ratio == null ? "N/A" : formatValShort(summary.ratio, 4)
     },
