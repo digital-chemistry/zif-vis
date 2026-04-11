@@ -65,13 +65,34 @@ function queueGroupedRestyle(plotDiv, actualTraceIndices, groupedUpdate) {
   return Plotly.restyle(plotDiv, groupedUpdate.update, traceIndices);
 }
 
-function finalize3DTraceUpdates(plotDiv, pendingUpdates, liveCamera) {
+function begin3DMutation(plotDiv) {
+  if (!plotDiv) return 0;
+  const nextToken = Number(plotDiv.__zif3DLatestMutationToken || 0) + 1;
+  plotDiv.__zif3DLatestMutationToken = nextToken;
+  return nextToken;
+}
+
+function finalize3DTraceUpdates(plotDiv, pendingUpdates, liveCamera, mutationToken) {
   if (!pendingUpdates.length) return false;
 
   const cameraToRestore = cloneCamera(liveCamera);
   Promise.allSettled(pendingUpdates).then(() => {
-    if (!cameraToRestore) return;
-    Plotly.relayout(plotDiv, { "scene.camera": cameraToRestore }).catch?.(() => {});
+    if (!plotDiv || !cameraToRestore) return;
+    if (plotDiv.__zif3DLatestMutationToken !== mutationToken) return;
+
+    plotDiv.__zif3DSuppressCameraEvents =
+      Number(plotDiv.__zif3DSuppressCameraEvents || 0) + 1;
+
+    Promise.resolve(
+      Plotly.relayout(plotDiv, { "scene.camera": cameraToRestore })
+    )
+      .catch(() => {})
+      .finally(() => {
+        plotDiv.__zif3DSuppressCameraEvents = Math.max(
+          0,
+          Number(plotDiv.__zif3DSuppressCameraEvents || 1) - 1
+        );
+      });
   });
 
   return true;
@@ -81,6 +102,7 @@ function restyleCurrent3DMarkerSize() {
   const plotDiv = $("plot");
   if (!plotDiv || !isCurrentMode3D() || !plotDiv.data?.length) return false;
   const liveCamera = cloneCamera(plotDiv?._fullLayout?.scene?.camera);
+  const mutationToken = begin3DMutation(plotDiv);
 
   const pointIndices = plotDiv.__zif3DPointTraceIndices;
   const pointUpdateFactory = plotDiv.__zif3DPointSizeUpdate;
@@ -93,21 +115,19 @@ function restyleCurrent3DMarkerSize() {
   const pointRestyle = queueGroupedRestyle(plotDiv, pointIndices, pointUpdate);
   if (pointRestyle) pendingUpdates.push(pointRestyle);
 
-  const searchIndices = plotDiv.__zif3DSearchTraceIndices;
-  const searchUpdateFactory = plotDiv.__zif3DSearchSizeUpdate;
-  if (Array.isArray(searchIndices) && typeof searchUpdateFactory === "function") {
-    const searchUpdate = searchUpdateFactory();
-    const searchRestyle = queueGroupedRestyle(plotDiv, searchIndices, searchUpdate);
-    if (searchRestyle) pendingUpdates.push(searchRestyle);
-  }
-
-  return finalize3DTraceUpdates(plotDiv, pendingUpdates, liveCamera);
+  return finalize3DTraceUpdates(
+    plotDiv,
+    pendingUpdates,
+    liveCamera,
+    mutationToken
+  );
 }
 
 function restyleCurrent3DAmorphousOpacity() {
   const plotDiv = $("plot");
   if (!plotDiv || !isCurrentMode3D() || !plotDiv.data?.length) return false;
   const liveCamera = cloneCamera(plotDiv?._fullLayout?.scene?.camera);
+  const mutationToken = begin3DMutation(plotDiv);
 
   const pointIndices = plotDiv.__zif3DPointTraceIndices;
   const pointUpdateFactory = plotDiv.__zif3DAmorphousOpacityUpdate;
@@ -120,7 +140,12 @@ function restyleCurrent3DAmorphousOpacity() {
   const pointRestyle = queueGroupedRestyle(plotDiv, pointIndices, pointUpdate);
   if (pointRestyle) pendingUpdates.push(pointRestyle);
 
-  return finalize3DTraceUpdates(plotDiv, pendingUpdates, liveCamera);
+  return finalize3DTraceUpdates(
+    plotDiv,
+    pendingUpdates,
+    liveCamera,
+    mutationToken
+  );
 }
 
 function readSavedLayerSelection() {

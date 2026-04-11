@@ -152,6 +152,9 @@ export function renderPlot3D(
   plotDiv.removeAllListeners?.("plotly_click");
 
   plotDiv.on("plotly_relayout", (ev) => {
+    if (Number(plotDiv.__zif3DSuppressCameraEvents || 0) > 0) {
+      return;
+    }
     const nextCamera = extractCameraFromRelayoutEvent(
       ev,
       plotDiv?._fullLayout?.scene?.camera || effectiveCamera
