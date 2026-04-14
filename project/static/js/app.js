@@ -19,6 +19,12 @@ const SPACING_UI_MIN = 0;
 const SPACING_UI_MAX = 1;
 const SPACING_ACTUAL_MIN = 0.02;
 const SPACING_ACTUAL_MAX = 0.2;
+const PHASE_FILTER_BASIS_COPY = {
+  relative:
+    "Use these controls to require a minimum amount of specific crystalline phases in the selected samples.",
+  total:
+    "Use these controls to require a minimum amount of a phase in the total material composition. In this mode, amorphous content is included and crystalline phases are weighted by the overall crystallinity."
+};
 const SLICE_AXIS_LABELS = {
   metal: "Metal",
   ligand: "Ligand",
@@ -35,6 +41,13 @@ function apiUrl(path) {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function currentPhaseFilterBasis() {
+  return (
+    document.querySelector('input[name="phaseFilterBasis"]:checked')?.value ||
+    "relative"
+  );
 }
 
 function getNormalizedSpacingValue() {
@@ -255,6 +268,11 @@ function resetTransientControlsToDefaults() {
 
   const colourBy = $("colourBy");
   if (colourBy) colourBy.value = "phase";
+
+  const phaseFilterBasis = document.querySelector(
+    'input[name="phaseFilterBasis"][value="relative"]'
+  );
+  if (phaseFilterBasis) phaseFilterBasis.checked = true;
 
   const layerFocus = $("layerFocus");
   if (layerFocus) layerFocus.value = "";
@@ -494,6 +512,15 @@ function wireControls() {
     });
   });
 
+  document.querySelectorAll('input[name="phaseFilterBasis"]').forEach((el) => {
+    el.addEventListener("change", async () => {
+      const preservedState = capturePhaseFilterState();
+      const sourcePoints = await fetchDatasetPoints(currentExperimentalDatasetKey());
+      buildPhaseFilters(sourcePoints, preservedState);
+      scheduleRender();
+    });
+  });
+
   document.addEventListener("keydown", (ev) => {
     if (ev.key === "Escape") {
       $("compositionPanel")?.classList.add("is-hidden");
@@ -652,9 +679,17 @@ function buildLayerOptions(sourcePoints = allPoints) {
   saveLayerSelection();
 }
 
-function buildPhaseFilters(sourcePoints = allPoints) {
+function buildPhaseFilters(sourcePoints = allPoints, preservedState = {}) {
   const wrap = $("phaseFilters");
   if (!wrap) return;
+
+  const phaseFilterBasis = currentPhaseFilterBasis();
+  const help = $("phaseFiltersHelp");
+  if (help) {
+    help.textContent =
+      PHASE_FILTER_BASIS_COPY[phaseFilterBasis] ||
+      PHASE_FILTER_BASIS_COPY.relative;
+  }
 
   const phaseNames = [
     ...new Set(sourcePoints.flatMap((p) => Object.keys(p.phase_composition || {})))
@@ -662,17 +697,29 @@ function buildPhaseFilters(sourcePoints = allPoints) {
     .filter((phase) => !HIDDEN_USER_PHASE_KEYS.includes(normalisePhase(phase)))
     .sort();
 
+  if (
+    phaseFilterBasis === "total" &&
+    !phaseNames.some((phase) => normalisePhase(phase) === "am")
+  ) {
+    phaseNames.unshift("Amorphous");
+  }
+
   wrap.innerHTML = phaseNames
     .map(
       (phase) => {
         const phaseKey = normalisePhase(phase);
         const phaseColor = PHASE_COLORS[phaseKey] || PHASE_COLORS.unknown || "#8B8B8B";
         const phaseLabel = displayPhase(phase);
+        const saved = preservedState?.[phase] || null;
+        const sliderValue = Number.isFinite(Number(saved?.value))
+          ? Number(saved.value)
+          : 0;
+        const isChecked = Boolean(saved?.checked) || sliderValue > 0;
 
         return `
       <div class="phase-filter-row" style="--phase-accent:${phaseColor};">
         <label class="simple-check phase-filter-check">
-          <input type="checkbox" class="phase-check" data-phase="${phase}" style="accent-color:${phaseColor};">
+          <input type="checkbox" class="phase-check" data-phase="${phase}" style="accent-color:${phaseColor};" ${isChecked ? "checked" : ""}>
           <span class="phase-filter-name">${phaseLabel}</span>
         </label>
         <div class="phase-slider-wrap">
@@ -683,10 +730,10 @@ function buildPhaseFilters(sourcePoints = allPoints) {
             min="0"
             max="100"
             step="1"
-            value="0"
+            value="${sliderValue}"
             style="accent-color:${phaseColor};"
           >
-          <div class="phase-slider-readout" id="phaseReadout_${cssSafe(phase)}">>= 0%</div>
+          <div class="phase-slider-readout" id="phaseReadout_${cssSafe(phase)}">>= ${sliderValue}%</div>
         </div>
       </div>
     `;
@@ -719,6 +766,25 @@ function buildPhaseFilters(sourcePoints = allPoints) {
   });
 
   updatePhaseReadouts();
+}
+
+function capturePhaseFilterState() {
+  const wrap = $("phaseFilters");
+  if (!wrap) return {};
+
+  const result = {};
+  wrap.querySelectorAll(".phase-slider").forEach((slider) => {
+    const phase = slider.dataset.phase;
+    if (!phase) return;
+
+    const check = wrap.querySelector(`.phase-check[data-phase="${phase}"]`);
+    result[phase] = {
+      checked: Boolean(check?.checked),
+      value: Number(slider.value || 0)
+    };
+  });
+
+  return result;
 }
 
 function ensureDistinctSliceAxes() {
@@ -1172,6 +1238,8 @@ function formatRenderDebugFilters(filters) {
       : "2D view";
 
   const phaseFilters = Object.entries(filters.phaseThresholds || {});
+  const phaseBasis =
+    filters.phaseFilterBasis === "total" ? "Total material" : "Relative phase";
   const phaseSummary = phaseFilters.length
     ? phaseFilters
         .map(([phase, threshold]) => `${phase} >= ${Math.round(Number(threshold || 0) * 100)}%`)
@@ -1187,6 +1255,7 @@ function formatRenderDebugFilters(filters) {
     crystallinity: filters.crystBalance > 0 ? `>= ${Math.round(filters.crystBalance * 100)}%` : "Any",
     atrRatio: formatValShort(filters.proteinThreshold, 3),
     ee: formatValShort(filters.eeThreshold, 2),
+    phaseBasis,
     phaseSummary
   };
 }
@@ -1222,6 +1291,7 @@ function renderNoPointsMarkupWithDiagnostics(diagnostics) {
           <div><strong>Min crystallinity:</strong> ${debug.crystallinity || "N/A"}</div>
           <div><strong>ATR-IR bands ratio min:</strong> ${debug.atrRatio || "N/A"}</div>
           <div><strong>Min EE:</strong> ${debug.ee || "N/A"}</div>
+          <div><strong>Phase filter basis:</strong> ${debug.phaseBasis || "Relative phase"}</div>
           <div><strong>Phase filters:</strong> ${debug.phaseSummary || "none"}</div>
         </div>
       </div>

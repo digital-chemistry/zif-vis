@@ -1,4 +1,5 @@
 import { $ } from "./dom.js";
+import { normalisePhase } from "./formatters.js";
 
 export function finiteValues(points, key) {
   return points
@@ -11,6 +12,12 @@ function getCheckedRadio(name, fallback) {
   return document.querySelector(`input[name="${name}"]:checked`)?.value || fallback;
 }
 
+function numericOrZero(value) {
+  if (value === null || value === undefined || value === "") return 0;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function getPhaseThresholds() {
   const result = {};
   document.querySelectorAll(".phase-slider").forEach((slider) => {
@@ -20,6 +27,58 @@ function getPhaseThresholds() {
     if (checked) result[phase] = threshold / 100;
   });
   return result;
+}
+
+function getPhaseFilterBasis() {
+  return getCheckedRadio("phaseFilterBasis", "relative");
+}
+
+function getRelativePhaseFraction(point, phase) {
+  const obj = point?.phase_composition?.[phase];
+  return numericOrZero(obj?.mean ?? obj);
+}
+
+function getTotalMaterialPhaseFraction(point, phase) {
+  const phaseKey = normalisePhase(phase);
+
+  if (phaseKey === "am") {
+    return numericOrZero(
+      point?.crystallinity?.fractions?.amorphous?.mean ??
+      point?.amorphous_fraction ??
+      point?.crystallinity_fractions?.amorphous ??
+      point?.amorphousness
+    );
+  }
+
+  const crystallinity = numericOrZero(
+    point?.crystallinity?.fractions?.crystalline?.mean ??
+    point?.crystalline_fraction ??
+    point?.crystallinity_fractions?.crystalline ??
+    point?.crystallinity
+  );
+
+  if (crystallinity <= 0) return 0;
+
+  const rawPhases = Object.entries(point?.phase_composition || {})
+    .map(([name, obj]) => ({
+      key: normalisePhase(name),
+      raw: numericOrZero(obj?.mean ?? obj)
+    }))
+    .filter((phaseEntry) => phaseEntry.raw > 0);
+
+  const rawTotal = rawPhases.reduce((sum, phaseEntry) => sum + phaseEntry.raw, 0);
+  if (rawTotal <= 0) return 0;
+
+  const match = rawPhases.find((phaseEntry) => phaseEntry.key === phaseKey);
+  if (!match) return 0;
+
+  return crystallinity * (match.raw / rawTotal);
+}
+
+function getPhaseFractionForFilter(point, phase, basis) {
+  return basis === "total"
+    ? getTotalMaterialPhaseFraction(point, phase)
+    : getRelativePhaseFraction(point, phase);
 }
 
 function getPositionMarker() {
@@ -68,6 +127,7 @@ export function readFiltersFromState(viewerState = {}) {
     crystBalance: Number($("crystBalance")?.value ?? 0) / 100,
     proteinThreshold: Number($("proteinThreshold")?.value ?? 0),
     eeThreshold: Number($("eeThreshold")?.value ?? 0),
+    phaseFilterBasis: getPhaseFilterBasis(),
     phaseThresholds: getPhaseThresholds(),
   };
 }
@@ -78,8 +138,6 @@ export function filterPoints(points, filters) {
     const cryst = Number(p.crystallinity);
     const protein = Number(p.protein_ratio);
     const ee = Number(p.encapsulation_efficiency ?? p.ee);
-    const phaseComp = p.phase_composition || {};
-
     if (filters.washing === "ethanol" && wash !== "EW") return false;
     if (filters.washing === "water" && wash !== "WW") return false;
 
@@ -88,8 +146,7 @@ export function filterPoints(points, filters) {
     if (Number.isFinite(ee) && ee < filters.eeThreshold) return false;
 
     for (const [phase, minFrac] of Object.entries(filters.phaseThresholds)) {
-      const obj = phaseComp?.[phase];
-      const frac = Number(obj?.mean ?? obj ?? 0);
+      const frac = getPhaseFractionForFilter(p, phase, filters.phaseFilterBasis);
       if (!Number.isFinite(frac) || frac < minFrac) return false;
     }
 

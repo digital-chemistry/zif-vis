@@ -230,8 +230,21 @@
         <span>Advanced phase filters</span>
       </summary>
       <div class="accordion-body">
-        <p class="helper-copy">Use these controls to require a minimum amount of specific crystalline phases in the selected samples.</p>
-        <div id="phaseFilters"></div>
+        <div class="control-block compact-block">
+          <div class="control-label">Filter basis</div>
+          <div class="segmented-control" id="phaseFilterBasisGroup">
+            <label class="seg-chip">
+              <input type="radio" name="phaseFilterBasis" value="relative" checked>
+              <span>Relative phase</span>
+            </label>
+            <label class="seg-chip">
+              <input type="radio" name="phaseFilterBasis" value="total">
+              <span>Total material</span>
+            </label>
+          </div>
+        </div>
+        <p class="helper-copy" id="phaseFiltersHelp">Use these controls to require a minimum amount of specific crystalline phases in the selected samples.</p>
+        <div id="phaseFilters" class="phase-filter-list"></div>
         <div class="advanced-subsection" id="sliceFiltersBlock">
           <div class="advanced-subsection-head">
             <span class="advanced-subsection-title">Composition slices</span>
