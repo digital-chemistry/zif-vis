@@ -298,7 +298,7 @@ function getMarkerStyle(points, colourBy) {
       color: points.map((p) => numericOrNull(p.protein_ratio)),
       colorscale: WARM_SCALAR_SCALE,
       showscale: true,
-      colorbar: { title: "Estimated ATR ratio" },
+      colorbar: { title: "ATR-IR bands ratio" },
       cmin: 0,
       cmax: 1
     };

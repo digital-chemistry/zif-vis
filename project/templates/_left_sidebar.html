@@ -108,7 +108,7 @@
         </span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">Change the marker coloring to emphasize phase identity, phase-presence probability, crystallinity, encapsulation efficiency, ATR-derived estimated ratio, or the uncertainty in EE and crystallinity assignment. In prediction views, probability means the likelihood of finding that phase contribution there, not necessarily a phase-pure material.</span>
+          <span class="info-tip-popover">Change the marker coloring to emphasize phase identity, phase-presence probability, crystallinity, encapsulation efficiency, the ATR-IR bands ratio, or the uncertainty in EE and crystallinity assignment. In prediction views, probability means the likelihood of finding that phase contribution there, not necessarily a phase-pure material.</span>
         </span>
       </label>
       <select id="colourBy">
@@ -123,7 +123,7 @@
         <option value="lc_percent">Loading capacity</option>
         <option value="ee_error">EE standard deviation</option>
         <option value="crystallinity_uncertainty">Crystallinity standard deviation</option>
-        <option value="protein_ratio">Estimated ATR ratio</option>
+        <option value="protein_ratio">ATR-IR bands ratio</option>
         <option value="none">None</option>
       </select>
     </div>
@@ -164,10 +164,10 @@
 
     <div class="slider-group">
       <div class="slider-title label-with-help">
-        <span>Estimated ratio minimum</span>
+        <span>ATR-IR bands ratio minimum</span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">This threshold filters samples by an ATR-IR peak ratio used here as an estimated compositional indicator. Higher values keep only samples above the selected ratio.</span>
+          <span class="info-tip-popover">This threshold filters samples by the ATR-IR bands ratio used here as a compositional indicator. Higher values keep only samples above the selected ratio.</span>
         </span>
       </div>
       <div class="single-slider-readout"><span id="proteinThresholdVal">0</span></div>

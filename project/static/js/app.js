@@ -989,10 +989,10 @@ function renderCompositionPrediction(payload) {
         <div class="prediction-label">Crystallinity std</div>
         <div class="prediction-value">${formatValShort((preds.crystalline_fraction_std ?? NaN) * 100, 1)}%</div>
       </div>
-      <div class="prediction-item">
-        <div class="prediction-label">ATR ratio</div>
-        <div class="prediction-value">${formatValShort(preds.atr_ratio_mean, 3)}</div>
-      </div>
+        <div class="prediction-item">
+          <div class="prediction-label">ATR-IR bands ratio</div>
+          <div class="prediction-value">${formatValShort(preds.atr_ratio_mean, 3)}</div>
+        </div>
       <div class="prediction-item">
         <div class="prediction-label">Trust</div>
         <div class="prediction-value">${trust.confidence_band || "N/A"}</div>
@@ -1220,7 +1220,7 @@ function renderNoPointsMarkupWithDiagnostics(diagnostics) {
         <div>
           <div><strong>Color by:</strong> ${debug.colourBy || "N/A"}</div>
           <div><strong>Min crystallinity:</strong> ${debug.crystallinity || "N/A"}</div>
-          <div><strong>Estimated ratio min:</strong> ${debug.atrRatio || "N/A"}</div>
+          <div><strong>ATR-IR bands ratio min:</strong> ${debug.atrRatio || "N/A"}</div>
           <div><strong>Min EE:</strong> ${debug.ee || "N/A"}</div>
           <div><strong>Phase filters:</strong> ${debug.phaseSummary || "none"}</div>
         </div>

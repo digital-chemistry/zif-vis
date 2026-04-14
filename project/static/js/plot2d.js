@@ -437,7 +437,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
   } else if (colourBy === "protein_ratio") {
     markerColor = layerPoints.map((p) => numericOrNull(p.protein_ratio));
     showscale = true;
-    colorbar = { title: "Estimated ATR ratio" };
+    colorbar = { title: "ATR-IR bands ratio" };
   } else if (PHASE_PROBABILITY_MODES[colourBy]) {
     markerColor = layerPoints.map((p) => scalarValueForMode(p, colourBy));
     showscale = true;
