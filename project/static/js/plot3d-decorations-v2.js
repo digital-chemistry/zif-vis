@@ -367,10 +367,10 @@ export function buildSideLabels3D(orderedLayers, concToZ) {
 
   const axisTrace = makeTextTrace(
     [leftAnchor.x - 0.115, baseAnchor.x, rightAnchor.x + 0.115],
-    [leftAnchor.y + 0.005, baseAnchor.y - 0.11, rightAnchor.y + 0.005],
+    [leftAnchor.y + 0.005, baseAnchor.y - 0.085, rightAnchor.y + 0.005],
     [z, z, z],
     ["Metal", "Ligand", "BSA"],
-    ["middle left", "top center", "middle right"],
+    ["middle left", "middle center", "middle right"],
     { size: 16, color: "#111111" }
   );
 
