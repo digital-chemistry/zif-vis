@@ -187,13 +187,40 @@ function formatHoverLine(label, value) {
   return `<span style="color:#7a8594;">${escapeHtml(label)}</span> ${escapeHtml(value)}`;
 }
 
+function buildHoverPhaseSummary(point) {
+  const rawPhaseText = String(
+    point?.detected_phases ||
+    point?.phase_label ||
+    point?.primary_phase ||
+    point?.phase ||
+    "N/A"
+  ).trim();
+
+  const formatted = [...new Set(
+    rawPhaseText
+      .split(/\s*,\s*/)
+      .map((phase) => phase.trim())
+      .filter(Boolean)
+      .map((phase) => displayPhase(phase))
+  )];
+
+  if (!formatted.length) {
+    return { label: "Detected phases", value: "N/A" };
+  }
+
+  return {
+    label: "Detected phases",
+    value: formatted.join("; ")
+  };
+}
+
 function buildPointHoverText(p) {
   const composition =
     `M ${formatValShort(p.metal, 1)}% | ` +
     `L ${formatValShort(p.ligand, 1)}% | ` +
     `BSA ${formatValShort(p.bsa, 1)}%`;
   const layer = `${formatValShort(p.concentration, 1)} mg mL^-1`;
-  const phase = displayPhase(p.phase || p.primary_phase || "N/A");
+  const phaseSummary = buildHoverPhaseSummary(p);
   const wash = p.washing || p.wash || "N/A";
   const ee = numericOrNull(p.ee);
   const sourceLabel = p.is_predicted
@@ -206,7 +233,7 @@ function buildPointHoverText(p) {
     `<span style="color:#20242a;">${escapeHtml(composition)}</span><br>` +
     `${formatHoverLine("Layer", layer)}<br>` +
     `${formatHoverLine("Wash", wash)}<br>` +
-    `${formatHoverLine("Phase", phase)}<br>` +
+    `${formatHoverLine(phaseSummary.label, phaseSummary.value)}<br>` +
     `${formatHoverLine("EE", ee == null ? "N/A" : formatValShort(ee, 2))}`
   );
 }

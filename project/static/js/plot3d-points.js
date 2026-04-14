@@ -7,6 +7,7 @@ import {
 import { $ } from "./dom.js";
 import {
   normalisePhase,
+  displayPhase,
   numericOrNull,
   formatValShort,
   escapeHtml,
@@ -173,13 +174,40 @@ function formatHoverLine(label, value) {
   return `<span style="color:#7a8594;">${escapeHtml(label)}</span> ${escapeHtml(value)}`;
 }
 
+function buildHoverPhaseSummary(point) {
+  const rawPhaseText = String(
+    point?.detected_phases ||
+    point?.phase_label ||
+    point?.primary_phase ||
+    point?.phase ||
+    "N/A"
+  ).trim();
+
+  const formatted = [...new Set(
+    rawPhaseText
+      .split(/\s*,\s*/)
+      .map((phase) => phase.trim())
+      .filter(Boolean)
+      .map((phase) => displayPhase(phase))
+  )];
+
+  if (!formatted.length) {
+    return { label: "Detected phases", value: "N/A" };
+  }
+
+  return {
+    label: "Detected phases",
+    value: formatted.join("; ")
+  };
+}
+
 function buildHoverText(p) {
   const m = Number(p.metal);
   const l = Number(p.ligand);
   const b = Number(p.bsa);
   const conc = Number(p.concentration);
   const wash = String(p.washing || p.wash || "N/A");
-  const phase = String(p.primary_phase || p.phase || "N/A");
+  const phaseSummary = buildHoverPhaseSummary(p);
 
   const eeMean = numericOrNull(p.ee);
   const eeErr = numericOrNull(p.ee_error ?? p.error_bar ?? p.ee_std);
@@ -199,7 +227,7 @@ function buildHoverText(p) {
     `<span style="color:#20242a;">${escapeHtml(composition)}</span><br>` +
     `${formatHoverLine("Layer", concentrationLabel)}<br>` +
     `${formatHoverLine("Wash", wash)}<br>` +
-    `${formatHoverLine("Phase", phase)}<br>` +
+    `${formatHoverLine(phaseSummary.label, phaseSummary.value)}<br>` +
     `${formatHoverLine("EE", eeLabel)}<br>` +
     `${formatHoverLine("LC", lcLabel)}`
   );
