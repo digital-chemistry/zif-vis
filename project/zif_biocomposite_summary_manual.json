@@ -1383,7 +1383,7 @@
             "ratio_nu_corrected": 0.9995,
             "ratio_response_scaled": 0.9905
         },
-        "LC_percent": 144
+        "LC_percent": 37
     },
     "100_06_WW": {
         "washing": "water_washing",
@@ -4407,7 +4407,7 @@
             "ratio_nu_corrected": 0.8676,
             "ratio_response_scaled": 0.2468
         },
-        "LC_percent": 101
+        "LC_percent": 46
     },
     "100_18_WW": {
         "washing": "water_washing",
@@ -4659,7 +4659,7 @@
             "ratio_nu_corrected": 0.8864,
             "ratio_response_scaled": 0.2807
         },
-        "LC_percent": 146
+        "LC_percent": 43
     },
     "100_19_WW": {
         "washing": "water_washing",
@@ -4911,7 +4911,7 @@
             "ratio_nu_corrected": 0.9021,
             "ratio_response_scaled": 0.3154
         },
-        "LC_percent": 110
+        "LC_percent": 73
     },
     "100_20_WW": {
         "washing": "water_washing",
@@ -31875,7 +31875,7 @@
             "ratio_nu_corrected": 0.8544,
             "ratio_response_scaled": 0.2268
         },
-        "LC_percent": 108
+        "LC_percent": 19
     },
     "50_19_WW": {
         "washing": "water_washing",
@@ -40695,7 +40695,7 @@
             "ratio_nu_corrected": 0.9823,
             "ratio_response_scaled": 0.7347
         },
-        "LC_percent": 113
+        "LC_percent": 42
     },
     "75_18_WW": {
         "washing": "water_washing",
