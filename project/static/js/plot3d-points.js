@@ -348,16 +348,63 @@ const hoverLabelStyle = {
   font: { color: "#20242a", size: 13 }
 };
 
+// Lighting config — gives markers proper 3D depth, gloss and specularity
+const MARKER_LIGHTING = {
+  ambient: 0.48,
+  diffuse: 0.82,
+  specular: 0.45,
+  roughness: 0.38,
+  fresnel: 0.22
+};
+
+const MARKER_LIGHTPOSITION = { x: 80, y: 180, z: 200 };
+
+// Depth factor: top layers (higher z) = full size/opacity, bottom = slightly reduced.
+// Creates natural visual recession without losing data legibility.
+function depthFactor(z, zMin, zMax) {
+  if (!Number.isFinite(z) || zMax === zMin) return 1;
+  const t = (z - zMin) / (zMax - zMin); // 0 = bottom, 1 = top
+  return 0.72 + 0.28 * t;              // range 0.72 → 1.0
+}
+
+function computeDepthScales(zs) {
+  const zFinite = zs.filter(Number.isFinite);
+  const zMin = zFinite.length ? Math.min(...zFinite) : 0;
+  const zMax = zFinite.length ? Math.max(...zFinite) : 1;
+  return zs.map((z) => depthFactor(z, zMin, zMax));
+}
+
+function buildDepthAwareBaseSizes(points, depths) {
+  return points.map((point, index) => baseMarkerSize3D(point) * depths[index]);
+}
+
+function buildDepthAwareCoreSizes(points, depths) {
+  return points.map((point, index) => coreMarkerSize3D(point) * depths[index]);
+}
+
+function buildDepthAwareBaseOpacity(depths) {
+  return depths.map((depth) => Math.min(1, 0.82 * depth + 0.12));
+}
+
+function buildDepthAwareCoreOpacity(points, colourBy, depths) {
+  return points.map((point, index) =>
+    Math.min(1, coreOpacity3D(point, colourBy) * (0.78 + 0.22 * depths[index]))
+  );
+}
+
 export function buildPointTraces(points, concToZ, colourBy) {
   const markerStyle = getMarkerStyle(points, colourBy);
   const isPhaseView = colourBy === "phase";
-  const amorphousBaseOpacity = getAmorphousBaseOpacity();
 
   const xs = points.map((p) => ternaryXYFromPoint(p).x);
   const ys = points.map((p) => ternaryXYFromPoint(p).y);
   const zs = points.map((p) => concToZ.get(Number(p.concentration)) ?? 0);
   const ids = points.map((p) => (p.is_predicted ? null : p.id));
   const texts = points.map(buildHoverText);
+
+  const depths = computeDepthScales(zs);
+  const baseSizes = buildDepthAwareBaseSizes(points, depths);
+  const coreSizes = buildDepthAwareCoreSizes(points, depths);
 
   const baseTrace = {
     type: "scatter3d",
@@ -370,9 +417,12 @@ export function buildPointTraces(points, concToZ, colourBy) {
     hovertemplate: "%{text}<extra></extra>",
     hoverlabel: hoverLabelStyle,
     marker: {
-      size: points.map(baseMarkerSize3D),
+      size: baseSizes,
       color: points.map(baseShellColor3D),
-      line: { width: 0.25, color: "rgba(70,70,70,0.18)" }
+      opacity: buildDepthAwareBaseOpacity(depths),
+      lighting: MARKER_LIGHTING,
+      lightposition: MARKER_LIGHTPOSITION,
+      line: { width: 0 }
     },
     showlegend: false
   };
@@ -389,9 +439,9 @@ export function buildPointTraces(points, concToZ, colourBy) {
     hoverlabel: hoverLabelStyle,
     marker: {
       size: isPhaseView
-        ? points.map(coreMarkerSize3D)
-        : points.map(baseMarkerSize3D),
-      opacity: points.map((p) => coreOpacity3D(p, colourBy)),
+        ? coreSizes
+        : baseSizes,
+      opacity: buildDepthAwareCoreOpacity(points, colourBy, depths),
       color: isPhaseView
         ? points.map(blendPhaseColor)
         : markerStyle.color,
@@ -400,7 +450,9 @@ export function buildPointTraces(points, concToZ, colourBy) {
       colorbar: isPhaseView ? undefined : markerStyle.colorbar,
       cmin: isPhaseView ? undefined : markerStyle.cmin,
       cmax: isPhaseView ? undefined : markerStyle.cmax,
-      line: { width: isPhaseView ? 0 : 0.25, color: "rgba(70,70,70,0.18)" }
+      lighting: MARKER_LIGHTING,
+      lightposition: MARKER_LIGHTPOSITION,
+      line: { width: 0 }
     },
     showlegend: false
   };
@@ -409,14 +461,18 @@ export function buildPointTraces(points, concToZ, colourBy) {
 }
 
 export function buildPointSizeUpdate3D(points, colourBy) {
+  const zs = points.map((point) => Number(point.z ?? point.concentration));
+  const depths = computeDepthScales(zs);
+  const baseSizes = buildDepthAwareBaseSizes(points, depths);
+  const coreSizes = buildDepthAwareCoreSizes(points, depths);
   const isPhaseView = colourBy === "phase";
   if (isPhaseView) {
     return {
       indices: [0, 1],
       update: {
         "marker.size": [
-          points.map(baseMarkerSize3D),
-          points.map(coreMarkerSize3D)
+          baseSizes,
+          coreSizes
         ]
       }
     };
@@ -425,7 +481,7 @@ export function buildPointSizeUpdate3D(points, colourBy) {
   return {
     indices: [0],
     update: {
-      "marker.size": [points.map(baseMarkerSize3D)]
+      "marker.size": [baseSizes]
     }
   };
 }
