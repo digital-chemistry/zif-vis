@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import math
 from collections import Counter
@@ -9,7 +10,8 @@ import numpy as np
 import pandas as pd
 
 
-DATA_PATH = Path("project/zif_biocomposite_summary_by_point.json")
+PRIMARY_DATA_PATH = Path("project/zif_biocomposite_summary_by_point.json")
+MANUAL_DATA_PATH = Path("project/zif_biocomposite_summary_manual.json")
 OUTPUT_DIR = Path("docs") / "offline_ml_prototype"
 EPS = 1e-9
 K_NEIGHBORS = 12
@@ -54,8 +56,21 @@ def normalize_wash(raw: str) -> str:
     return text
 
 
-def load_dataframe() -> pd.DataFrame:
-    with DATA_PATH.open(encoding="utf-8") as fh:
+def numeric_or_nan(value) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float("nan")
+
+
+def default_data_path() -> Path:
+    if MANUAL_DATA_PATH.exists():
+        return MANUAL_DATA_PATH
+    return PRIMARY_DATA_PATH
+
+
+def load_dataframe(data_path: Path) -> pd.DataFrame:
+    with data_path.open(encoding="utf-8") as fh:
         raw = json.load(fh)
 
     rows = []
@@ -76,13 +91,14 @@ def load_dataframe() -> pd.DataFrame:
                 "concentration": float(entry.get("concentration")),
                 "wash": normalize_wash(entry.get("washing")),
                 "primary_phase": primary_phase,
-                "ee_mean": float(encaps.get("mean")),
-                "ee_std": float(encaps.get("error_bar", encaps.get("std", np.nan))),
-                "crystalline_mean": float(((cryst.get("crystalline") or {}).get("mean"))),
-                "crystalline_std": float(((cryst.get("crystalline") or {}).get("std", (cryst.get("crystalline") or {}).get("error_bar", np.nan)))),
-                "amorphous_mean": float(((cryst.get("amorphous") or {}).get("mean"))),
-                "amorphous_std": float(((cryst.get("amorphous") or {}).get("std", (cryst.get("amorphous") or {}).get("error_bar", np.nan)))),
-                "atr_ratio": float(ir_data.get("ratio_selected_peaks")),
+                "ee_mean": numeric_or_nan(encaps.get("mean")),
+                "ee_std": numeric_or_nan(encaps.get("error_bar", encaps.get("std", np.nan))),
+                "lc_percent": numeric_or_nan(entry.get("LC_percent", np.nan)),
+                "crystalline_mean": numeric_or_nan((cryst.get("crystalline") or {}).get("mean")),
+                "crystalline_std": numeric_or_nan((cryst.get("crystalline") or {}).get("std", (cryst.get("crystalline") or {}).get("error_bar", np.nan))),
+                "amorphous_mean": numeric_or_nan((cryst.get("amorphous") or {}).get("mean")),
+                "amorphous_std": numeric_or_nan((cryst.get("amorphous") or {}).get("std", (cryst.get("amorphous") or {}).get("error_bar", np.nan))),
+                "atr_ratio": numeric_or_nan(ir_data.get("ratio_selected_peaks")),
             }
         )
 
@@ -136,6 +152,7 @@ def evaluate_leave_one_out(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, fl
     regression_targets = [
         "ee_mean",
         "ee_std",
+        "lc_percent",
         "crystalline_mean",
         "crystalline_std",
         "amorphous_mean",
@@ -189,8 +206,13 @@ def evaluate_leave_one_out(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, fl
     for target in regression_targets:
         pred = pred_df[f"pred_{target}"].to_numpy(dtype=float)
         actual = pred_df[f"actual_{target}"].to_numpy(dtype=float)
-        mae = np.mean(np.abs(pred - actual))
-        rmse = math.sqrt(np.mean((pred - actual) ** 2))
+        mask = np.isfinite(pred) & np.isfinite(actual)
+        if not mask.any():
+            metrics[f"{target}_mae"] = float("nan")
+            metrics[f"{target}_rmse"] = float("nan")
+            continue
+        mae = np.mean(np.abs(pred[mask] - actual[mask]))
+        rmse = math.sqrt(np.mean((pred[mask] - actual[mask]) ** 2))
         metrics[f"{target}_mae"] = float(mae)
         metrics[f"{target}_rmse"] = float(rmse)
 
@@ -203,6 +225,7 @@ def build_report(df: pd.DataFrame, metrics: dict[str, float]) -> pd.DataFrame:
         ("phase_accuracy", round(metrics["phase_accuracy"], 4)),
         ("ee_mean_mae", round(metrics["ee_mean_mae"], 4)),
         ("ee_std_mae", round(metrics["ee_std_mae"], 4)),
+        ("lc_percent_mae", round(metrics["lc_percent_mae"], 4)),
         ("crystalline_mean_mae", round(metrics["crystalline_mean_mae"], 4)),
         ("crystalline_std_mae", round(metrics["crystalline_std_mae"], 4)),
         ("amorphous_mean_mae", round(metrics["amorphous_mean_mae"], 4)),
@@ -250,6 +273,7 @@ def build_example_queries(df: pd.DataFrame) -> pd.DataFrame:
                 "phase_confidence": round(phase_probs[top_phase], 4),
                 "pred_ee_mean": round(weighted_regression(neighbor_df["ee_mean"].to_numpy(dtype=float), weights), 4),
                 "pred_ee_std": round(weighted_regression(neighbor_df["ee_std"].to_numpy(dtype=float), weights), 4),
+                "pred_lc_percent": round(weighted_regression(neighbor_df["lc_percent"].to_numpy(dtype=float), weights), 4),
                 "pred_crystalline_mean": round(weighted_regression(neighbor_df["crystalline_mean"].to_numpy(dtype=float), weights), 4),
                 "pred_crystalline_std": round(weighted_regression(neighbor_df["crystalline_std"].to_numpy(dtype=float), weights), 4),
                 "pred_atr_ratio": round(weighted_regression(neighbor_df["atr_ratio"].to_numpy(dtype=float), weights), 4),
@@ -260,9 +284,23 @@ def build_example_queries(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(examples)
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Evaluate the offline composition prototype against a ZIF summary JSON."
+    )
+    parser.add_argument(
+        "--data",
+        type=Path,
+        default=default_data_path(),
+        help="Path to the source JSON file. Defaults to the manual JSON when present."
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
     ensure_output_dir()
-    df = load_dataframe()
+    df = load_dataframe(args.data)
 
     pred_df, metrics = evaluate_leave_one_out(df)
     metric_df = build_report(df, metrics)
@@ -275,6 +313,7 @@ def main() -> None:
     class_counts = Counter(df["primary_phase"])
     with (OUTPUT_DIR / "summary.txt").open("w", encoding="utf-8") as fh:
         fh.write("Offline find-composition prototype\n")
+        fh.write(f"Source: {args.data}\n")
         fh.write(f"Points: {len(df)}\n")
         fh.write("Primary phase counts:\n")
         for phase, count in class_counts.most_common():

@@ -270,4 +270,7 @@ export function renderLinePlotElement(target, x, y, xlabel, ylabel) {
     { responsive: true, displaylogo: false }
   );
 
-  re
+  requestAnimationFrame(() => {
+    Plotly.Plots.resize(target);
+  });
+}

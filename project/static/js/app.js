@@ -1426,4 +1426,309 @@ async function updateCompositionPrediction() {
 }
 
 function updateDerivedReadouts(uiState = readAllState(viewerState)) {
-  const cryst = Number(uiState.crystBalance
+  const cryst = Number(uiState.crystBalance ?? 0);
+  const protein = Number(uiState.proteinThreshold ?? 0);
+  const ee = Number(uiState.eeThreshold ?? 0);
+  const spacing = Number.isFinite(Number(uiState.spacingScale))
+    ? clamp(Number(uiState.spacingScale), SPACING_UI_MIN, SPACING_UI_MAX)
+    : getNormalizedSpacingValue();
+  const markerScale = Number(uiState.markerScale3D ?? 1.8);
+  const amorphousOpacity = Number(uiState.amorphousOpacity ?? 0.7);
+
+  const crystOut = $("crystBalanceVal");
+  const proteinOut = $("proteinThresholdVal");
+  const eeOut = $("eeThresholdVal");
+  const spacingOut = $("spacingScaleVal");
+  const markerScaleOut = $("markerScale3DVal");
+  const amorphousOpacityOut = $("amorphousOpacityVal");
+  const sliceValueAOut = $("sliceValueAVal");
+  const sliceValueBOut = $("sliceValueBVal");
+  const sliceSummary = $("sliceSummary");
+  const sliceState = readCompositionSliceState(uiState);
+
+  if (crystOut) {
+    crystOut.textContent = cryst === 0 ? "Any" : `>= ${cryst}%`;
+  }
+  if (proteinOut) {
+    proteinOut.textContent = formatValShort(protein, 3);
+  }
+  if (eeOut) {
+    eeOut.textContent = formatValShort(ee, 1);
+  }
+  if (spacingOut) {
+    spacingOut.textContent = formatValShort(spacing, 2);
+  }
+  if (markerScaleOut) {
+    markerScaleOut.textContent = `${formatValShort(markerScale, 1)}x`;
+  }
+  if (amorphousOpacityOut) {
+    amorphousOpacityOut.textContent = `${Math.round(amorphousOpacity * 100)}%`;
+  }
+  if (sliceValueAOut) {
+    sliceValueAOut.textContent = `${Math.round(Number(uiState.sliceValueA ?? 50))}%`;
+  }
+  if (sliceValueBOut) {
+    sliceValueBOut.textContent = `${Math.round(Number(uiState.sliceValueB ?? 20))}%`;
+  }
+  if (sliceSummary) {
+    if (sliceState.mode === "off") {
+      sliceSummary.textContent = "No composition slice is applied.";
+    } else if (sliceState.mode === "line") {
+      sliceSummary.textContent =
+        `${SLICE_AXIS_LABELS[sliceState.axisA] || sliceState.axisA} = ${Math.round(sliceState.valueA)}%, ` +
+        `${SLICE_AXIS_LABELS[sliceState.axisB] || sliceState.axisB} = ${Math.round(sliceState.valueB)}% only across layers.`;
+    } else {
+      sliceSummary.textContent =
+        `${SLICE_AXIS_LABELS[sliceState.axisA] || sliceState.axisA} = ${Math.round(sliceState.valueA)}% only across layers.`;
+    }
+  }
+
+  updatePositionNote();
+}
+
+function toggleModeDependentCards(uiState = readAllState(viewerState)) {
+  const mode = uiState.mode || "3d";
+  const spacingCard = $("spacingCard");
+  const markerSizeCard = $("markerSizeCard");
+  const amorphousOpacityCard = $("amorphousOpacityCard");
+  const interlayerGuideCard = $("interlayerGuideCard");
+  const sliceFiltersBlock = $("sliceFiltersBlock");
+  const sliceAxisBRow = $("sliceAxisBRow");
+  const colourBy = uiState.colourBy || "phase";
+  const sliceMode = uiState.sliceMode || "off";
+
+  if (spacingCard) {
+    spacingCard.style.display = mode === "3d" ? "flex" : "none";
+  }
+  if (markerSizeCard) {
+    markerSizeCard.style.display = mode === "3d" ? "flex" : "none";
+  }
+  if (amorphousOpacityCard) {
+    amorphousOpacityCard.style.display =
+      mode === "2d" && colourBy === "phase" ? "flex" : "none";
+  }
+  if (interlayerGuideCard) {
+    interlayerGuideCard.style.display = mode === "3d" ? "flex" : "none";
+  }
+  if (sliceFiltersBlock) {
+    sliceFiltersBlock.style.display = mode === "3d" ? "flex" : "none";
+  }
+  if (sliceAxisBRow) {
+    sliceAxisBRow.style.display =
+      mode === "3d" && sliceMode === "line" ? "grid" : "none";
+  }
+}
+
+function formatRenderDebugFilters(filters) {
+  const layers =
+    filters.mode === "3d"
+      ? filters.selectedLayersExplicitlyEmpty
+        ? "none selected"
+        : filters.selectedLayers.length
+          ? filters.selectedLayers.map((value) => formatValShort(value, 1)).join(", ")
+          : "all layers"
+      : "2D view";
+
+  const phaseFilters = Object.entries(filters.phaseThresholds || {});
+  const phaseBasis =
+    filters.phaseFilterBasis === "total" ? "Total material" : "Relative phase";
+  const phaseSummary = phaseFilters.length
+    ? phaseFilters
+        .map(([phase, threshold]) => `${phase} >= ${Math.round(Number(threshold || 0) * 100)}%`)
+        .join(", ")
+    : "none";
+
+  return {
+    mode: filters.mode === "3d" ? "3D stacked" : "2D ternary",
+    dataLayer: filters.dataLayer,
+    wash: filters.washing,
+    colourBy: filters.colourBy,
+    layers,
+    crystallinity: filters.crystBalance > 0 ? `>= ${Math.round(filters.crystBalance * 100)}%` : "Any",
+    atrRatio: formatValShort(filters.proteinThreshold, 3),
+    ee: formatValShort(filters.eeThreshold, 2),
+    phaseBasis,
+    phaseSummary
+  };
+}
+
+function renderEmptyState({
+  kind = "empty",
+  title,
+  body,
+  diagnosticMarkup = ""
+}) {
+  return `
+    <div class="empty-state-wrap${kind === "error" ? " empty-state-error" : ""}">
+      ${createEmptyStateIcon(kind)}
+      <div class="empty-state-title">${title}</div>
+      <div class="empty-state-body">${body}</div>
+      ${diagnosticMarkup}
+    </div>
+  `;
+}
+
+function renderNoPointsMarkup() {
+  return renderEmptyState({
+    title: "No points match the current filters.",
+    body: "Adjust the visible layers or relax one of the filters to see samples again."
+  });
+}
+
+function renderNoPointsMarkupWithDiagnostics(diagnostics) {
+  const debug = diagnostics?.filters || {};
+  return renderEmptyState({
+    title: "No points match the current filters.",
+    body: "The current filter combination leaves no visible samples. Relax one or more constraints to repopulate the plot.",
+    diagnosticMarkup: `
+      <div class="empty-state-diagnostic-grid">
+        <div>
+          <div><strong>Source points:</strong> ${diagnostics?.sourceCount ?? 0}</div>
+          <div><strong>After wash/value filters:</strong> ${diagnostics?.propertyCount ?? 0}</div>
+          <div><strong>After layer visibility:</strong> ${diagnostics?.visibleCount ?? 0}</div>
+        </div>
+        <div>
+          <div><strong>Mode:</strong> ${debug.mode || "N/A"}</div>
+          <div><strong>Data layer:</strong> ${debug.dataLayer || "N/A"}</div>
+          <div><strong>Wash:</strong> ${debug.wash || "N/A"}</div>
+          <div><strong>Layers:</strong> ${debug.layers || "N/A"}</div>
+        </div>
+        <div>
+          <div><strong>Color by:</strong> ${debug.colourBy || "N/A"}</div>
+          <div><strong>Min crystallinity:</strong> ${debug.crystallinity || "N/A"}</div>
+          <div><strong>ATR-IR bands ratio min:</strong> ${debug.atrRatio || "N/A"}</div>
+          <div><strong>Min EE:</strong> ${debug.ee || "N/A"}</div>
+          <div><strong>Phase filter basis:</strong> ${debug.phaseBasis || "Relative phase"}</div>
+          <div><strong>Phase filters:</strong> ${debug.phaseSummary || "none"}</div>
+        </div>
+      </div>
+    `
+  });
+}
+
+function clearPlotContainer(plotDiv) {
+  if (!plotDiv) return;
+  Plotly.purge?.(plotDiv);
+  plotDiv.replaceChildren();
+  plotDiv.textContent = "";
+}
+
+function showPlotEmptyState(markup) {
+  const plotDiv = $("plot");
+  const emptyState = $("plotEmptyState");
+  if (plotDiv) {
+    clearPlotContainer(plotDiv);
+    plotDiv.style.display = "none";
+  }
+  if (emptyState) {
+    emptyState.innerHTML = markup;
+    emptyState.classList.remove("is-hidden");
+  }
+}
+
+function hidePlotEmptyState() {
+  const plotDiv = $("plot");
+  const emptyState = $("plotEmptyState");
+  if (plotDiv) {
+    plotDiv.style.display = "";
+  }
+  if (emptyState) {
+    emptyState.innerHTML = "";
+    emptyState.classList.add("is-hidden");
+  }
+}
+
+async function applyFiltersAndRender(uiState = readAllState(viewerState)) {
+  if (document.querySelectorAll(".layer-check").length) {
+    syncLayerSelectionFromDom();
+  }
+  const filters = readFiltersFromState(viewerState, uiState);
+  const sliceState = readCompositionSliceState(uiState);
+  const token = ++renderRequestToken;
+  const renderStartedAt = performance.now();
+  const theme = getThemeTokens();
+
+  try {
+    const displayPoints = await getDisplayPoints(filters);
+    if (token !== renderRequestToken) return;
+    const propertyFiltered = filterPoints(displayPoints, filters);
+    const layerVisiblePoints = applyLayerVisibility(propertyFiltered, filters);
+    const filtered =
+      filters.mode === "3d"
+        ? applySliceVisibility(layerVisiblePoints, filters, sliceState)
+        : layerVisiblePoints;
+    if (token !== renderRequestToken) return;
+
+    const diagnostics = {
+      sourceCount: displayPoints.length,
+      propertyCount: propertyFiltered.length,
+      visibleCount: filtered.length,
+      filters: formatRenderDebugFilters(filters)
+    };
+    window.__zifLastRenderDiagnostics = diagnostics;
+
+    if (!filtered.length) {
+      showPlotEmptyState(renderNoPointsMarkupWithDiagnostics(diagnostics));
+      return;
+    }
+
+    hidePlotEmptyState();
+
+    if (filters.mode === "2d") {
+      renderPlot2D(
+        filtered,
+        filters.colourBy,
+        handlePointClick,
+        filters.searchPosition,
+        { theme }
+      );
+    } else {
+      renderPlot3D(
+        filtered,
+        filters.colourBy,
+        viewerState.camera3D,
+        (camera) => {
+          viewerState.camera3D = camera;
+        },
+        handlePointClick,
+        filters.searchPosition,
+        layerVisiblePoints,
+        { theme }
+      );
+    }
+    setPlotAccessibility(filters, filtered);
+    console.debug("[zif-vis] render", {
+      points: filtered.length,
+      ms: Number((performance.now() - renderStartedAt).toFixed(1)),
+      mode: filters.mode,
+      dataLayer: filters.dataLayer
+    });
+  } catch (err) {
+    if (token !== renderRequestToken) return;
+    console.error("applyFiltersAndRender failed:", err);
+    showPlotEmptyState(
+      renderEmptyState({
+        kind: "error",
+        title: "Failed to load the selected data layer.",
+        body: "The requested view could not be rendered. Please try a different data layer or refresh the page."
+      })
+    );
+  }
+}
+
+async function handlePointClick(sampleId) {
+  if (!sampleId || String(sampleId).startsWith("pred_")) return;
+  const dataset =
+    document.querySelector('input[name="dataLayer"]:checked')?.value === "experimental_xue"
+      ? "manual"
+      : "primary";
+  await loadInspector(sampleId, dataset);
+  if (isMobileLayout()) {
+    openMobileSidebar("right");
+  }
+  const firstParameter = $("parametersGrid")?.querySelector(".parameter-value");
+  if (firstParameter) {
+    firstParameter.setAttribute("tabindex", "-1");
+    firstParameter.focus();
+  }
+}

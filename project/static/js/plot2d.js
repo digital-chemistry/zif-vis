@@ -568,4 +568,24 @@ function renderPlot2DFallback(
       { x: 0.5, y: 0.96, xref: "paper", yref: "paper", text: "BSA", showarrow: false, font: { size: 16, color: theme.muted } }
     ],
     xaxis: { visible: false, range: [-0.1, 1.1] },
-    yaxis: { visible: false, range: [-0.08, 0.95], scaleanchor: "x", scaleratio
+    yaxis: { visible: false, range: [-0.08, 0.95], scaleanchor: "x", scaleratio: 1 },
+    shapes: [{
+      type: "path",
+      path: `M 0 0 L 1 0 L 0.5 ${Math.sqrt(3) / 2} Z`,
+      xref: "x",
+      yref: "y",
+      line: { color: theme.muted, width: 2 },
+      fillcolor: "rgba(0,0,0,0)"
+    }],
+    showlegend: false,
+    uirevision: "stay2d"
+  };
+
+  Plotly.react(plotDiv, traces, layout, { responsive: true, displaylogo: false });
+
+  plotDiv.removeAllListeners?.("plotly_click");
+  plotDiv.on("plotly_click", async (ev) => {
+    const sampleId = ev.points?.[0]?.customdata;
+    if (sampleId) await onPointClick(sampleId);
+  });
+}

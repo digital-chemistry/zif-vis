@@ -351,4 +351,13 @@ async function loadExperimentCards(sample, token) {
           );
         };
 
-        renderLinePlotEl
+        renderLinePlotElement(plotDiv, x, y, "2θ / °", "Intensity");
+      } else {
+        plotDiv.innerHTML = `<div class="empty-msg">No XRD data</div>`;
+      }
+    } catch (err) {
+      console.error("XRD load failed:", exp.experiment_id, err);
+      plotDiv.innerHTML = `<div class="empty-msg">No XRD data</div>`;
+    }
+  }
+}
