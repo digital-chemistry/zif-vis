@@ -1,4 +1,4 @@
-import { $, updateViewControls } from "./dom.js";
+import { $, getThemeTokens, readAllState, updateViewControls } from "./dom.js";
 import { displayPhase, formatValShort, normalisePhase } from "./formatters.js";
 import { PHASE_COLORS, HIDDEN_USER_PHASE_KEYS } from "./constants.js";
 import { readFiltersFromState, filterPoints } from "./filters.js";
@@ -14,7 +14,12 @@ let predictionRequestToken = 0;
 let renderRequestToken = 0;
 const ZIF_BASE_PATH = String(window.ZIF_BASE_PATH || "");
 const LAYER_SELECTION_STORAGE_KEY = "zifExplorer.visibleLayers";
+const THEME_STORAGE_KEY = "zifExplorer.theme";
+const RENDER_DEBOUNCE_MS = 60;
+const MOBILE_LAYOUT_QUERY = "(max-width: 1024px)";
 let scheduledRenderHandle = null;
+let scheduledRenderTimeout = null;
+let phaseFilterSignature = "";
 const SPACING_UI_MIN = 0;
 const SPACING_UI_MAX = 1;
 const SPACING_ACTUAL_MIN = 0.02;
@@ -34,6 +39,252 @@ const viewerState = {
   selectedLayers: [],
   camera3D: null
 };
+
+function isMobileLayout() {
+  return window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
+}
+
+function getStoredTheme() {
+  try {
+    return window.localStorage.getItem(THEME_STORAGE_KEY) || "light";
+  } catch (_err) {
+    return "light";
+  }
+}
+
+function getCurrentTheme() {
+  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+}
+
+function setThemeToggleState() {
+  const toggle = $("themeToggleBtn");
+  if (!toggle) return;
+
+  const isDark = getCurrentTheme() === "dark";
+  toggle.setAttribute("aria-pressed", String(isDark));
+  toggle.setAttribute(
+    "aria-label",
+    isDark ? "Switch to light mode" : "Switch to dark mode"
+  );
+}
+
+function buildThemedAnnotations(plotDiv, theme) {
+  const currentAnnotations =
+    plotDiv?.layout?.annotations || plotDiv?._fullLayout?.annotations || [];
+  if (!Array.isArray(currentAnnotations) || !currentAnnotations.length) {
+    return null;
+  }
+
+  return currentAnnotations.map((annotation, index) => ({
+    ...annotation,
+    font: {
+      ...(annotation.font || {}),
+      color: index === 0 ? theme.text : theme.muted
+    }
+  }));
+}
+
+function syncPlotTheme() {
+  const plotDiv = $("plot");
+  if (!plotDiv?.data?.length) return;
+
+  const theme = getThemeTokens();
+  const relayout = {
+    paper_bgcolor: theme.card,
+    plot_bgcolor: theme.card,
+    font: { color: theme.text }
+  };
+  const annotations = buildThemedAnnotations(plotDiv, theme);
+  if (annotations) relayout.annotations = annotations;
+
+  Promise.resolve(Plotly.relayout(plotDiv, relayout)).catch(() => {});
+}
+
+function applyTheme(themeName, { persist = true } = {}) {
+  if (themeName === "dark") {
+    document.documentElement.dataset.theme = "dark";
+  } else {
+    delete document.documentElement.dataset.theme;
+  }
+
+  if (persist) {
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, getCurrentTheme());
+    } catch (_err) {
+      // Ignore storage failures and keep the UI responsive.
+    }
+  }
+
+  setThemeToggleState();
+  syncPlotTheme();
+}
+
+function toggleTheme() {
+  applyTheme(getCurrentTheme() === "dark" ? "light" : "dark");
+}
+
+function updateSidebarToggleState() {
+  const leftOpen = $("leftSidebar")?.classList.contains("sidebar-open");
+  const rightOpen = $("rightSidebar")?.classList.contains("sidebar-open");
+  $("openLeftSidebarBtn")?.setAttribute("aria-expanded", String(Boolean(leftOpen)));
+  $("openRightSidebarBtn")?.setAttribute("aria-expanded", String(Boolean(rightOpen)));
+}
+
+function closeMobileSidebars() {
+  $("leftSidebar")?.classList.remove("sidebar-open");
+  $("rightSidebar")?.classList.remove("sidebar-open");
+
+  const backdrop = $("mobileSidebarBackdrop");
+  if (backdrop) {
+    backdrop.classList.remove("is-visible");
+    backdrop.hidden = true;
+  }
+
+  updateSidebarToggleState();
+}
+
+function toggleMobileSidebar(side) {
+  if (!isMobileLayout()) return;
+
+  const target = $(side === "left" ? "leftSidebar" : "rightSidebar");
+  const other = $(side === "left" ? "rightSidebar" : "leftSidebar");
+  const backdrop = $("mobileSidebarBackdrop");
+  if (!target || !backdrop) return;
+
+  const shouldOpen = !target.classList.contains("sidebar-open");
+  target.classList.toggle("sidebar-open", shouldOpen);
+  other?.classList.remove("sidebar-open");
+
+  backdrop.hidden = !shouldOpen;
+  backdrop.classList.toggle("is-visible", shouldOpen);
+  updateSidebarToggleState();
+}
+
+function openMobileSidebar(side) {
+  if (!isMobileLayout()) return;
+  const target = $(side === "left" ? "leftSidebar" : "rightSidebar");
+  const other = $(side === "left" ? "rightSidebar" : "leftSidebar");
+  const backdrop = $("mobileSidebarBackdrop");
+  if (!target || !backdrop) return;
+
+  target.classList.add("sidebar-open");
+  other?.classList.remove("sidebar-open");
+  backdrop.hidden = false;
+  backdrop.classList.add("is-visible");
+  updateSidebarToggleState();
+}
+
+function syncMobileSidebarLayout() {
+  if (!isMobileLayout()) {
+    closeMobileSidebars();
+  } else {
+    updateSidebarToggleState();
+  }
+}
+
+function refreshUiChrome(uiState = readAllState(viewerState)) {
+  updateDerivedReadouts(uiState);
+  updateViewControls(uiState);
+  toggleModeDependentCards(uiState);
+  syncRangeAccessibility();
+  return uiState;
+}
+
+function syncRangeAccessibility() {
+  document.querySelectorAll('input[type="range"]').forEach((input) => {
+    const min = Number(input.min ?? 0);
+    const max = Number(input.max ?? 100);
+    const value = Number(input.value ?? 0);
+    input.setAttribute("aria-valuemin", String(Number.isFinite(min) ? min : 0));
+    input.setAttribute("aria-valuemax", String(Number.isFinite(max) ? max : 100));
+    input.setAttribute("aria-valuenow", String(Number.isFinite(value) ? value : 0));
+
+    const legendText =
+      input.closest("fieldset")?.querySelector("legend")?.textContent?.trim() || "";
+    if (legendText && !input.getAttribute("aria-label")) {
+      input.setAttribute("aria-label", legendText);
+    }
+  });
+}
+
+function initialiseInfoTips() {
+  document.querySelectorAll(".info-tip").forEach((tip, index) => {
+    const popover = tip.querySelector(".info-tip-popover");
+    if (!popover) return;
+
+    const tooltipId = popover.id || `infoTipPopover${index + 1}`;
+    popover.id = tooltipId;
+    popover.setAttribute("role", "tooltip");
+
+    tip.setAttribute("role", "button");
+    tip.setAttribute("aria-describedby", tooltipId);
+    tip.setAttribute("aria-expanded", "false");
+
+    const labelHost = [...(tip.parentElement?.children || [])].find(
+      (child) => child !== tip
+    );
+    const labelText = labelHost?.textContent?.replace(/\?/g, "").trim() || "More information";
+    tip.setAttribute("aria-label", `More information about ${labelText}`);
+
+    const setExpanded = (expanded) =>
+      tip.setAttribute("aria-expanded", String(Boolean(expanded)));
+
+    tip.addEventListener("focus", () => setExpanded(true));
+    tip.addEventListener("blur", () => setExpanded(false));
+    tip.addEventListener("mouseenter", () => setExpanded(true));
+    tip.addEventListener("mouseleave", () => setExpanded(false));
+    tip.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setExpanded(false);
+        tip.blur();
+      }
+    });
+  });
+}
+
+function createEmptyStateIcon(kind = "empty") {
+  if (kind === "error") {
+    return `
+      <svg class="empty-state-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    `;
+  }
+
+  return `
+    <svg class="empty-state-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 7h16"></path>
+      <path d="M7 7v10"></path>
+      <path d="M17 7v6"></path>
+      <path d="m9.5 15.5 5-5"></path>
+      <path d="m14.5 15.5-5-5"></path>
+    </svg>
+  `;
+}
+
+function setPlotAccessibility(filters, visiblePoints) {
+  const plotDiv = $("plot");
+  if (!plotDiv) return;
+
+  const pointCount = Array.isArray(visiblePoints) ? visiblePoints.length : 0;
+  const layerCount =
+    filters.mode === "3d"
+      ? new Set(visiblePoints.map((point) => Number(point.concentration)).filter(Number.isFinite)).size
+      : 1;
+  const layerLabel =
+    filters.mode === "3d"
+      ? `${layerCount} layers`
+      : `layer ${filters.searchPosition?.concentration ?? $("layerFocus")?.value || "auto"}`;
+  const label =
+    filters.mode === "3d"
+      ? `3D stacked phase map, ${layerLabel}, ${pointCount} points visible`
+      : `2D ternary phase map, ${layerLabel}, ${pointCount} points visible`;
+
+  plotDiv.setAttribute("role", "img");
+  plotDiv.setAttribute("aria-label", label);
+}
 
 function apiUrl(path) {
   return `${ZIF_BASE_PATH}${path}`;
@@ -246,14 +497,30 @@ function applySliceVisibility(points, filters, sliceState) {
   return applyCompositionSlice(points, sliceState);
 }
 
-function scheduleRender() {
-  if (scheduledRenderHandle != null) {
-    window.cancelAnimationFrame(scheduledRenderHandle);
-  }
+function requestAnimationFrameRender() {
+  if (scheduledRenderHandle != null) return;
   scheduledRenderHandle = window.requestAnimationFrame(() => {
     scheduledRenderHandle = null;
     applyFiltersAndRender();
   });
+}
+
+function scheduleRender({ strategy = "immediate" } = {}) {
+  if (strategy === "debounce") {
+    if (scheduledRenderTimeout != null) return;
+    scheduledRenderTimeout = window.setTimeout(() => {
+      scheduledRenderTimeout = null;
+      requestAnimationFrameRender();
+    }, RENDER_DEBOUNCE_MS);
+    return;
+  }
+
+  if (scheduledRenderTimeout != null) {
+    window.clearTimeout(scheduledRenderTimeout);
+    scheduledRenderTimeout = null;
+  }
+
+  requestAnimationFrameRender();
 }
 
 function resetTransientControlsToDefaults() {
@@ -336,8 +603,12 @@ async function initApp() {
   if (window.__zifExplorerLoaded) return;
   window.__zifExplorerLoaded = true;
 
+  applyTheme(getStoredTheme(), { persist: false });
   resetTransientControlsToDefaults();
+  initialiseInfoTips();
+  syncRangeAccessibility();
   wireControls();
+  syncMobileSidebarLayout();
   await loadPoints();
 }
 
@@ -353,9 +624,16 @@ async function syncControlsToActiveExperimentalDataset() {
   buildPhaseFilters(points);
   initSliderRanges(points);
   resetAdvancedPhaseFilters();
+  syncRangeAccessibility();
 }
 
 function wireControls() {
+  $("themeToggleBtn")?.addEventListener("click", toggleTheme);
+  $("openLeftSidebarBtn")?.addEventListener("click", () => toggleMobileSidebar("left"));
+  $("openRightSidebarBtn")?.addEventListener("click", () => toggleMobileSidebar("right"));
+  $("mobileSidebarBackdrop")?.addEventListener("click", closeMobileSidebars);
+  window.addEventListener("resize", syncMobileSidebarLayout);
+
   $("openCompositionPanel")?.addEventListener("click", () => {
     $("compositionPanel")?.classList.remove("is-hidden");
     $("posMetal")?.focus();
@@ -383,10 +661,10 @@ function wireControls() {
 
     const evt = el.tagName === "SELECT" ? "change" : "input";
     el.addEventListener(evt, () => {
-      updateDerivedReadouts();
-      updateViewControls();
-      toggleModeDependentCards();
-      scheduleRender();
+      refreshUiChrome();
+      scheduleRender({
+        strategy: el.matches('input[type="range"]') ? "debounce" : "immediate"
+      });
     });
   });
 
@@ -396,9 +674,7 @@ function wireControls() {
 
     el.addEventListener("change", () => {
       ensureDistinctSliceAxes();
-      updateDerivedReadouts();
-      updateViewControls();
-      toggleModeDependentCards();
+      refreshUiChrome();
       scheduleRender();
     });
   });
@@ -406,11 +682,9 @@ function wireControls() {
   const markerScale3D = $("markerScale3D");
   if (markerScale3D) {
     markerScale3D.addEventListener("input", () => {
-      updateDerivedReadouts();
-      updateViewControls();
-      toggleModeDependentCards();
+      refreshUiChrome();
       if (!restyleCurrent3DMarkerSize()) {
-        scheduleRender();
+        scheduleRender({ strategy: "debounce" });
       }
     });
   }
@@ -418,11 +692,9 @@ function wireControls() {
   const amorphousOpacity = $("amorphousOpacity");
   if (amorphousOpacity) {
     amorphousOpacity.addEventListener("input", () => {
-      updateDerivedReadouts();
-      updateViewControls();
-      toggleModeDependentCards();
+      refreshUiChrome();
       if (!restyleCurrent3DAmorphousOpacity()) {
-        scheduleRender();
+        scheduleRender({ strategy: "debounce" });
       }
     });
   }
@@ -442,7 +714,7 @@ function wireControls() {
     el.addEventListener("change", () => {
       clearAutoFlags();
       autoFillPosition();
-      updateDerivedReadouts();
+      refreshUiChrome();
       updateCompositionPrediction();
       scheduleRender();
     });
@@ -454,7 +726,7 @@ function wireControls() {
   });
 
   $("posConcentration")?.addEventListener("change", () => {
-    updateDerivedReadouts();
+    refreshUiChrome();
     updateCompositionPrediction();
   });
 
@@ -482,18 +754,17 @@ function wireControls() {
 
   document.querySelectorAll('input[name="viewMode"]').forEach((el) => {
     el.addEventListener("change", () => {
-      updateViewControls();
-      toggleModeDependentCards();
+      refreshUiChrome();
       scheduleRender();
     });
   });
 
   document.querySelectorAll('input[name="dataLayer"]').forEach((el) => {
     el.addEventListener("change", async () => {
-      updateViewControls();
-      toggleModeDependentCards();
+      refreshUiChrome();
       if (el.value === "experimental" || el.value === "experimental_xue") {
         await syncControlsToActiveExperimentalDataset();
+        refreshUiChrome();
       }
       scheduleRender();
     });
@@ -501,9 +772,7 @@ function wireControls() {
 
   document.querySelectorAll('input[name="washing"]').forEach((el) => {
     el.addEventListener("change", () => {
-      updateDerivedReadouts();
-      updateViewControls();
-      toggleModeDependentCards();
+      refreshUiChrome();
       if ($("posWash") && !readPositionNumber("posConcentration")) {
         $("posWash").value = el.value;
         updateCompositionPrediction();
@@ -517,6 +786,7 @@ function wireControls() {
       const preservedState = capturePhaseFilterState();
       const sourcePoints = await fetchDatasetPoints(currentExperimentalDatasetKey());
       buildPhaseFilters(sourcePoints, preservedState);
+      syncRangeAccessibility();
       scheduleRender();
     });
   });
@@ -524,6 +794,7 @@ function wireControls() {
   document.addEventListener("keydown", (ev) => {
     if (ev.key === "Escape") {
       $("compositionPanel")?.classList.add("is-hidden");
+      closeMobileSidebars();
     }
   });
 }
@@ -543,19 +814,23 @@ async function loadPoints() {
 
     await syncControlsToActiveExperimentalDataset();
 
-    updateDerivedReadouts();
+    refreshUiChrome();
     const posWash = $("posWash");
     if (posWash) {
       posWash.value =
         document.querySelector('input[name="washing"]:checked')?.value || "ethanol";
     }
-    updateViewControls();
-    toggleModeDependentCards();
     updateCompositionPrediction();
     applyFiltersAndRender();
   } catch (err) {
     console.error("loadPoints failed:", err);
-    showPlotEmptyState(`<div style="padding:24px;color:#a33;">Failed to load point data.</div>`);
+    showPlotEmptyState(
+      renderEmptyState({
+        kind: "error",
+        title: "Failed to load point data.",
+        body: "The dataset could not be loaded. Please retry or refresh the page."
+      })
+    );
   } finally {
     hideLoadingSpinner();
   }
@@ -711,6 +986,15 @@ function buildPhaseFilters(sourcePoints = allPoints, preservedState = {}) {
     phaseNames.unshift("Amorphous");
   }
 
+  const nextSignature = `${phaseFilterBasis}::${phaseNames
+    .map((phase) => normalisePhase(phase))
+    .join("|")}`;
+  if (phaseFilterSignature === nextSignature && wrap.childElementCount) {
+    updatePhaseReadouts();
+    return;
+  }
+  phaseFilterSignature = nextSignature;
+
   wrap.innerHTML = phaseNames
     .map(
       (phase) => {
@@ -756,6 +1040,7 @@ function buildPhaseFilters(sourcePoints = allPoints, preservedState = {}) {
         slider.value = 0;
       }
       updatePhaseReadouts();
+      syncRangeAccessibility();
       scheduleRender();
     });
   });
@@ -768,11 +1053,13 @@ function buildPhaseFilters(sourcePoints = allPoints, preservedState = {}) {
         check.checked = true;
       }
       updatePhaseReadouts();
-      scheduleRender();
+      syncRangeAccessibility();
+      scheduleRender({ strategy: "debounce" });
     });
   });
 
   updatePhaseReadouts();
+  syncRangeAccessibility();
 }
 
 function capturePhaseFilterState() {
@@ -807,12 +1094,12 @@ function ensureDistinctSliceAxes() {
   }
 }
 
-function readCompositionSliceState() {
-  const mode = $("sliceMode")?.value || "off";
+function readCompositionSliceState(uiState = readAllState(viewerState)) {
+  const mode = uiState.sliceMode || "off";
   if (mode === "off") return { mode: "off" };
 
-  const axisA = $("sliceAxisA")?.value || "metal";
-  const valueA = Number($("sliceValueA")?.value ?? 50);
+  const axisA = uiState.sliceAxisA || "metal";
+  const valueA = Number(uiState.sliceValueA ?? 50);
 
   if (mode !== "line") {
     return {
@@ -822,12 +1109,12 @@ function readCompositionSliceState() {
     };
   }
 
-  let axisB = $("sliceAxisB")?.value || "ligand";
+  let axisB = uiState.sliceAxisB || "ligand";
   if (axisB === axisA) {
     axisB = ["metal", "ligand", "bsa"].find((value) => value !== axisA) || "ligand";
   }
 
-  const valueB = Number($("sliceValueB")?.value ?? 20);
+  const valueB = Number(uiState.sliceValueB ?? 20);
   return {
     mode: "line",
     axisA,
@@ -989,13 +1276,13 @@ function updatePositionNote() {
 
   if (hasRangeError) {
     note.textContent = "Values must stay between 0 and 100.";
-    note.style.color = "#c84b31";
+    note.style.color = "var(--danger)";
     return;
   }
 
   if ([m, l, b].every((v) => v !== null) && hasSumError) {
     note.textContent = "Metal + Ligand + BSA must equal 100.";
-    note.style.color = "#c84b31";
+    note.style.color = "var(--danger)";
     return;
   }
 
@@ -1138,13 +1425,15 @@ async function updateCompositionPrediction() {
   }
 }
 
-function updateDerivedReadouts() {
-  const cryst = Number($("crystBalance")?.value ?? 0);
-  const protein = Number($("proteinThreshold")?.value ?? 0);
-  const ee = Number($("eeThreshold")?.value ?? 0);
-  const spacing = getNormalizedSpacingValue();
-  const markerScale = Number($("markerScale3D")?.value ?? 1.8);
-  const amorphousOpacity = Number($("amorphousOpacity")?.value ?? 0.7);
+function updateDerivedReadouts(uiState = readAllState(viewerState)) {
+  const cryst = Number(uiState.crystBalance ?? 0);
+  const protein = Number(uiState.proteinThreshold ?? 0);
+  const ee = Number(uiState.eeThreshold ?? 0);
+  const spacing = Number.isFinite(Number(uiState.spacingScale))
+    ? clamp(Number(uiState.spacingScale), SPACING_UI_MIN, SPACING_UI_MAX)
+    : getNormalizedSpacingValue();
+  const markerScale = Number(uiState.markerScale3D ?? 1.8);
+  const amorphousOpacity = Number(uiState.amorphousOpacity ?? 0.7);
 
   const crystOut = $("crystBalanceVal");
   const proteinOut = $("proteinThresholdVal");
@@ -1155,7 +1444,7 @@ function updateDerivedReadouts() {
   const sliceValueAOut = $("sliceValueAVal");
   const sliceValueBOut = $("sliceValueBVal");
   const sliceSummary = $("sliceSummary");
-  const sliceState = readCompositionSliceState();
+  const sliceState = readCompositionSliceState(uiState);
 
   if (crystOut) {
     crystOut.textContent = cryst === 0 ? "Any" : `>= ${cryst}%`;
@@ -1176,10 +1465,10 @@ function updateDerivedReadouts() {
     amorphousOpacityOut.textContent = `${Math.round(amorphousOpacity * 100)}%`;
   }
   if (sliceValueAOut) {
-    sliceValueAOut.textContent = `${Math.round(Number($("sliceValueA")?.value ?? 50))}%`;
+    sliceValueAOut.textContent = `${Math.round(Number(uiState.sliceValueA ?? 50))}%`;
   }
   if (sliceValueBOut) {
-    sliceValueBOut.textContent = `${Math.round(Number($("sliceValueB")?.value ?? 20))}%`;
+    sliceValueBOut.textContent = `${Math.round(Number(uiState.sliceValueB ?? 20))}%`;
   }
   if (sliceSummary) {
     if (sliceState.mode === "off") {
@@ -1197,18 +1486,16 @@ function updateDerivedReadouts() {
   updatePositionNote();
 }
 
-function toggleModeDependentCards() {
-  const mode =
-    document.querySelector('input[name="viewMode"]:checked')?.value || "3d";
-
+function toggleModeDependentCards(uiState = readAllState(viewerState)) {
+  const mode = uiState.mode || "3d";
   const spacingCard = $("spacingCard");
   const markerSizeCard = $("markerSizeCard");
   const amorphousOpacityCard = $("amorphousOpacityCard");
   const interlayerGuideCard = $("interlayerGuideCard");
   const sliceFiltersBlock = $("sliceFiltersBlock");
   const sliceAxisBRow = $("sliceAxisBRow");
-  const colourBy = $("colourBy")?.value || "phase";
-  const sliceMode = $("sliceMode")?.value || "off";
+  const colourBy = uiState.colourBy || "phase";
+  const sliceMode = uiState.sliceMode || "off";
 
   if (spacingCard) {
     spacingCard.style.display = mode === "3d" ? "flex" : "none";
@@ -1265,21 +1552,36 @@ function formatRenderDebugFilters(filters) {
   };
 }
 
-function renderNoPointsMarkup(diagnostics) {
+function renderEmptyState({
+  kind = "empty",
+  title,
+  body,
+  diagnosticMarkup = ""
+}) {
   return `
-    <div style="padding:24px;color:#555;">
-      <div style="font-size:16px;color:#666;">No points match the current filters.</div>
-      <div style="margin-top:8px;font-size:13px;color:#7a8393;">Adjust the visible layers or relax one of the filters to see samples again.</div>
+    <div class="empty-state-wrap${kind === "error" ? " empty-state-error" : ""}">
+      ${createEmptyStateIcon(kind)}
+      <div class="empty-state-title">${title}</div>
+      <div class="empty-state-body">${body}</div>
+      ${diagnosticMarkup}
     </div>
   `;
 }
 
+function renderNoPointsMarkup() {
+  return renderEmptyState({
+    title: "No points match the current filters.",
+    body: "Adjust the visible layers or relax one of the filters to see samples again."
+  });
+}
+
 function renderNoPointsMarkupWithDiagnostics(diagnostics) {
   const debug = diagnostics?.filters || {};
-  return `
-    <div style="padding:24px;color:#555;display:flex;flex-direction:column;gap:12px;">
-      <div style="font-size:16px;color:#666;">No points match the current filters.</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;font-size:13px;color:#596273;">
+  return renderEmptyState({
+    title: "No points match the current filters.",
+    body: "The current filter combination leaves no visible samples. Relax one or more constraints to repopulate the plot.",
+    diagnosticMarkup: `
+      <div class="empty-state-diagnostic-grid">
         <div>
           <div><strong>Source points:</strong> ${diagnostics?.sourceCount ?? 0}</div>
           <div><strong>After wash/value filters:</strong> ${diagnostics?.propertyCount ?? 0}</div>
@@ -1300,8 +1602,8 @@ function renderNoPointsMarkupWithDiagnostics(diagnostics) {
           <div><strong>Phase filters:</strong> ${debug.phaseSummary || "none"}</div>
         </div>
       </div>
-    </div>
-  `;
+    `
+  });
 }
 
 function clearPlotContainer(plotDiv) {
@@ -1336,14 +1638,15 @@ function hidePlotEmptyState() {
   }
 }
 
-async function applyFiltersAndRender() {
+async function applyFiltersAndRender(uiState = readAllState(viewerState)) {
   if (document.querySelectorAll(".layer-check").length) {
     syncLayerSelectionFromDom();
   }
-  const filters = readFiltersFromState(viewerState);
-  const sliceState = readCompositionSliceState();
-  const plotDiv = $("plot");
+  const filters = readFiltersFromState(viewerState, uiState);
+  const sliceState = readCompositionSliceState(uiState);
   const token = ++renderRequestToken;
+  const renderStartedAt = performance.now();
+  const theme = getThemeTokens();
 
   try {
     const displayPoints = await getDisplayPoints(filters);
@@ -1365,31 +1668,51 @@ async function applyFiltersAndRender() {
     window.__zifLastRenderDiagnostics = diagnostics;
 
     if (!filtered.length) {
-      showPlotEmptyState(renderNoPointsMarkup(diagnostics));
+      showPlotEmptyState(renderNoPointsMarkupWithDiagnostics(diagnostics));
       return;
     }
 
     hidePlotEmptyState();
 
     if (filters.mode === "2d") {
-      renderPlot2D(filtered, filters.colourBy, handlePointClick, filters.searchPosition);
+      renderPlot2D(
+        filtered,
+        filters.colourBy,
+        handlePointClick,
+        filters.searchPosition,
+        { theme }
+      );
     } else {
       renderPlot3D(
-          filtered,
-          filters.colourBy,
-          viewerState.camera3D,
-          (camera) => {
-            viewerState.camera3D = camera;
-          },
-          handlePointClick,
-          filters.searchPosition,
-          layerVisiblePoints
+        filtered,
+        filters.colourBy,
+        viewerState.camera3D,
+        (camera) => {
+          viewerState.camera3D = camera;
+        },
+        handlePointClick,
+        filters.searchPosition,
+        layerVisiblePoints,
+        { theme }
       );
     }
+    setPlotAccessibility(filters, filtered);
+    console.debug("[zif-vis] render", {
+      points: filtered.length,
+      ms: Number((performance.now() - renderStartedAt).toFixed(1)),
+      mode: filters.mode,
+      dataLayer: filters.dataLayer
+    });
   } catch (err) {
     if (token !== renderRequestToken) return;
     console.error("applyFiltersAndRender failed:", err);
-    showPlotEmptyState(`<div style="padding:24px;color:#a33;">Failed to load the selected data layer.</div>`);
+    showPlotEmptyState(
+      renderEmptyState({
+        kind: "error",
+        title: "Failed to load the selected data layer.",
+        body: "The requested view could not be rendered. Please try a different data layer or refresh the page."
+      })
+    );
   }
 }
 
@@ -1400,5 +1723,12 @@ async function handlePointClick(sampleId) {
       ? "manual"
       : "primary";
   await loadInspector(sampleId, dataset);
+  if (isMobileLayout()) {
+    openMobileSidebar("right");
+  }
+  const firstParameter = $("parametersGrid")?.querySelector(".parameter-value");
+  if (firstParameter) {
+    firstParameter.setAttribute("tabindex", "-1");
+    firstParameter.focus();
+  }
 }
-

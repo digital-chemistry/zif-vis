@@ -1,4 +1,5 @@
 import { TRI_H } from "./plot3d-geometry.js";
+import { getThemeTokens } from "./dom.js";
 
 const DEFAULT_3D_CAMERA = {
   eye: { x: 0.0, y: -1.72, z: 0.66 },
@@ -13,7 +14,7 @@ export function buildLayout(
   concToZ = new Map(),
   options = {}
 ) {
-  const { preserveExistingCamera = false } = options;
+  const { preserveExistingCamera = false, theme = getThemeTokens() } = options;
   const xMin = -0.14;
   const xMax = 1.14;
   const span = xMax - xMin;
@@ -29,8 +30,9 @@ export function buildLayout(
 
   const layout = {
     margin: { l: 0, r: 0, t: 8, b: 0 },
-    paper_bgcolor: "rgba(0,0,0,0)",
-    plot_bgcolor: "rgba(0,0,0,0)",
+    paper_bgcolor: theme.card,
+    plot_bgcolor: theme.card,
+    font: { color: theme.text },
     uirevision: "zif-3d-scene",
 
     scene: {
@@ -76,7 +78,7 @@ export function buildLayout(
       y: 0.975,
       text: "Stacked ternary composition map",
       showarrow: false,
-      font: { size: 15, color: "#283240" },
+      font: { size: 15, color: theme.text },
       align: "left"
     },
       {
@@ -86,7 +88,7 @@ export function buildLayout(
       y: 0.935,
       text: "Layered by concentration with anchored ternary axes",
       showarrow: false,
-      font: { size: 11, color: "#6d7785" },
+      font: { size: 11, color: theme.muted },
       align: "left"
     }
     ],

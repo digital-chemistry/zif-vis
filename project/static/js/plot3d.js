@@ -90,14 +90,20 @@ export function renderPlot3D(
   onCameraChange,
   onPointClick,
   searchPosition = null,
-  geometrySourcePoints = null
+  geometrySourcePoints = null,
+  options = {}
 ) {
   const plotDiv = $("plot");
   if (!plotDiv) return;
 
   if (!points.length) {
     clearPlotContainer(plotDiv);
-    plotDiv.innerHTML = `<div style="padding:24px;color:#777;">No points match the current filters.</div>`;
+    plotDiv.innerHTML = `
+      <div class="empty-state-wrap">
+        <div class="empty-state-title">No points match the current filters.</div>
+        <div class="empty-state-body">Adjust the visible layers or relax one of the filters to see samples again.</div>
+      </div>
+    `;
     updateTernaryInset();
     updatePhaseLegend(colourBy);
     return;
@@ -135,7 +141,10 @@ export function renderPlot3D(
   Plotly.react(
     plotDiv,
     traces,
-    buildLayout(effectiveCamera, orderedLayers, concToZ, { preserveExistingCamera }),
+    buildLayout(effectiveCamera, orderedLayers, concToZ, {
+      preserveExistingCamera,
+      theme: options.theme
+    }),
     { responsive: true, displaylogo: false }
   );
 

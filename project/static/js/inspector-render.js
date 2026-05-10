@@ -1,4 +1,4 @@
-import { $ } from "./dom.js";
+import { $, getThemeTokens } from "./dom.js";
 import { formatValShort, escapeHtml } from "./formatters.js";
 
 export function formatPercentWithError(mean, err, digits = 2) {
@@ -158,7 +158,7 @@ export function renderParametersCard(summary, topPhasesText, pointId) {
       (row) => `
       <div class="parameter-item${row.wide ? " parameter-item-wide" : ""}">
         <div class="parameter-label">${escapeHtml(row.label)}</div>
-        <div class="parameter-value">${escapeHtml(row.value)}</div>
+        <div class="parameter-value" tabindex="-1">${escapeHtml(row.value)}</div>
       </div>
     `
     )
@@ -168,6 +168,7 @@ export function renderParametersCard(summary, topPhasesText, pointId) {
 export function renderPhaseComposition(slices) {
   const plotDiv = $("phaseCompositionPlot");
   const legend = $("phaseLegend");
+  const theme = getThemeTokens();
 
   if (!plotDiv) return;
 
@@ -200,7 +201,8 @@ export function renderPhaseComposition(slices) {
     ],
     {
       margin: { l: 0, r: 0, t: 0, b: 0 },
-      paper_bgcolor: "white",
+      paper_bgcolor: theme.card,
+      font: { color: theme.text },
       showlegend: false
     },
     { responsive: true, displaylogo: false }
@@ -221,6 +223,7 @@ export function renderPhaseComposition(slices) {
 }
 
 export function renderLinePlotElement(target, x, y, xlabel, ylabel) {
+  const theme = getThemeTokens();
   Plotly.react(
     target,
     [
@@ -235,11 +238,11 @@ export function renderLinePlotElement(target, x, y, xlabel, ylabel) {
     {
       autosize: true,
       margin: { l: 46, r: 12, t: 10, b: 42 },
-      paper_bgcolor: "white",
-      plot_bgcolor: "white",
+      paper_bgcolor: theme.card,
+      plot_bgcolor: theme.card,
       font: {
         family: "Segoe UI, Arial, sans-serif",
-        color: "#4d627a",
+        color: theme.muted,
         size: 12
       },
       xaxis: {
@@ -247,8 +250,8 @@ export function renderLinePlotElement(target, x, y, xlabel, ylabel) {
         showgrid: false,
         zeroline: false,
         showline: true,
-        linecolor: "rgba(223, 75, 97, 0.24)",
-        tickcolor: "rgba(223, 75, 97, 0.24)",
+        linecolor: theme.border,
+        tickcolor: theme.border,
         ticks: "outside",
         automargin: true
       },
@@ -257,8 +260,8 @@ export function renderLinePlotElement(target, x, y, xlabel, ylabel) {
         showgrid: false,
         zeroline: false,
         showline: true,
-        linecolor: "rgba(223, 75, 97, 0.24)",
-        tickcolor: "rgba(223, 75, 97, 0.24)",
+        linecolor: theme.border,
+        tickcolor: theme.border,
         ticks: "outside",
         automargin: true
       },

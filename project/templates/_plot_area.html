@@ -6,9 +6,45 @@
     </div>
 
     <div class="plot-header-actions">
+      <button
+        type="button"
+        class="header-icon-btn mobile-sidebar-toggle"
+        id="openLeftSidebarBtn"
+        aria-label="Open filters and controls panel"
+        aria-controls="leftSidebar"
+        aria-expanded="false"
+      >
+        <i data-lucide="panel-left-open"></i>
+        <span class="sr-only">Open filters and controls panel</span>
+      </button>
+
       <button type="button" class="plot-search-trigger" id="openCompositionPanel">
         <i data-lucide="search-code"></i>
         <span>Search / Predict</span>
+      </button>
+
+      <button
+        type="button"
+        class="header-icon-btn theme-toggle-btn"
+        id="themeToggleBtn"
+        aria-label="Switch to dark mode"
+        aria-pressed="false"
+      >
+        <i data-lucide="moon-star" class="theme-icon theme-icon-dark"></i>
+        <i data-lucide="sun-medium" class="theme-icon theme-icon-light"></i>
+        <span class="sr-only">Toggle color theme</span>
+      </button>
+
+      <button
+        type="button"
+        class="header-icon-btn mobile-sidebar-toggle"
+        id="openRightSidebarBtn"
+        aria-label="Open sample details panel"
+        aria-controls="rightSidebar"
+        aria-expanded="false"
+      >
+        <i data-lucide="panel-right-open"></i>
+        <span class="sr-only">Open sample details panel</span>
       </button>
 
       <a
@@ -27,7 +63,7 @@
   </div>
 
   <div class="plot-shell">
-    <div id="plot"></div>
+    <div id="plot" role="img" aria-label="Interactive plot loading" tabindex="0"></div>
     <div id="plotLoading" class="plot-loading is-hidden" aria-live="polite" aria-label="Loading data">
       <div class="spinner"></div>
       <div class="spinner-label">Loading dataset…</div>
@@ -70,4 +106,5 @@
     </aside>
     <div id="plotPhaseLegend" class="plot-overlay plot-phase-legend is-hidden"></div>
   </div>
+  <div id="mobileSidebarBackdrop" class="mobile-sidebar-backdrop" hidden></div>
 </main>

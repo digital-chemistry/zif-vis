@@ -8,10 +8,6 @@ export function finiteValues(points, key) {
     .sort((a, b) => a - b);
 }
 
-function getCheckedRadio(name, fallback) {
-  return document.querySelector(`input[name="${name}"]:checked`)?.value || fallback;
-}
-
 function numericOrZero(value) {
   if (value === null || value === undefined || value === "") return 0;
   const n = Number(value);
@@ -99,36 +95,60 @@ function getPositionMarker() {
   return { metal: m, ligand: l, bsa: b, concentration: c };
 }
 
-export function readFiltersFromState(viewerState = {}) {
-  const mode = getCheckedRadio("viewMode", "3d");
-  const dataLayer = getCheckedRadio("dataLayer", "experimental");
-  const washing = getCheckedRadio("washing", "ethanol");
+function getPositionMarkerFromState(uiState = {}) {
+  const m = Number(uiState?.searchPosition?.metal);
+  const l = Number(uiState?.searchPosition?.ligand);
+  const b = Number(uiState?.searchPosition?.bsa);
+  const c = Number(uiState?.searchPosition?.concentration);
 
-  const colourBy = $("colourBy")?.value || "phase";
+  if (![m, l, b, c].every(Number.isFinite)) return null;
+  if ([m, l, b].some((value) => value < 0 || value > 100)) return null;
+  if (Math.abs(m + l + b - 100) > 0.25) return null;
+
+  return { metal: m, ligand: l, bsa: b, concentration: c };
+}
+
+export function readFiltersFromState(viewerState = {}, uiState = null) {
+  const state = uiState || {};
+  const mode = state.mode || document.querySelector('input[name="viewMode"]:checked')?.value || "3d";
+  const dataLayer =
+    state.dataLayer ||
+    document.querySelector('input[name="dataLayer"]:checked')?.value ||
+    "experimental";
+  const washing =
+    state.washing ||
+    document.querySelector('input[name="washing"]:checked')?.value ||
+    "ethanol";
+  const colourBy = state.colourBy || $("colourBy")?.value || "phase";
   const selectedLayers =
     mode === "3d"
-      ? (Array.isArray(viewerState.selectedLayers) ? viewerState.selectedLayers : [])
-          .map(value => Number(value))
-          .filter(value => Number.isFinite(value))
+      ? (Array.isArray(state.selectedLayers)
+          ? state.selectedLayers
+          : Array.isArray(viewerState.selectedLayers)
+            ? viewerState.selectedLayers
+            : []
+        )
+          .map((value) => Number(value))
+          .filter((value) => Number.isFinite(value))
       : [];
-  const layerCheckboxCount = document.querySelectorAll(".layer-check").length;
+  const layerCheckboxCount =
+    state.layerCheckboxCount ?? document.querySelectorAll(".layer-check").length;
 
   return {
     mode,
     dataLayer,
     washing,
     colourBy,
-    searchPosition: getPositionMarker(),
+    searchPosition: uiState ? getPositionMarkerFromState(state) : getPositionMarker(),
     selectedLayers,
     selectedLayersExplicitlyEmpty:
-      mode === "3d" &&
-      layerCheckboxCount > 0 &&
-      selectedLayers.length === 0,
-    crystBalance: Number($("crystBalance")?.value ?? 0) / 100,
-    proteinThreshold: Number($("proteinThreshold")?.value ?? 0),
-    eeThreshold: Number($("eeThreshold")?.value ?? 0),
-    phaseFilterBasis: getPhaseFilterBasis(),
-    phaseThresholds: getPhaseThresholds(),
+      state.selectedLayersExplicitlyEmpty ??
+      (mode === "3d" && layerCheckboxCount > 0 && selectedLayers.length === 0),
+    crystBalance: Number(state.crystBalance ?? $("crystBalance")?.value ?? 0) / 100,
+    proteinThreshold: Number(state.proteinThreshold ?? $("proteinThreshold")?.value ?? 0),
+    eeThreshold: Number(state.eeThreshold ?? $("eeThreshold")?.value ?? 0),
+    phaseFilterBasis: state.phaseFilterBasis || getPhaseFilterBasis(),
+    phaseThresholds: state.phaseThresholds || getPhaseThresholds(),
   };
 }
 

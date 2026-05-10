@@ -1,4 +1,4 @@
-<aside class="sidebar left">
+<aside class="sidebar left" id="leftSidebar" aria-label="Filters and display controls">
   <section class="panel-card">
     <div class="panel-heading icon-label">
       <i data-lucide="sliders-horizontal"></i>
@@ -150,77 +150,77 @@
       <select id="layerFocus"></select>
     </div>
 
-    <div class="slider-group">
-      <div class="slider-title label-with-help">
+    <fieldset class="slider-group">
+      <legend class="slider-title label-with-help">
         <span>Min crystallinity</span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
           <span class="info-tip-popover">Crystallinity is the fraction of the sample assigned as crystalline rather than amorphous. Raising this filter keeps only more crystalline samples.</span>
         </span>
-      </div>
+      </legend>
       <div class="single-slider-readout"><span id="crystBalanceVal">Any</span></div>
       <input type="range" id="crystBalance" min="0" max="100" step="1" value="0">
-    </div>
+    </fieldset>
 
-    <div class="slider-group">
-      <div class="slider-title label-with-help">
+    <fieldset class="slider-group">
+      <legend class="slider-title label-with-help">
         <span>ATR-IR bands ratio minimum</span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
           <span class="info-tip-popover">This threshold filters samples by the ATR-IR bands ratio used here as a compositional indicator. Higher values keep only samples above the selected ratio.</span>
         </span>
-      </div>
+      </legend>
       <div class="single-slider-readout"><span id="proteinThresholdVal">0</span></div>
       <input type="range" id="proteinThreshold" min="0" max="1" step="0.001" value="0">
-    </div>
+    </fieldset>
 
-    <div class="slider-group">
-      <div class="slider-title label-with-help">
+    <fieldset class="slider-group">
+      <legend class="slider-title label-with-help">
         <span>Min EE</span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
           <span class="info-tip-popover">EE means encapsulation efficiency: how much of the target biomolecule is retained in the composite relative to the starting amount. Raise this to focus on better-loading samples.</span>
         </span>
-      </div>
+      </legend>
       <div class="single-slider-readout"><span id="eeThresholdVal">0</span></div>
       <input type="range" id="eeThreshold" min="0" max="100" step="0.1" value="0">
-    </div>
+    </fieldset>
 
-    <div class="slider-group" id="spacingCard">
-      <div class="slider-title label-with-help">
+    <fieldset class="slider-group" id="spacingCard">
+      <legend class="slider-title label-with-help">
         <span>3D layer spacing</span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
           <span class="info-tip-popover">Adjust the vertical spacing between concentration layers in the stacked 3D display. This changes readability, not the underlying data.</span>
         </span>
-      </div>
+      </legend>
       <div class="single-slider-readout"><span id="spacingScaleVal">1</span></div>
       <input type="range" id="spacingScale" min="0" max="1" step="0.01" value="1">
-    </div>
+    </fieldset>
 
-    <div class="slider-group" id="markerSizeCard">
-      <div class="slider-title label-with-help">
+    <fieldset class="slider-group" id="markerSizeCard">
+      <legend class="slider-title label-with-help">
         <span>3D marker size</span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
           <span class="info-tip-popover">Increase or decrease the point size in the 3D view to make dense regions easier to inspect.</span>
         </span>
-      </div>
+      </legend>
       <div class="single-slider-readout"><span id="markerScale3DVal">1.8x</span></div>
       <input type="range" id="markerScale3D" min="0.6" max="5" step="0.1" value="1.8">
-    </div>
+    </fieldset>
 
-    <div class="slider-group" id="amorphousOpacityCard" style="display:none;">
-      <div class="slider-title label-with-help">
+    <fieldset class="slider-group" id="amorphousOpacityCard" style="display:none;">
+      <legend class="slider-title label-with-help">
         <span>Amorphous base opacity</span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
           <span class="info-tip-popover">In phase view, adjust how transparent the outer amorphous shell looks behind the colored crystalline core.</span>
         </span>
-      </div>
+      </legend>
       <div class="single-slider-readout"><span id="amorphousOpacityVal">70%</span></div>
       <input type="range" id="amorphousOpacity" min="0.1" max="1" step="0.05" value="0.7">
-    </div>
+    </fieldset>
   </section>
 
   <div class="panel-card accordion-card">
@@ -270,13 +270,13 @@
                 <option value="bsa">BSA</option>
               </select>
             </div>
-            <div class="slider-group compact-slider">
-              <div class="slider-title">
+            <fieldset class="slider-group compact-slider">
+              <legend class="slider-title">
                 <span>First value</span>
-              </div>
+              </legend>
               <div class="single-slider-readout"><span id="sliceValueAVal">50%</span></div>
               <input type="range" id="sliceValueA" min="0" max="100" step="10" value="50">
-            </div>
+            </fieldset>
           </div>
 
           <div id="sliceAxisBRow" class="slice-control-grid" style="display:none;">
@@ -288,13 +288,13 @@
                 <option value="bsa">BSA</option>
               </select>
             </div>
-            <div class="slider-group compact-slider">
-              <div class="slider-title">
+            <fieldset class="slider-group compact-slider">
+              <legend class="slider-title">
                 <span>Second value</span>
-              </div>
+              </legend>
               <div class="single-slider-readout"><span id="sliceValueBVal">20%</span></div>
               <input type="range" id="sliceValueB" min="0" max="100" step="10" value="20">
-            </div>
+            </fieldset>
           </div>
 
           <div class="slice-summary" id="sliceSummary">No composition slice is applied.</div>

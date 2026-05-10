@@ -129,10 +129,10 @@
 }
 
 .experiment-card {
-  border: 1px solid #e4e0db;
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 10px;
-  background: #fcfbf9;
+  background: color-mix(in srgb, var(--card) 74%, var(--panel) 26%);
 }
 
 .experiment-card-head {
@@ -146,7 +146,7 @@
 .experiment-title {
   font-size: 13px;
   font-weight: 800;
-  color: #3a332c;
+  color: var(--text);
   margin-bottom: 0;
   word-break: break-word;
 }

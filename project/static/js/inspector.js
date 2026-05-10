@@ -171,6 +171,13 @@ export async function loadInspector(sampleId, dataset = "primary") {
     renderParametersCard(summary, topPhasesText, data.id || sampleId);
     renderPhaseComposition(slices);
 
+    // Move keyboard focus to the first parameter value so screen-reader users
+    // immediately hear the newly loaded sample content (Task D step 5).
+    const firstValue = $("parametersGrid")?.querySelector(".parameter-value");
+    if (firstValue) {
+      firstValue.focus({ preventScroll: true });
+    }
+
     prepareCollapsedSections();
     wireLazySections(token);
 

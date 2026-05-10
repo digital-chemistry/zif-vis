@@ -4,7 +4,7 @@ import {
   SAMPLE_MARKER_SIZE_2D,
   CRYSTAL_CORE_MIN_SIZE_2D
 } from "./constants.js";
-import { $ } from "./dom.js";
+import { $, getThemeTokens } from "./dom.js";
 import {
   normalisePhase,
   displayPhase,
@@ -394,9 +394,16 @@ function markerForSearchPosition2DFallback(searchPosition, layer) {
   ];
 }
 
-export function renderPlot2D(points, colourBy, onPointClick, searchPosition = null) {
+export function renderPlot2D(
+  points,
+  colourBy,
+  onPointClick,
+  searchPosition = null,
+  options = {}
+) {
   const plotDiv = $("plot");
   if (!plotDiv) return;
+  const theme = options.theme || getThemeTokens();
 
   const layerFocus = $("layerFocus")?.value || "";
   const availableLayers = [...new Set(points.map((p) => Number(p.concentration)).filter((v) => Number.isFinite(v)))]
@@ -404,7 +411,12 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
 
   if (!availableLayers.length) {
     clearPlotContainer(plotDiv);
-    plotDiv.innerHTML = `<div style="padding:24px;color:#777;">No points match the current filters.</div>`;
+    plotDiv.innerHTML = `
+      <div class="empty-state-wrap">
+        <div class="empty-state-title">No points match the current filters.</div>
+        <div class="empty-state-body">Adjust the visible layers or relax one of the filters to see samples again.</div>
+      </div>
+    `;
     return;
   }
 
@@ -413,13 +425,32 @@ export function renderPlot2D(points, colourBy, onPointClick, searchPosition = nu
 
   if (!layerPoints.length) {
     clearPlotContainer(plotDiv);
-    plotDiv.innerHTML = `<div style="padding:24px;color:#777;">No points found for this layer.</div>`;
+    plotDiv.innerHTML = `
+      <div class="empty-state-wrap">
+        <div class="empty-state-title">No points found for this layer.</div>
+        <div class="empty-state-body">Pick a different concentration layer or switch back to Auto.</div>
+      </div>
+    `;
     return;
   }
-  return renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, searchPosition);
+  return renderPlot2DFallback(
+    layerPoints,
+    colourBy,
+    layer,
+    onPointClick,
+    searchPosition,
+    theme
+  );
 }
 
-function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, searchPosition = null) {
+function renderPlot2DFallback(
+  layerPoints,
+  colourBy,
+  layer,
+  onPointClick,
+  searchPosition = null,
+  theme = getThemeTokens()
+) {
   const plotDiv = $("plot");
 
   let markerColor = "#9c9c9c";
@@ -527,13 +558,14 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
 
   const layout = {
     margin: { l: 40, r: 40, t: 40, b: 40 },
-    paper_bgcolor: "white",
-    plot_bgcolor: "white",
+    paper_bgcolor: theme.card,
+    plot_bgcolor: theme.card,
+    font: { color: theme.text },
     annotations: [
-      { x: 0.5, y: 1.06, xref: "paper", yref: "paper", text: `Layer ${layer}`, showarrow: false, font: { size: 18, color: "#333" } },
-      { x: 0.02, y: 0.02, xref: "paper", yref: "paper", text: "Metal", showarrow: false, font: { size: 16, color: "#333" } },
-      { x: 0.98, y: 0.02, xref: "paper", yref: "paper", text: "Ligand", showarrow: false, font: { size: 16, color: "#333" } },
-      { x: 0.5, y: 0.96, xref: "paper", yref: "paper", text: "BSA", showarrow: false, font: { size: 16, color: "#333" } }
+      { x: 0.5, y: 1.06, xref: "paper", yref: "paper", text: `Layer ${layer}`, showarrow: false, font: { size: 18, color: theme.text } },
+      { x: 0.02, y: 0.02, xref: "paper", yref: "paper", text: "Metal", showarrow: false, font: { size: 16, color: theme.muted } },
+      { x: 0.98, y: 0.02, xref: "paper", yref: "paper", text: "Ligand", showarrow: false, font: { size: 16, color: theme.muted } },
+      { x: 0.5, y: 0.96, xref: "paper", yref: "paper", text: "BSA", showarrow: false, font: { size: 16, color: theme.muted } }
     ],
     xaxis: { visible: false, range: [-0.1, 1.1] },
     yaxis: { visible: false, range: [-0.08, 0.95], scaleanchor: "x", scaleratio: 1 },
@@ -542,7 +574,7 @@ function renderPlot2DFallback(layerPoints, colourBy, layer, onPointClick, search
       path: `M 0 0 L 1 0 L 0.5 ${Math.sqrt(3) / 2} Z`,
       xref: "x",
       yref: "y",
-      line: { color: "rgba(25,25,25,0.45)", width: 2 },
+      line: { color: theme.muted, width: 2 },
       fillcolor: "rgba(0,0,0,0)"
     }],
     showlegend: false,

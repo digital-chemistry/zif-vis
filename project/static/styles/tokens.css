@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
+  color-scheme: light;
   --bg: #f6f7f9;
   --panel: #f1f3f5;
   --card: #ffffff;
@@ -31,6 +32,29 @@
 
   --scrollbar-thumb: rgba(148, 163, 184, 0.45);
   --scrollbar-thumb-hover: rgba(100, 116, 139, 0.65);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1117;
+  --panel: #181c24;
+  --card: #1e2330;
+  --border: #2c3244;
+  --text: #e8edf4;
+  --muted: #8a97aa;
+  --accent: #f06479;
+  --accent-hover: #e85570;
+  --accent-weak: #2e1820;
+  --danger: #ff8b73;
+  --danger-bg: rgba(255, 139, 115, 0.12);
+  --icon: #f06479;
+  --icon-soft-bg: rgba(240, 100, 121, 0.14);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.36);
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.26);
+  --shadow-lg: 0 24px 52px rgba(0, 0, 0, 0.38);
+  --focus-ring: 0 0 0 3px rgba(240, 100, 121, 0.22);
+  --scrollbar-thumb: rgba(100, 116, 139, 0.4);
+  --scrollbar-thumb-hover: rgba(148, 163, 184, 0.62);
 }
 
 * {
