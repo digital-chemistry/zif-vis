@@ -98,9 +98,4 @@ export function buildLayout(
 
   if (currentCamera) {
     layout.scene.camera = currentCamera;
-  } else if (!preserveExistingCamera) {
-    layout.scene.camera = DEFAULT_3D_CAMERA;
-  }
-
-  return layout;
-}
+  } else if (!

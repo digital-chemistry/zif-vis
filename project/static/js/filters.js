@@ -148,28 +148,4 @@ export function readFiltersFromState(viewerState = {}, uiState = null) {
     proteinThreshold: Number(state.proteinThreshold ?? $("proteinThreshold")?.value ?? 0),
     eeThreshold: Number(state.eeThreshold ?? $("eeThreshold")?.value ?? 0),
     phaseFilterBasis: state.phaseFilterBasis || getPhaseFilterBasis(),
-    phaseThresholds: state.phaseThresholds || getPhaseThresholds(),
-  };
-}
-
-export function filterPoints(points, filters) {
-  return points.filter((p) => {
-    const wash = String(p.wash_code || p.wash || "").toUpperCase();
-    const cryst = Number(p.crystallinity);
-    const protein = Number(p.protein_ratio);
-    const ee = Number(p.encapsulation_efficiency ?? p.ee);
-    if (filters.washing === "ethanol" && wash !== "EW") return false;
-    if (filters.washing === "water" && wash !== "WW") return false;
-
-    if (filters.crystBalance > 0 && Number.isFinite(cryst) && cryst < filters.crystBalance) return false;
-    if (Number.isFinite(protein) && protein < filters.proteinThreshold) return false;
-    if (Number.isFinite(ee) && ee < filters.eeThreshold) return false;
-
-    for (const [phase, minFrac] of Object.entries(filters.phaseThresholds)) {
-      const frac = getPhaseFractionForFilter(p, phase, filters.phaseFilterBasis);
-      if (!Number.isFinite(frac) || frac < minFrac) return false;
-    }
-
-    return true;
-  });
-}
+    phaseThresholds: state.phaseThresholds || getPhase

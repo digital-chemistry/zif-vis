@@ -171,15 +171,4 @@ export function renderPlot3D(
     }
     const nextCamera = extractCameraFromRelayoutEvent(
       ev,
-      plotDiv?._fullLayout?.scene?.camera || effectiveCamera
-    );
-    if (nextCamera) {
-      onCameraChange(nextCamera);
-    }
-  });
-
-  plotDiv.on("plotly_click", async (ev) => {
-    const sampleId = ev.points?.[0]?.customdata;
-    if (sampleId) await onPointClick(sampleId);
-  });
-}
+      plotDiv?._fullLayout?.scene?.camera || effectiveCamer

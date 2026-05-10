@@ -298,8 +298,4 @@
   color: var(--danger);
 }
 
-.empty-state-error .empty-state-title,
-.empty-state-error .empty-state-body,
-.empty-state-error .empty-state-icon {
-  color: var(--danger);
-}
+.empty-state-error .empty-state-tit
