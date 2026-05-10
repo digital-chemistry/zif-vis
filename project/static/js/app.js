@@ -528,7 +528,16 @@ function wireControls() {
   });
 }
 
+function showLoadingSpinner() {
+  $("plotLoading")?.classList.remove("is-hidden");
+}
+
+function hideLoadingSpinner() {
+  $("plotLoading")?.classList.add("is-hidden");
+}
+
 async function loadPoints() {
+  showLoadingSpinner();
   try {
     allPoints = await fetchDatasetPoints("primary");
 
@@ -546,11 +555,9 @@ async function loadPoints() {
     applyFiltersAndRender();
   } catch (err) {
     console.error("loadPoints failed:", err);
-
-    const plotDiv = $("plot");
-    if (plotDiv) {
-      showPlotEmptyState(`<div style="padding:24px;color:#a33;">Failed to load point data.</div>`);
-    }
+    showPlotEmptyState(`<div style="padding:24px;color:#a33;">Failed to load point data.</div>`);
+  } finally {
+    hideLoadingSpinner();
   }
 }
 
@@ -869,9 +876,7 @@ function readPositionNumber(id) {
 function setPositionFieldError(id, hasError) {
   const el = $(id);
   if (!el) return;
-
-  el.style.borderColor = hasError ? "#c84b31" : "";
-  el.style.background = hasError ? "#fff4f1" : "";
+  el.classList.toggle("is-error", hasError);
 }
 
 function clearAutoFlags() {

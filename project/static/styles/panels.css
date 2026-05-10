@@ -34,9 +34,12 @@
   font-size: 28px;
   font-weight: 800;
   line-height: 1.1;
-  color: #213247;
   margin: 0;
   letter-spacing: -0.02em;
+  background: linear-gradient(130deg, #1a2d41 30%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .plot-header-subtitle {
@@ -106,12 +109,17 @@
 }
 
 .panel-card {
-  background: var(--card);
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfd 100%);
   border: 1px solid #e3e6ea;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 16px;
   margin-bottom: 12px;
+  transition: box-shadow var(--transition-fast);
+}
+
+.panel-card:hover {
+  box-shadow: 0 12px 32px rgba(18, 24, 40, 0.10);
 }
 
 .panel-heading {
@@ -119,6 +127,9 @@
   font-weight: 800;
   color: var(--text);
   margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 3px solid var(--accent);
+  border-radius: 1px;
 }
 
 .card-divider {
@@ -151,13 +162,20 @@
 }
 
 .accordion-section > summary::after {
-  content: "+";
+  content: "›";
   float: right;
   color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform var(--transition-fast), color var(--transition-fast);
 }
 
 .accordion-section[open] > summary::after {
-  content: "-";
+  transform: rotate(90deg);
+  color: var(--accent);
+  content: "›";
 }
 
 .accordion-body {
@@ -186,6 +204,12 @@
 .sidebar .panel-card {
   border-radius: 16px;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.sidebar .panel-card:hover {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.09);
+  transform: translateY(-1px);
 }
 
 .sidebar-credits {
@@ -194,6 +218,9 @@
   font-size: 11px;
   line-height: 1.5;
   text-align: center;
+  letter-spacing: 0.02em;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(209, 215, 224, 0.6);
 }
 
 .sidebar-credits-sep {

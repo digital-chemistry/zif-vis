@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 :root {
   --bg: #f6f7f9;
   --panel: #f1f3f5;
@@ -20,6 +22,15 @@
   --radius: 14px;
 
   --focus-ring: 0 0 0 3px rgba(223, 75, 97, 0.12);
+
+  --transition-fast: 0.16s ease;
+  --transition-med: 0.24s ease;
+
+  --shadow-sm: 0 4px 14px rgba(18, 24, 40, 0.06);
+  --shadow-lg: 0 24px 52px rgba(92, 115, 139, 0.14);
+
+  --scrollbar-thumb: rgba(148, 163, 184, 0.45);
+  --scrollbar-thumb-hover: rgba(100, 116, 139, 0.65);
 }
 
 * {

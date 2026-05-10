@@ -30,6 +30,45 @@
   z-index: 5;
 }
 
+/* Loading spinner */
+.plot-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(8px);
+  border-radius: 28px;
+}
+
+.plot-loading.is-hidden {
+  display: none;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(223, 75, 97, 0.14);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: zif-spin 0.72s linear infinite;
+}
+
+.spinner-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+@keyframes zif-spin {
+  to { transform: rotate(360deg); }
+}
+
 .composition-panel {
   pointer-events: auto;
   top: 18px;

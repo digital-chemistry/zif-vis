@@ -13,5 +13,12 @@ project/ATR_xy/
 project/XRD_xy/
 project/images/
 
-# Local backup/original JSON snapshots
+# Local backup/original JSON snapshots (never needed in production)
 project/*_org.json
+project/*_sanitized.json
+project/*manual1.json
+project/*manual_1*.json
+project/*pre_sanitize*.json
+
+# Archive folder (dead/superseded code, gitignored like old/)
+_archive/

@@ -57,6 +57,14 @@ input.is-auto {
   background: #f8fafc;
 }
 
+input.is-error,
+select.is-error {
+  border-color: var(--danger) !important;
+  background: var(--danger-bg) !important;
+  box-shadow: 0 0 0 3px rgba(200, 75, 49, 0.08);
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
 /* --- Grid Layouts --- */
 .position-grid {
   display: grid;

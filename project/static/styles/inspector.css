@@ -16,13 +16,20 @@
 }
 
 .panel-details > summary::after {
-  content: "+";
+  content: "›";
   float: right;
   color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform var(--transition-fast), color var(--transition-fast);
 }
 
 .panel-details[open] > summary::after {
-  content: "-";
+  transform: rotate(90deg);
+  color: var(--accent);
+  content: "›";
 }
 
 .panel-details-body {
