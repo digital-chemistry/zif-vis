@@ -276,7 +276,7 @@ function setPlotAccessibility(filters, visiblePoints) {
   const layerLabel =
     filters.mode === "3d"
       ? `${layerCount} layers`
-      : `layer ${filters.searchPosition?.concentration ?? $("layerFocus")?.value || "auto"}`;
+      : `layer ${filters.searchPosition?.concentration ?? $("layerFocus")?.value ?? "auto"}`;
   const label =
     filters.mode === "3d"
       ? `3D stacked phase map, ${layerLabel}, ${pointCount} points visible`
