@@ -68,6 +68,15 @@ function setThemeToggleState() {
   );
 }
 
+function syncBrandLogo() {
+  const logo = $("plotBrandLogo");
+  if (!logo) return;
+
+  const isDark = getCurrentTheme() === "dark";
+  const nextSrc = isDark ? logo.dataset.logoDark : logo.dataset.logoLight;
+  if (nextSrc) logo.src = nextSrc;
+}
+
 function buildThemedAnnotations(plotDiv, theme) {
   const currentAnnotations =
     plotDiv?.layout?.annotations || plotDiv?._fullLayout?.annotations || [];
@@ -116,6 +125,7 @@ function applyTheme(themeName, { persist = true } = {}) {
   }
 
   setThemeToggleState();
+  syncBrandLogo();
   syncPlotTheme();
 }
 

@@ -9,14 +9,44 @@ import {
   vec,
   midpoint
 } from "./plot3d-geometry.js";
+import { getThemeTokens } from "./dom.js";
 
-const LAYER_PLANE_COLORS = [
-  "rgba(255, 255, 255, 0.22)",
-  "rgba(250, 250, 251, 0.18)",
-  "rgba(246, 247, 248, 0.14)",
-  "rgba(242, 243, 245, 0.11)",
-  "rgba(238, 239, 241, 0.08)"
-];
+function isDarkTheme() {
+  return document.documentElement.dataset.theme === "dark";
+}
+
+function getOverlayPalette() {
+  const theme = getThemeTokens();
+  const dark = isDarkTheme();
+
+  return {
+    planeColors: dark
+      ? [
+          "rgba(255, 255, 255, 0.18)",
+          "rgba(255, 255, 255, 0.15)",
+          "rgba(255, 255, 255, 0.12)",
+          "rgba(255, 255, 255, 0.10)",
+          "rgba(255, 255, 255, 0.08)"
+        ]
+      : [
+          "rgba(255, 255, 255, 0.22)",
+          "rgba(250, 250, 251, 0.18)",
+          "rgba(246, 247, 248, 0.14)",
+          "rgba(242, 243, 245, 0.11)",
+          "rgba(238, 239, 241, 0.08)"
+        ],
+    gridLine: dark ? "rgba(216, 225, 238, 0.18)" : "rgba(65, 74, 86, 0.12)",
+    interlayerGuide: dark ? "rgba(208, 219, 235, 0.34)" : "rgba(95, 111, 133, 0.42)",
+    layerLabelText: theme.text,
+    layerLabelStroke: dark ? "rgba(228, 235, 245, 0.28)" : "rgba(55, 66, 80, 0.32)",
+    concentrationLine: dark ? "rgba(214, 223, 236, 0.30)" : "rgba(40, 49, 61, 0.22)",
+    concentrationTick: dark ? "rgba(214, 223, 236, 0.72)" : "rgba(48, 57, 69, 0.7)",
+    concentrationTickStroke: dark ? "rgba(255, 255, 255, 0.92)" : "rgba(255,255,255,0.85)",
+    concentrationText: dark ? theme.text : "#424c59",
+    axisLabelText: dark ? theme.text : "#111111",
+    tickLabelText: dark ? theme.muted : "#5a6572"
+  };
+}
 
 function makeLineTrace(coords, color, width = 5) {
   return {
@@ -118,6 +148,7 @@ function formatLayerLabel(layer) {
 
 export function buildLayerPlanes(orderedLayers, concToZ) {
   const { A, B, C } = TRIANGLE;
+  const palette = getOverlayPalette();
 
   return orderedLayers.map((layer, index) => {
     const z = concToZ.get(layer);
@@ -129,7 +160,9 @@ export function buildLayerPlanes(orderedLayers, concToZ) {
       i: [0],
       j: [1],
       k: [2],
-      color: LAYER_PLANE_COLORS[index] || LAYER_PLANE_COLORS[LAYER_PLANE_COLORS.length - 1],
+      color:
+        palette.planeColors[index] ||
+        palette.planeColors[palette.planeColors.length - 1],
       opacity: 1,
       hoverinfo: "skip",
       showscale: false
@@ -168,6 +201,7 @@ export function buildTriangleEdges(orderedLayers, concToZ) {
 }
 
 export function buildTriangleGrid(orderedLayers, concToZ) {
+  const palette = getOverlayPalette();
   const xs = [];
   const ys = [];
   const zs = [];
@@ -199,13 +233,14 @@ export function buildTriangleGrid(orderedLayers, concToZ) {
     z: zs,
     hoverinfo: "skip",
     showlegend: false,
-    line: { color: "rgba(65, 74, 86, 0.12)", width: 2 }
+    line: { color: palette.gridLine, width: 2 }
   };
 }
 
 export function buildInterlayerGuides3D(orderedLayers, concToZ) {
   if (orderedLayers.length < 2) return [];
 
+  const palette = getOverlayPalette();
   const anchors = [];
   const step = 0.1;
 
@@ -246,7 +281,7 @@ export function buildInterlayerGuides3D(orderedLayers, concToZ) {
         showlegend: false,
         marker: {
           size: idx % 2 === 0 ? 2.8 : 2.2,
-          color: "rgba(95, 111, 133, 0.42)",
+          color: palette.interlayerGuide,
           line: { width: 0, color: "rgba(0,0,0,0)" }
         }
       });
@@ -257,6 +292,7 @@ export function buildInterlayerGuides3D(orderedLayers, concToZ) {
 }
 
 export function buildLayerLabels3D(orderedLayers, concToZ) {
+  const palette = getOverlayPalette();
   const x = [];
   const y = [];
   const z = [];
@@ -278,12 +314,12 @@ export function buildLayerLabels3D(orderedLayers, concToZ) {
     {
       size: 10,
       color: "rgba(255,255,255,0.92)",
-      line: { width: 1.5, color: "rgba(55, 66, 80, 0.32)" },
+      line: { width: 1.5, color: palette.layerLabelStroke },
       symbol: "circle"
     },
     {
       size: 12,
-      color: "#2f3946"
+      color: palette.layerLabelText
     }
   );
 }
@@ -291,6 +327,7 @@ export function buildLayerLabels3D(orderedLayers, concToZ) {
 export function buildConcentrationGuide3D(orderedLayers, concToZ) {
   if (orderedLayers.length < 2) return [];
 
+  const palette = getOverlayPalette();
   const x = 1.03;
   const y = 0.06;
   const zValues = orderedLayers.map((layer) => concToZ.get(layer));
@@ -307,7 +344,7 @@ export function buildConcentrationGuide3D(orderedLayers, concToZ) {
       z: [zMin, zMax],
       hoverinfo: "skip",
       showlegend: false,
-      line: { color: "rgba(40, 49, 61, 0.22)", width: 5 }
+      line: { color: palette.concentrationLine, width: 5 }
     },
     {
       type: "scatter3d",
@@ -319,8 +356,8 @@ export function buildConcentrationGuide3D(orderedLayers, concToZ) {
       showlegend: false,
       marker: {
         size: 5,
-        color: "rgba(48, 57, 69, 0.7)",
-        line: { width: 1, color: "rgba(255,255,255,0.85)" }
+        color: palette.concentrationTick,
+        line: { width: 1, color: palette.concentrationTickStroke }
       }
     },
     makeTextTrace(
@@ -329,7 +366,7 @@ export function buildConcentrationGuide3D(orderedLayers, concToZ) {
       [midZ],
       ["Concentration"],
       "middle right",
-      { size: 12, color: "#424c59" }
+      { size: 12, color: palette.concentrationText }
     )
   ];
 }
@@ -357,6 +394,7 @@ export function buildPerLayerDirectionArrows3D(orderedLayers, concToZ) {
 export function buildSideLabels3D(orderedLayers, concToZ) {
   if (!orderedLayers.length) return [];
 
+  const palette = getOverlayPalette();
   const frontLayer = orderedLayers[0];
   const z = concToZ.get(frontLayer) ?? 0;
 
@@ -371,7 +409,7 @@ export function buildSideLabels3D(orderedLayers, concToZ) {
     [z, z, z],
     ["Metal", "Ligand", "BSA"],
     ["middle left", "middle center", "middle right"],
-    { size: 16, color: "#111111" }
+    { size: 16, color: palette.axisLabelText }
   );
 
   const tickTrace = makeTextTrace(
@@ -401,7 +439,7 @@ export function buildSideLabels3D(orderedLayers, concToZ) {
       "middle left",
       "middle right"
     ],
-    { size: 10, color: "#5a6572" }
+    { size: 10, color: palette.tickLabelText }
   );
 
   return [axisTrace, tickTrace];

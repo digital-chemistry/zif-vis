@@ -55,7 +55,10 @@
         aria-label="Visit the Falcaro Group webpage"
       >
         <img
+          id="plotBrandLogo"
           src="{{ url_for('static', filename='logo.png') }}"
+          data-logo-light="{{ url_for('static', filename='logo.png') }}"
+          data-logo-dark="{{ url_for('static', filename='logo_dark.png') }}"
           class="plot-brand-logo"
         >
       </a>
