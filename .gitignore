@@ -13,12 +13,15 @@ project/ATR_xy/
 project/XRD_xy/
 project/images/
 
-# Local backup/original JSON snapshots (never needed in production)
+# Local backup/original JSON snapshots
 project/*_org.json
-project/*_sanitized.json
-project/*manual1.json
-project/*manual_1*.json
-project/*pre_sanitize*.json
 
-# Archive folder (dead/superseded code, gitignored like old/)
-_archive/
+# Server logs
+local_app*.log
+
+# Offline ML prototype artefacts (local research only)
+docs/offline_ml_prototype/*.csv
+docs/offline_ml_prototype/*.json
+
+# One-off scripts not needed in production
+scripts/sanitize_phase_units.py
