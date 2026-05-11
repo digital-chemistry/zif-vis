@@ -38,17 +38,17 @@
         </span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">Switch between the original measured dataset, the alternative manual ground-truth dataset from Xue, prediction-only points generated inside the experimentally supported domain, or the original measured data together with predictions.</span>
+          <span class="info-tip-popover">Switch between Exp-A, the manually curated Exp-M dataset, prediction-only points generated inside the experimentally supported domain, or the measured data together with predictions.</span>
         </span>
       </div>
       <div class="segmented-control" id="dataLayerGroup">
         <label class="seg-chip">
           <input type="radio" name="dataLayer" value="experimental" checked>
-          <span>Exp</span>
+          <span>Exp-A</span>
         </label>
         <label class="seg-chip">
           <input type="radio" name="dataLayer" value="experimental_xue">
-          <span>XUE</span>
+          <span>Exp-M</span>
         </label>
         <label class="seg-chip">
           <input type="radio" name="dataLayer" value="predicted">
@@ -297,9 +297,4 @@
             </fieldset>
           </div>
 
-          <div class="slice-summary" id="sliceSummary">No composition slice is applied.</div>
-        </div>
-      </div>
-    </details>
-  </div>
-</aside>
+          <div 

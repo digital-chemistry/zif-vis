@@ -290,9 +290,4 @@
   text-align: center;
   letter-spacing: 0.02em;
   padding: 10px 14px;
-  border-top: 1px solid var(--border);
-}
-
-.sidebar-credits-sep {
-  margin: 0 4px;
-}
+  border-top: 1px solid var(--bor

@@ -1732,13 +1732,4 @@ async function handlePointClick(sampleId) {
     document.querySelector('input[name="dataLayer"]:checked')?.value === "experimental_xue"
       ? "manual"
       : "primary";
-  await loadInspector(sampleId, dataset);
-  if (isMobileLayout()) {
-    openMobileSidebar("right");
-  }
-  const firstParameter = $("parametersGrid")?.querySelector(".parameter-value");
-  if (firstParameter) {
-    firstParameter.setAttribute("tabindex", "-1");
-    firstParameter.focus();
-  }
-}
+  await loadInspector(sampleId,

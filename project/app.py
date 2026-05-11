@@ -35,7 +35,7 @@ def create_app():
         points, point_details, experiment_details = load_data(path)
         datasets[key] = {
             "key": key,
-            "label": "Manual" if key == "manual" else "Primary",
+            "label": "Exp-M" if key == "manual" else "Exp-A",
             "json_path": str(path),
             "points": points,
             "point_details": point_details,
