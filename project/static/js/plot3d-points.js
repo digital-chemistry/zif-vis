@@ -518,4 +518,76 @@ export function markerForSearchPosition3D(searchPosition, concToZ) {
   const bsa = Number(searchPosition.bsa);
   const concentration = Number(searchPosition.concentration);
 
-  if (![metal, ligand, bsa, concentration].every(Number.isF
+  if (![metal, ligand, bsa, concentration].every(Number.isFinite)) return null;
+  if ([metal, ligand, bsa].some((v) => v < 0 || v > 100)) return null;
+
+  const total = metal + ligand + bsa;
+  if (!Number.isFinite(total) || Math.abs(total - 100) > 0.25) return null;
+
+  const x = ligand / total + 0.5 * (bsa / total);
+  const y = TRI_H * (bsa / total);
+
+  let z = concentrationToInterpolatedZ(concentration, concToZ);
+  if (!Number.isFinite(z)) z = 0;
+
+  const hovertemplate =
+    `You are here<br>` +
+    `Metal: ${formatValShort(metal, 1)} %<br>` +
+    `Ligand: ${formatValShort(ligand, 1)} %<br>` +
+    `BSA: ${formatValShort(bsa, 1)} %<br>` +
+    `Concentration: ${formatValShort(concentration, 1)} mg mL^-1<extra></extra>`;
+
+  return [
+    {
+      type: "scatter3d",
+      mode: "markers",
+      x: [x],
+      y: [y],
+      z: [z],
+      hoverinfo: "skip",
+      showlegend: false,
+      marker: {
+        size: 22 * get3DSearchMarkerScale(),
+        color: "rgba(216, 91, 114, 0.12)",
+        line: { width: 0, color: "rgba(0,0,0,0)" }
+      }
+    },
+    {
+      type: "scatter3d",
+      mode: "markers",
+      x: [x],
+      y: [y],
+      z: [z],
+      hoverinfo: "skip",
+      showlegend: false,
+      marker: {
+        size: 15 * get3DSearchMarkerScale(),
+        color: "rgba(216, 91, 114, 0.22)",
+        line: { width: 0, color: "rgba(0,0,0,0)" }
+      }
+    },
+    {
+      type: "scatter3d",
+      mode: "markers+text",
+      x: [x],
+      y: [y],
+      z: [z],
+      text: ["You are here"],
+      textposition: "top center",
+      hovertemplate,
+      hoverlabel: {
+        bgcolor: "rgba(255,255,255,0.96)",
+        bordercolor: SEARCH_MARKER_COLOR,
+        font: { color: "#20242a", size: 13 }
+      },
+      marker: {
+        size: 8.5 * get3DSearchMarkerScale(),
+        color: SEARCH_MARKER_CORE_COLOR,
+        symbol: "circle",
+        line: { width: 2, color: "#ffffff" }
+      },
+      textfont: { size: 13, color: "#2e3947" },
+      showlegend: false
+    }
+  ];
+}

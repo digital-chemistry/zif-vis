@@ -25,6 +25,17 @@
 
       <button
         type="button"
+        class="header-icon-btn export-plot-btn"
+        id="exportPlotBtn"
+        aria-label="Download a high-resolution PNG of the current plot"
+        title="Download high-resolution PNG"
+      >
+        <i data-lucide="camera"></i>
+        <span class="sr-only">Download high-resolution PNG</span>
+      </button>
+
+      <button
+        type="button"
         class="header-icon-btn theme-toggle-btn"
         id="themeToggleBtn"
         aria-label="Switch to dark mode"
@@ -81,4 +92,33 @@
         <button type="button" class="composition-panel-close" id="closeCompositionPanel" aria-label="Close search and prediction panel">×</button>
       </div>
 
-      <p cl
+      <p class="composition-panel-copy">Place a marker for any composition and preview a prototype prediction from nearby measured samples.</p>
+
+      <div class="position-grid composition-grid">
+        <label class="field"><span>Metal %</span><input id="posMetal" type="number" step="0.1"></label>
+        <label class="field"><span>Ligand %</span><input id="posLigand" type="number" step="0.1"></label>
+        <label class="field"><span>BSA %</span><input id="posBsa" type="number" step="0.1"></label>
+        <label class="field"><span>Concentration</span><input id="posConcentration" type="number" step="0.1"></label>
+        <label class="field composition-field-wide">
+          <span>Prediction wash</span>
+          <select id="posWash">
+            <option value="ethanol">Ethanol</option>
+            <option value="water">Water</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="positionNote" class="position-note composition-note"></div>
+      <div id="compositionPrediction" class="prediction-card is-hidden"></div>
+
+      <div class="action-row composition-actions">
+        <button type="button" class="ghost-btn icon-btn" id="clearCompositionBtn">
+          <i data-lucide="rotate-ccw"></i>
+          <span>Clear composition</span>
+        </button>
+      </div>
+    </aside>
+    <div id="plotPhaseLegend" class="plot-overlay plot-phase-legend is-hidden"></div>
+  </div>
+  <div id="mobileSidebarBackdrop" class="mobile-sidebar-backdrop" hidden></div>
+</main>

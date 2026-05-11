@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  color-scheme: light;
+  --bg: #f6f7f9;
+  --panel: #f1f3f5;
+  --card: #ffffff;
+  --border: #d9dde3;
+  --text: #20242a;
+  --muted: #7a8594;
+
+  --accent: #df4b61;
+  --accent-hover: #cf3d54;
+  --accent-weak: #fdecef;
+
+  --danger: #c84b31;
+  --danger-bg: #fff4f1;
+
+  --icon: #df4b61;
+  --icon-soft-bg: #f9eff1;
+
+  --shadow: 0 8px 24px rgba(18, 24, 40, 0.08);
+  --radius: 14px;
+
+  --focus-ring: 0 0 0 3px rgba(223, 75, 97, 0.12);
+
+  --transition-fast: 0.16s ease;
+  --transition-med: 0.24s ease;
+
+  --shadow-sm: 0 4px 14px rgba(18, 24, 40, 0.06);
+  --shadow-lg: 0 24px 52px rgba(92, 115, 139, 0.14);
+
+  --scrollbar-thumb: rgba(148, 163, 184, 0.45);
+  --scrollbar-thumb-hover: rgba(100, 116, 139, 0.65);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1117;
+  --panel: #181c24;
+  --card: #1e2330;
+  --border: #2c3244;
+  --text: #e8edf4;
+  --muted: #8a97aa;
+  --accent: #f06479;
+  --accent-hover: #e85570;
+  --accent-weak: #2e1820;
+  --danger: #ff8b73;
+  --danger-bg: rgba(255, 139, 115, 0.12);
+  --icon: #f06479;
+  --icon-soft-bg: rgba(240, 100, 121, 0.14);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.36);
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.26);
+  --shadow-lg: 0 24px 52px rgba(0, 0, 0, 0.38);
+  --focus-ring: 0 0 0 3px rgba(240, 100, 121, 0.22);
+  --scrollbar-thumb: rgba(100, 116, 139, 0.4);
+  --scrollbar-thumb-hover: rgba(148, 163, 184, 0.62);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  height: 100%;
+}
+
+body {
+  min-height: 100vh;
+}

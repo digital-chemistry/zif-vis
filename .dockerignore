@@ -1,0 +1,11 @@
+.git
+.gitignore
+.venv
+myenv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+node_modules
+docs/offline_ml_prototype

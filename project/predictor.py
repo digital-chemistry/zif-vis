@@ -228,7 +228,7 @@ class CompositionPredictor:
             min_samples_leaf=2,
             class_weight="balanced",
             random_state=42,
-            n_jobs=-1,
+            n_jobs=1,
         )
         clf = VotingClassifier(
             estimators=[
@@ -236,7 +236,7 @@ class CompositionPredictor:
                 ("et", ExtraTreesClassifier(**_shared)),
             ],
             voting="soft",
-            n_jobs=-1,
+            n_jobs=1,
         )
         clf.fit(X, y)
 

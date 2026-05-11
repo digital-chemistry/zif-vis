@@ -1,0 +1,77 @@
+@media (max-width: 1280px) {
+  .layout {
+    grid-template-columns: 316px minmax(420px, 1fr) 340px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    z-index: 40;
+    width: min(380px, calc(100vw - 36px));
+    max-width: calc(100vw - 36px);
+    padding: 12px;
+    background: color-mix(in srgb, var(--bg) 92%, transparent 8%);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.28s ease;
+    overscroll-behavior: contain;
+  }
+
+  .sidebar.left {
+    left: 0;
+    transform: translateX(calc(-100% - 24px));
+  }
+
+  .sidebar.right {
+    right: 0;
+    transform: translateX(calc(100% + 24px));
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .plot-header-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .plot-header-actions {
+    justify-content: space-between;
+  }
+
+  .mobile-sidebar-toggle {
+    display: inline-flex;
+  }
+
+  #plot {
+    height: 70vh;
+  }
+
+  .position-grid,
+  .metrics-grid,
+  .phase-legend {
+    grid-template-columns: 1fr;
+  }
+
+  .info-tip-popover {
+    right: auto;
+    left: 0;
+    width: min(250px, 82vw);
+  }
+
+  .composition-panel {
+    left: 14px;
+    right: 14px;
+    top: 14px;
+    width: auto;
+    max-height: calc(100% - 28px);
+  }
+}

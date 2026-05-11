@@ -109,6 +109,49 @@ function syncPlotTheme() {
   Promise.resolve(Plotly.relayout(plotDiv, relayout)).catch(() => {});
 }
 
+function buildPlotExportFilename() {
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  return `zif-biocomposite-plot-${stamp}`;
+}
+
+async function exportCurrentPlotPng() {
+  const button = $("exportPlotBtn");
+  const plotDiv = $("plot");
+  if (!plotDiv?.data?.length || typeof Plotly?.downloadImage !== "function") {
+    return;
+  }
+
+  const rect = plotDiv.getBoundingClientRect();
+  const baseWidth = Math.max(900, Math.round(rect.width || plotDiv.clientWidth || 1200));
+  const baseHeight = Math.max(640, Math.round(rect.height || plotDiv.clientHeight || 800));
+  const targetWidth = Math.max(3600, baseWidth * 3);
+  const targetHeight = Math.round((baseHeight / baseWidth) * targetWidth);
+
+  if (button) {
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    button.title = "Preparing high-resolution PNG...";
+  }
+
+  try {
+    await Plotly.downloadImage(plotDiv, {
+      format: "png",
+      filename: buildPlotExportFilename(),
+      width: targetWidth,
+      height: targetHeight,
+      scale: 1
+    });
+  } catch (error) {
+    console.error("exportCurrentPlotPng failed:", error);
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.setAttribute("aria-busy", "false");
+      button.title = "Download high-resolution PNG";
+    }
+  }
+}
+
 function applyTheme(themeName, { persist = true } = {}) {
   if (themeName === "dark") {
     document.documentElement.dataset.theme = "dark";
@@ -638,6 +681,7 @@ async function syncControlsToActiveExperimentalDataset() {
 }
 
 function wireControls() {
+  $("exportPlotBtn")?.addEventListener("click", exportCurrentPlotPng);
   $("themeToggleBtn")?.addEventListener("click", toggleTheme);
   $("openLeftSidebarBtn")?.addEventListener("click", () => toggleMobileSidebar("left"));
   $("openRightSidebarBtn")?.addEventListener("click", () => toggleMobileSidebar("right"));
@@ -1732,4 +1776,13 @@ async function handlePointClick(sampleId) {
     document.querySelector('input[name="dataLayer"]:checked')?.value === "experimental_xue"
       ? "manual"
       : "primary";
-  await loadInspector(sampleId,
+  await loadInspector(sampleId, dataset);
+  if (isMobileLayout()) {
+    openMobileSidebar("right");
+  }
+  const firstParameter = $("parametersGrid")?.querySelector(".parameter-value");
+  if (firstParameter) {
+    firstParameter.setAttribute("tabindex", "-1");
+    firstParameter.focus();
+  }
+}

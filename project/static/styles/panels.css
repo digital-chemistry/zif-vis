@@ -96,6 +96,11 @@
   background: color-mix(in srgb, var(--card) 86%, var(--accent-weak) 14%);
 }
 
+.export-plot-btn {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--card) 88%, var(--accent-weak) 12%);
+}
+
 .theme-toggle-btn .theme-icon-light {
   display: none;
 }
@@ -290,4 +295,9 @@
   text-align: center;
   letter-spacing: 0.02em;
   padding: 10px 14px;
-  border-top: 1px solid var(--bor
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-credits-sep {
+  margin: 0 4px;
+}
