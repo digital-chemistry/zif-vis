@@ -102,7 +102,9 @@ def load_dataframe(data_path: Path) -> pd.DataFrame:
                 "primary_phase": primary_phase,
                 "ee_mean": numeric_or_nan(encaps.get("mean")),
                 "ee_std": numeric_or_nan(encaps.get("error_bar", encaps.get("std", np.nan))),
-                "lc_percent": numeric_or_nan(entry.get("LC_percent", np.nan)),
+                "lc_percent": numeric_or_nan(
+                    entry.get("LC_percent", (entry.get("lc_data") or {}).get("lc_percent", np.nan))
+                ),
                 "crystalline_mean": numeric_or_nan((cryst.get("crystalline") or {}).get("mean")),
                 "crystalline_std": numeric_or_nan((cryst.get("crystalline") or {}).get("std", (cryst.get("crystalline") or {}).get("error_bar", np.nan))),
                 "amorphous_mean": numeric_or_nan((cryst.get("amorphous") or {}).get("mean")),

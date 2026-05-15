@@ -4,7 +4,7 @@ from pathlib import Path
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from .config import MASTER_JSON, MANUAL_JSON
+from .config import MASTER_JSON
 from .data_loader import load_data, build_atr_index, build_full_experiment_index
 from .predictor import CompositionPredictor
 from .routes import register_routes
@@ -35,7 +35,7 @@ def create_app():
         points, point_details, experiment_details = load_data(path)
         datasets[key] = {
             "key": key,
-            "label": "Exp-M" if key == "manual" else "Exp-A",
+            "label": "Experimental",
             "json_path": str(path),
             "points": points,
             "point_details": point_details,
@@ -44,8 +44,6 @@ def create_app():
         }
 
     register_dataset("primary", MASTER_JSON)
-    if MANUAL_JSON.exists():
-        register_dataset("manual", MANUAL_JSON)
 
     register_routes(
         app,

@@ -194,47 +194,97 @@
 }
 
 .plot-phase-legend {
-  pointer-events: none;
+  pointer-events: auto;
   left: 22px;
-  right: 22px;
+  right: auto;
   bottom: 22px;
   top: auto;
+  max-width: calc(100% - 44px);
 
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 18px;
+  flex-direction: column;
+  gap: 0;
 
-  min-width: 0;
-  max-width: none;
-
-  background: color-mix(in srgb, var(--card) 86%, transparent 14%);
+  background: color-mix(in srgb, var(--card) 90%, transparent 10%);
   backdrop-filter: blur(10px);
   border: 1px solid color-mix(in srgb, var(--border) 80%, transparent 20%);
-  border-radius: 16px;
+  border-radius: 14px;
   box-shadow: var(--shadow);
-  padding: 12px 16px;
+  padding: 10px 14px;
+  transition: padding 0.18s ease;
 }
 
 .plot-phase-legend.is-hidden {
   display: none;
 }
 
+/* Header row: title + toggle button */
+.plot-phase-legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: default;
+}
+
 .plot-phase-legend-title {
-  flex: 0 0 100%;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--muted);
-  margin-bottom: 2px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.plot-phase-legend-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 4px;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  flex: 0 0 auto;
+}
+
+.plot-phase-legend-toggle:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--panel) 80%, transparent 20%);
+}
+
+.plot-phase-legend-toggle svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+/* Collapsed state: rotate chevron and hide body */
+.plot-phase-legend.is-collapsed .plot-phase-legend-toggle svg {
+  transform: rotate(-90deg);
+}
+
+.plot-phase-legend-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 8px;
+  overflow: hidden;
+  transition: margin-top 0.18s ease;
+}
+
+.plot-phase-legend.is-collapsed .plot-phase-legend-body {
+  display: none;
+  margin-top: 0;
 }
 
 .plot-phase-legend-row {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin: 0;
+  gap: 7px;
   font-size: 12px;
   color: var(--text);
   white-space: nowrap;

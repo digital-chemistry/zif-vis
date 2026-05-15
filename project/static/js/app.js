@@ -121,25 +121,34 @@ async function exportCurrentPlotPng() {
     return;
   }
 
+  const is3DScene = Boolean(plotDiv?._fullLayout?.scene);
+  const exportFormat = is3DScene ? "png" : "svg";
   const rect = plotDiv.getBoundingClientRect();
-  const baseWidth = Math.max(900, Math.round(rect.width || plotDiv.clientWidth || 1200));
-  const baseHeight = Math.max(640, Math.round(rect.height || plotDiv.clientHeight || 800));
-  const targetWidth = Math.max(3600, baseWidth * 3);
-  const targetHeight = Math.round((baseHeight / baseWidth) * targetWidth);
+  const liveLayoutWidth = Math.round(
+    plotDiv?._fullLayout?.width || rect.width || plotDiv.clientWidth || 1200
+  );
+  const liveLayoutHeight = Math.round(
+    plotDiv?._fullLayout?.height || rect.height || plotDiv.clientHeight || 800
+  );
+  const exportWidth = Math.max(640, liveLayoutWidth);
+  const exportHeight = Math.max(480, liveLayoutHeight);
+  const exportScale = exportWidth < 1000 ? 4 : 3;
 
   if (button) {
     button.disabled = true;
     button.setAttribute("aria-busy", "true");
-    button.title = "Preparing high-resolution PNG...";
+    button.title =
+      exportFormat === "svg" ? "Preparing SVG..." : "Preparing high-resolution PNG...";
   }
 
   try {
     await Plotly.downloadImage(plotDiv, {
-      format: "png",
+      format: exportFormat,
       filename: buildPlotExportFilename(),
-      width: targetWidth,
-      height: targetHeight,
-      scale: 1
+      // Keep the current on-screen geometry. Use pixel scaling only for raster export.
+      width: exportWidth,
+      height: exportHeight,
+      scale: exportFormat === "svg" ? 1 : exportScale
     });
   } catch (error) {
     console.error("exportCurrentPlotPng failed:", error);
@@ -147,7 +156,8 @@ async function exportCurrentPlotPng() {
     if (button) {
       button.disabled = false;
       button.setAttribute("aria-busy", "false");
-      button.title = "Download high-resolution PNG";
+      button.title =
+        exportFormat === "svg" ? "Download SVG" : "Download high-resolution PNG";
     }
   }
 }
@@ -666,9 +676,7 @@ async function initApp() {
 }
 
 function currentExperimentalDatasetKey() {
-  const dataLayer =
-    document.querySelector('input[name="dataLayer"]:checked')?.value || "experimental";
-  return dataLayer === "experimental_xue" ? "manual" : "primary";
+  return "primary";
 }
 
 async function syncControlsToActiveExperimentalDataset() {
@@ -816,7 +824,7 @@ function wireControls() {
   document.querySelectorAll('input[name="dataLayer"]').forEach((el) => {
     el.addEventListener("change", async () => {
       refreshUiChrome();
-      if (el.value === "experimental" || el.value === "experimental_xue") {
+      if (el.value === "experimental") {
         await syncControlsToActiveExperimentalDataset();
         refreshUiChrome();
       }
@@ -914,9 +922,6 @@ async function getPredictedGridPoints(wash, includeIntermediateLayers = false) {
 async function getDisplayPoints(filters) {
   if (filters.dataLayer === "experimental") {
     return fetchDatasetPoints("primary");
-  }
-  if (filters.dataLayer === "experimental_xue") {
-    return fetchDatasetPoints("manual");
   }
 
   const includeIntermediateLayers =
@@ -1772,11 +1777,7 @@ async function applyFiltersAndRender(uiState = readAllState(viewerState)) {
 
 async function handlePointClick(sampleId) {
   if (!sampleId || String(sampleId).startsWith("pred_")) return;
-  const dataset =
-    document.querySelector('input[name="dataLayer"]:checked')?.value === "experimental_xue"
-      ? "manual"
-      : "primary";
-  await loadInspector(sampleId, dataset);
+  await loadInspector(sampleId, "primary");
   if (isMobileLayout()) {
     openMobileSidebar("right");
   }

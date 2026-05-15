@@ -453,6 +453,18 @@ function renderPlot2DFallback(
 ) {
   const plotDiv = $("plot");
 
+  /* Compact colorbar: top-anchored, short, thin — won't overlap phase legend */
+  const CB = {
+    thickness: 13,
+    len: 0.55,
+    y: 0.98,
+    yanchor: "top",
+    x: 1.02,
+    xanchor: "left",
+    tickfont: { size: 10 },
+    title: { side: "right", font: { size: 10 } }
+  };
+
   let markerColor = "#9c9c9c";
   let colorscale = WARM_SCALAR_SCALE;
   let showscale = false;
@@ -467,20 +479,20 @@ function renderPlot2DFallback(
   } else if (colourBy === "ee") {
     markerColor = layerPoints.map((p) => numericOrNull(p.ee));
     showscale = true;
-    colorbar = { title: "Encapsulation efficiency" };
+    colorbar = { ...CB, title: { ...CB.title, text: "EE" } };
   } else if (colourBy === "lc_percent") {
     markerColor = layerPoints.map((p) => numericOrNull(p.lc_percent));
     showscale = true;
-    colorbar = { title: "Loading capacity" };
+    colorbar = { ...CB, title: { ...CB.title, text: "Loading capacity" } };
   } else if (colourBy === "ee_error") {
     markerColor = layerPoints.map((p) => numericOrNull(p.ee_error ?? p.ee_std));
     colorscale = WARM_SCALAR_SCALE;
     showscale = true;
-    colorbar = { title: "EE standard deviation" };
+    colorbar = { ...CB, title: { ...CB.title, text: "EE std dev" } };
   } else if (colourBy === "crystallinity") {
     markerColor = layerPoints.map((p) => numericOrNull(p.crystallinity));
     showscale = true;
-    colorbar = { title: "Crystallinity" };
+    colorbar = { ...CB, title: { ...CB.title, text: "Crystallinity" } };
   } else if (colourBy === "crystallinity_uncertainty") {
     markerColor = layerPoints.map((p) =>
       numericOrNull(
@@ -491,15 +503,15 @@ function renderPlot2DFallback(
     );
     colorscale = WARM_SCALAR_SCALE;
     showscale = true;
-    colorbar = { title: "Crystallinity standard deviation" };
+    colorbar = { ...CB, title: { ...CB.title, text: "Cryst. std dev" } };
   } else if (colourBy === "protein_ratio") {
     markerColor = layerPoints.map((p) => numericOrNull(p.protein_ratio));
     showscale = true;
-    colorbar = { title: "ATR-IR bands ratio" };
+    colorbar = { ...CB, title: { ...CB.title, text: "ATR-IR ratio" } };
   } else if (PHASE_PROBABILITY_MODES[colourBy]) {
     markerColor = layerPoints.map((p) => scalarValueForMode(p, colourBy));
     showscale = true;
-    colorbar = { title: PHASE_PROBABILITY_MODES[colourBy].title };
+    colorbar = { ...CB, title: { ...CB.title, text: PHASE_PROBABILITY_MODES[colourBy].title } };
   }
 
   const isPhaseView = colourBy === "phase";
@@ -556,32 +568,98 @@ function renderPlot2DFallback(
   const pointTraces = isPhaseView ? [baseTrace, colorTrace] : [colorTrace];
   const traces = searchTrace ? [...pointTraces, ...searchTrace] : pointTraces;
 
+  /* ── Ternary grid & tick labels ─────────────────────────────────────── */
+  const H2D = Math.sqrt(3) / 2;
+  const GRID_TICKS = [0.2, 0.4, 0.6, 0.8];
+  const gridLineColor = "rgba(150,150,150,0.22)";
+
+  /* Convert fractional ternary (metal, ligand, bsa) → Cartesian xy */
+  function toXY2D(m, l, b) {
+    const t = m + l + b;
+    return { x: l / t + 0.5 * (b / t), y: H2D * (b / t) };
+  }
+
+  const gridShapes = [];
+  const tickAnnotations = [];
+
+  /*
+   * Perpendicular outward unit vectors for each edge (used to place tick labels
+   * outside the triangle without clipping into the interior):
+   *
+   *   Left  edge: Metal(0,0)→BSA(0.5,H2D), direction=(0.5,H2D), outward perp=(-H2D, 0.5)
+   *   Right edge: Ligand(1,0)→BSA(0.5,H2D), direction=(-0.5,H2D), outward perp=(H2D, 0.5)
+   *   Bottom edge: horizontal, outward perp=(0,-1)
+   */
+  const TICK_D = 0.042; // perpendicular offset distance from each edge
+  const leftPerp  = { dx: -H2D,  dy:  0.5 }; // outward from left  edge
+  const rightPerp = { dx:  H2D,  dy:  0.5 }; // outward from right edge
+
+  /* Constant-Metal gridlines: left-edge ↔ bottom-edge.  Label Metal % on LEFT edge. */
+  GRID_TICKS.forEach((m) => {
+    const pL = toXY2D(m, 0,     1 - m); // on left edge   (ligand=0)
+    const pB = toXY2D(m, 1 - m, 0);     // on bottom edge (bsa=0)
+    gridShapes.push({ type: "line", x0: pL.x, y0: pL.y, x1: pB.x, y1: pB.y, xref: "x", yref: "y", line: { color: gridLineColor, width: 0.9, dash: "dot" } });
+    tickAnnotations.push({ x: pL.x + leftPerp.dx * TICK_D, y: pL.y + leftPerp.dy * TICK_D, xref: "x", yref: "y", text: `${Math.round(m * 100)}%`, showarrow: false, font: { size: 10, color: theme.muted }, xanchor: "right", yanchor: "middle" });
+  });
+
+  /* Constant-Ligand gridlines: bottom-edge ↔ right-edge.  Label Ligand % on BOTTOM edge. */
+  GRID_TICKS.forEach((l) => {
+    const pB = toXY2D(1 - l, l, 0);     // on bottom edge
+    const pR = toXY2D(0,     l, 1 - l); // on right edge (metal=0)
+    gridShapes.push({ type: "line", x0: pB.x, y0: pB.y, x1: pR.x, y1: pR.y, xref: "x", yref: "y", line: { color: gridLineColor, width: 0.9, dash: "dot" } });
+    tickAnnotations.push({ x: pB.x, y: -TICK_D, xref: "x", yref: "y", text: `${Math.round(l * 100)}%`, showarrow: false, font: { size: 10, color: theme.muted }, xanchor: "center", yanchor: "top" });
+  });
+
+  /* Constant-BSA gridlines: left-edge ↔ right-edge (horizontal).  Label BSA % on RIGHT edge. */
+  GRID_TICKS.forEach((b) => {
+    const pL = toXY2D(1 - b, 0,     b); // on left edge
+    const pR = toXY2D(0,     1 - b, b); // on right edge
+    gridShapes.push({ type: "line", x0: pL.x, y0: pL.y, x1: pR.x, y1: pR.y, xref: "x", yref: "y", line: { color: gridLineColor, width: 0.9, dash: "dot" } });
+    tickAnnotations.push({ x: pR.x + rightPerp.dx * TICK_D, y: pR.y + rightPerp.dy * TICK_D, xref: "x", yref: "y", text: `${Math.round(b * 100)}%`, showarrow: false, font: { size: 10, color: theme.muted }, xanchor: "left", yanchor: "middle" });
+  });
+
   const layout = {
-    margin: { l: 40, r: 40, t: 40, b: 40 },
+    margin: { l: 68, r: 110, t: 52, b: 68 },
     paper_bgcolor: theme.card,
     plot_bgcolor: theme.card,
     font: { color: theme.text },
     annotations: [
-      { x: 0.5, y: 1.06, xref: "paper", yref: "paper", text: `Layer ${layer}`, showarrow: false, font: { size: 18, color: theme.text } },
-      { x: 0.02, y: 0.02, xref: "paper", yref: "paper", text: "Metal", showarrow: false, font: { size: 16, color: theme.muted } },
-      { x: 0.98, y: 0.02, xref: "paper", yref: "paper", text: "Ligand", showarrow: false, font: { size: 16, color: theme.muted } },
-      { x: 0.5, y: 0.96, xref: "paper", yref: "paper", text: "BSA", showarrow: false, font: { size: 16, color: theme.muted } }
+      /* Layer title */
+      { x: 0.5, y: 1.05, xref: "paper", yref: "paper", text: `Layer ${layer}`, showarrow: false, font: { size: 17, color: theme.text } },
+      /* Vertex labels — data-space anchored exactly at each triangle corner */
+      { x: 0.5,  y: H2D + 0.06, xref: "x", yref: "y", text: "<b>BSA</b>",    showarrow: false, font: { size: 14, color: theme.text }, xanchor: "center", yanchor: "bottom" },
+      { x: 0.0,  y: -0.07,      xref: "x", yref: "y", text: "<b>Metal</b>",  showarrow: false, font: { size: 14, color: theme.text }, xanchor: "center", yanchor: "top"    },
+      { x: 1.0,  y: -0.07,      xref: "x", yref: "y", text: "<b>Ligand</b>", showarrow: false, font: { size: 14, color: theme.text }, xanchor: "center", yanchor: "top"    },
+      ...tickAnnotations
     ],
-    xaxis: { visible: false, range: [-0.1, 1.1] },
-    yaxis: { visible: false, range: [-0.08, 0.95], scaleanchor: "x", scaleratio: 1 },
-    shapes: [{
-      type: "path",
-      path: `M 0 0 L 1 0 L 0.5 ${Math.sqrt(3) / 2} Z`,
-      xref: "x",
-      yref: "y",
-      line: { color: theme.muted, width: 2 },
-      fillcolor: "rgba(0,0,0,0)"
-    }],
+    xaxis: { visible: false, range: [-0.20, 1.20] },
+    yaxis: { visible: false, range: [-0.16, 1.00], scaleanchor: "x", scaleratio: 1 },
+    shapes: [
+      {
+        type: "path",
+        path: `M 0 0 L 1 0 L 0.5 ${H2D} Z`,
+        xref: "x",
+        yref: "y",
+        line: { color: theme.muted, width: 2 },
+        fillcolor: "rgba(0,0,0,0)"
+      },
+      ...gridShapes
+    ],
     showlegend: false,
     uirevision: "stay2d"
   };
 
-  Plotly.react(plotDiv, traces, layout, { responsive: true, displaylogo: false });
+  /* Export exactly what the user sees — no width/height override so Plotly
+     uses its own computed layout, just scale up 2× for print quality.     */
+  Plotly.react(plotDiv, traces, layout, {
+    responsive: true,
+    displaylogo: false,
+    toImageButtonOptions: {
+      format: "png",
+      filename: `ZIF_ternary_layer${layer}`,
+      scale: 2
+    }
+  });
 
   plotDiv.removeAllListeners?.("plotly_click");
   plotDiv.on("plotly_click", async (ev) => {

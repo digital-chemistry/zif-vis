@@ -201,10 +201,9 @@ class CompositionPredictor:
         """
         Soft-voting ensemble (RandomForest + ExtraTrees), 6-feature space.
 
-        10-fold CV on n=360:
-          RF-300 alone:    85.6% +/- 5.5%
-          ET-300 alone:    85.0% +/- 5.0%
-          Soft vote RF+ET: 86.1% +/- 5.7%  <- used here
+        This classifier is always fit on the currently loaded primary dataset.
+        Cross-validation benchmarks therefore depend on the active experimental
+        source rather than being fixed constants.
         """
         X = np.array(
             [

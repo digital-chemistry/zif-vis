@@ -116,6 +116,11 @@ def load_data(json_path: str | Path | None = None):
             .get("mean")
         )
         lc_percent = entry.get("LC_percent")
+        if lc_percent is None:
+            lc_percent = (
+                (entry.get("lc_data") or {})
+                .get("lc_percent")
+            )
         ee_std = (
             entry.get("encapsulation_efficiency", {})
             .get("error_bar")

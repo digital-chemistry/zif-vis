@@ -1,0 +1,391 @@
+<dialog id="docsModal" class="docs-modal" aria-label="About the ZIF Biocomposite Explorer">
+<div class="docs-inner">
+
+  <!-- Header -->
+  <header class="docs-header">
+    <div>
+      <div class="docs-header-eyebrow">Documentation &amp; Attribution</div>
+      <h2 class="docs-header-title">ZIF Biocomposite Explorer</h2>
+    </div>
+    <button type="button" class="docs-close" id="closeDocsModal" aria-label="Close documentation">
+      <i data-lucide="x"></i>
+    </button>
+  </header>
+
+  <!-- Scrollable content -->
+  <div class="docs-body">
+
+    <section class="docs-lead">
+      <div class="docs-lead-label">Main Developer / Digitalisation &amp; Visualisation</div>
+      <h3 class="docs-lead-name">Ass. Prof. Aleksandar Kondinski</h3>
+      <div class="docs-lead-detail">
+        Leader, <a href="https://chemin.at/" target="_blank" rel="noopener noreferrer">CheMIn Group</a> &mdash; Graz University of Technology
+      </div>
+      <p class="docs-lead-role">
+        End-to-end digitalisation of experimental workflows: automated data collection via syringe-pump systems, machine-learning phase-prediction pipeline, and this interactive visualisation platform.
+      </p>
+    </section>
+
+    <!-- Author / Institution hero -->
+    <div class="docs-hero">
+
+      <!-- Experimental group -->
+      <div class="docs-hero-card">
+        <div class="docs-hero-label">Experimental Groups</div>
+        <div class="docs-hero-name">Falcaro &amp; Carraro Groups</div>
+        <div class="docs-hero-detail">
+          Institute of Physical and Theoretical Chemistry,
+          Graz University of Technology
+        </div>
+        <div class="docs-hero-role">
+          <strong>Prof. Falcaro</strong> &mdash;
+          <a href="https://www.tugraz.at/institute/ptc/research/the-falcaro-group"
+             target="_blank" rel="noopener noreferrer">Falcaro Group</a><br>
+          <a href="https://www.tugraz.at/institute/ptc/research/the-carraro-group/francesco-carraro"
+             target="_blank" rel="noopener noreferrer"><strong>Ass. Prof. Francesco Carraro</strong></a><br>
+          Experiments performed by <strong>Ms. Xue Chen</strong>
+        </div>
+      </div>
+
+      <!-- Dataset stats -->
+      <div class="docs-hero-card docs-hero-stat">
+        <div class="docs-hero-label">Dataset at a glance</div>
+        <div class="docs-stat-row">
+          <span class="docs-stat-val">5</span>
+          <span class="docs-stat-unit">concentration levels (12.5 – 100 mg·mL⁻¹)</span>
+        </div>
+        <div class="docs-stat-row">
+          <span class="docs-stat-val">8</span>
+          <span class="docs-stat-unit">crystalline phases identified</span>
+        </div>
+        <div class="docs-stat-row">
+          <span class="docs-stat-val">2</span>
+          <span class="docs-stat-unit">washing protocols (ethanol &amp; water)</span>
+        </div>
+        <div class="docs-stat-row">
+          <span class="docs-stat-val">3×</span>
+          <span class="docs-stat-unit">triplicate XRD repeats per sample</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- About -->
+    <section class="docs-section">
+      <h3 class="docs-section-heading">About ZIF Biocomposites</h3>
+      <p class="docs-p">
+        Zeolitic Imidazolate Frameworks (ZIFs) are a class of metal&ndash;organic frameworks built from tetrahedral metal nodes (here zinc, Zn<sup>2+</sup>) coordinated by imidazolate linkers. Their porous, cage-like topology gives ZIFs exceptional chemical stability and a tunable internal surface area, making them attractive hosts for bioactive cargo.
+      </p>
+      <p class="docs-p">
+        In this study, ZIF biocomposites are formed by mixing zinc nitrate, 2-methylimidazole (Hmim), and Bovine Serum Albumin (BSA) in aqueous solution. BSA serves as both a structural co-precipitant and a model encapsulant; its presence during ZIF nucleation profoundly alters the crystalline phase that forms.
+      </p>
+      <p class="docs-p">
+        The resulting composites are of interest for protein delivery, biocatalysis, and biosensing because the ZIF shell can protect labile biomolecules from enzymatic degradation while the pore structure allows controlled release.
+      </p>
+      <p class="docs-p">
+        A central challenge is the simultaneous competition between multiple ZIF polymorphs during synthesis. The outcome depends strongly on the metal-to-ligand ratio, total reagent concentration, the amount of protein present, and the post-synthesis washing protocol.
+      </p>
+    </section>
+    <!-- Methodology -->
+    <section class="docs-section">
+      <h3 class="docs-section-heading">Synthesis &amp; Characterisation</h3>
+      <div class="docs-cols">
+        <div>
+          <p class="docs-p">
+            Samples were prepared by combining zinc nitrate (Metal),
+            2-methylimidazole (Ligand), and BSA in varying molar ratios at
+            <strong>five total concentration levels</strong>: 12.5, 25, 50, 75, and
+            100 mg·mL<sup>⁻¹</sup>. Each formulation was prepared in triplicate to
+            quantify measurement reproducibility.
+          </p>
+          <p class="docs-p">
+            After precipitation, samples were washed with either
+            <strong>ethanol</strong> or <strong>water</strong> to remove unreacted
+            reagents. The two washing protocols yield different surface chemistries
+            and can shift the phase equilibrium of the final solid.
+          </p>
+        </div>
+        <div>
+          <p class="docs-p">
+            Each sample was characterised by:
+          </p>
+          <p class="docs-p">
+            <strong>Powder XRD</strong> — diffraction patterns were matched against
+            reference ZIF structures to assign the dominant crystalline phase and
+            quantify <em>crystallinity</em> (the crystalline fraction of the total
+            scattering volume).
+          </p>
+          <p class="docs-p">
+            <strong>ATR-IR spectroscopy</strong> — amide and imidazolate band
+            intensities provide an independent estimate of the protein-to-framework
+            ratio retained in the composite, reported here as the
+            <em>ATR-IR bands ratio</em>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Phase identification -->
+    <section class="docs-section">
+      <h3 class="docs-section-heading">Phase Identification Guide</h3>
+      <p class="docs-p">
+        XRD patterns were matched against known ZIF structure databases. Eight
+        distinct outcomes are tracked in this dataset, from fully amorphous precipitates
+        to well-defined crystalline polymorphs with different cage topologies:
+      </p>
+      <div class="docs-phase-grid">
+        <div class="docs-phase-chip">
+          <span class="docs-phase-swatch" style="background:#B2B2B2"></span>
+          Amorphous
+        </div>
+        <div class="docs-phase-chip">
+          <span class="docs-phase-swatch" style="background:#5825ED"></span>
+          Sodalite (SOD)
+        </div>
+        <div class="docs-phase-chip">
+          <span class="docs-phase-swatch" style="background:#D73819"></span>
+          Diamondoid (DIA)
+        </div>
+        <div class="docs-phase-chip">
+          <span class="docs-phase-swatch" style="background:#64CAD6"></span>
+          ZIF-C
+        </div>
+        <div class="docs-phase-chip">
+          <span class="docs-phase-swatch" style="background:#C8AC34"></span>
+          U13
+        </div>
+        <div class="docs-phase-chip">
+          <span class="docs-phase-swatch" style="background:#4FBF5B"></span>
+          U12
+        </div>
+        <div class="docs-phase-chip">
+          <span class="docs-phase-swatch" style="background:#E84FA8"></span>
+          ZIF-EC-1
+        </div>
+        <div class="docs-phase-chip">
+          <span class="docs-phase-swatch" style="background:#F28C28"></span>
+          ZIF-L
+        </div>
+      </div>
+      <p class="docs-phase-desc">
+        <strong>Sodalite</strong> is the canonical ZIF-8 topology and typically
+        forms under high-ligand conditions. <strong>Diamondoid</strong> is a
+        denser polymorph favoured at intermediate ratios. <strong>ZIF-L</strong>
+        is a leaf-like two-dimensional phase. <strong>U12 and U13</strong> are
+        newly identified phases specific to this biocomposite system.
+        Mixed-phase samples display contributions from several of these
+        simultaneously, which the inspector reports as phase probabilities.
+      </p>
+    </section>
+
+    <!-- Ternary diagram -->
+    <section class="docs-section">
+      <h3 class="docs-section-heading">Reading the Ternary &amp; 3D Views</h3>
+      <div class="docs-cols">
+        <div>
+          <p class="docs-p">
+            A <strong>ternary diagram</strong> maps three-component mixtures onto a
+            triangle. Each vertex represents 100&thinsp;% of one component; any interior
+            point encodes all three fractions simultaneously. Because
+            Metal + Ligand + BSA = 100&thinsp;%, the position of a point fully
+            determines its composition.
+          </p>
+          <p class="docs-p">
+            Moving towards the <strong>Metal</strong> vertex (bottom-left) increases
+            the zinc content. Moving towards <strong>Ligand</strong> (bottom-right)
+            increases the imidazolate ratio. Moving towards <strong>BSA</strong>
+            (top) increases the protein concentration.
+          </p>
+          <p class="docs-p">
+            The <strong>3D stacked view</strong> layers five such triangles vertically,
+            one per concentration level. The depth axis therefore represents total
+            reagent concentration, revealing how the same composition behaves as the
+            solution is diluted or concentrated.
+          </p>
+        </div>
+        <div class="docs-ternary-wrap">
+          <svg class="docs-ternary-svg" viewBox="0 0 240 218"
+               role="img" aria-label="Annotated ternary diagram">
+            <!-- Triangle -->
+            <polygon points="120,18 16,200 224,200"
+                     fill="none"
+                     stroke="var(--border)" stroke-width="1.5"/>
+            <!-- Grid lines at 1/3 and 2/3 -->
+            <line x1="85"  y1="79"  x2="189" y2="79"
+                  stroke="var(--border)" stroke-width="0.7" stroke-dasharray="4,3"/>
+            <line x1="51"  y1="140" x2="188" y2="140"
+                  stroke="var(--border)" stroke-width="0.7" stroke-dasharray="4,3"/>
+            <line x1="68"  y1="110" x2="120" y2="200"
+                  stroke="var(--border)" stroke-width="0.7" stroke-dasharray="4,3"/>
+            <line x1="120" y1="18"  x2="172" y2="110"
+                  stroke="var(--border)" stroke-width="0.7" stroke-dasharray="4,3"/>
+            <line x1="16"  y1="200" x2="85"  y2="79"
+                  stroke="var(--border)" stroke-width="0.7" stroke-dasharray="4,3"/>
+            <line x1="224" y1="200" x2="155" y2="79"
+                  stroke="var(--border)" stroke-width="0.7" stroke-dasharray="4,3"/>
+            <!-- Vertex labels -->
+            <text x="120" y="10" text-anchor="middle"
+                  fill="var(--text)" font-size="10.5" font-family="Inter,sans-serif" font-weight="700">
+              Metal
+            </text>
+            <text x="6" y="215" text-anchor="start"
+                  fill="var(--text)" font-size="10.5" font-family="Inter,sans-serif" font-weight="700">
+              Ligand
+            </text>
+            <text x="234" y="215" text-anchor="end"
+                  fill="var(--text)" font-size="10.5" font-family="Inter,sans-serif" font-weight="700">
+              BSA
+            </text>
+            <!-- Sample points (animated) -->
+            <circle cx="108" cy="68" r="5.5" fill="#5825ED" opacity="0.88">
+              <animate attributeName="r" values="5.5;7.5;5.5" dur="3.2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="155" cy="128" r="5.5" fill="#C8AC34" opacity="0.88">
+              <animate attributeName="r" values="5.5;7.5;5.5" dur="3.2s" begin="1.1s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="80" cy="166" r="5.5" fill="#D73819" opacity="0.88">
+              <animate attributeName="r" values="5.5;7.5;5.5" dur="3.2s" begin="2.2s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Annotations -->
+            <text x="108" y="57" text-anchor="middle"
+                  fill="var(--muted)" font-size="8" font-family="Inter,sans-serif">
+              High metal
+            </text>
+            <text x="162" y="146" text-anchor="middle"
+                  fill="var(--muted)" font-size="8" font-family="Inter,sans-serif">
+              Balanced
+            </text>
+            <text x="73" y="183" text-anchor="middle"
+                  fill="var(--muted)" font-size="8" font-family="Inter,sans-serif">
+              High ligand
+            </text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ML Predictor -->
+    <section class="docs-section">
+      <h3 class="docs-section-heading">Machine Learning Predictor</h3>
+      <p class="docs-p">
+        The <strong>Prediction</strong> data layer is driven by a soft-voting ensemble of
+        Random Forest (RF) and Extra Trees (ET) classifiers trained on the full experimental
+        dataset (~360 samples, 5 observed phase classes in the current Exp-A training set).
+        Both models use 300 estimators, balanced class weights, and
+        <em>max_features = sqrt(p)</em>. The current benchmark uses 7-fold stratified
+        cross-validation, set by the smallest class count in the current Exp-A dataset.
+      </p>
+
+      <!-- Model comparison cards -->
+      <div class="docs-model-grid">
+        <div class="docs-model-card">
+          <div class="docs-model-label">Random Forest</div>
+          <div class="docs-model-acc">87.5<span class="docs-model-unit">%</span></div>
+          <div class="docs-model-ci">&plusmn; 4.4 pp &nbsp;(7-fold CV)</div>
+          <div class="docs-model-note">n_estimators = 300 &middot; class_weight = balanced</div>
+        </div>
+        <div class="docs-model-card">
+          <div class="docs-model-label">Extra Trees</div>
+          <div class="docs-model-acc">86.4<span class="docs-model-unit">%</span></div>
+          <div class="docs-model-ci">&plusmn; 3.6 pp &nbsp;(7-fold CV)</div>
+          <div class="docs-model-note">n_estimators = 300 &middot; class_weight = balanced</div>
+        </div>
+        <div class="docs-model-card docs-model-card--deployed">
+          <div class="docs-model-label">RF + ET Ensemble <span class="docs-model-badge">Deployed</span></div>
+          <div class="docs-model-acc">87.2<span class="docs-model-unit">%</span></div>
+          <div class="docs-model-ci">&plusmn; 4.9 pp &nbsp;(7-fold CV)</div>
+          <div class="docs-model-note">Soft-vote &middot; averaged class probabilities &middot; trained on the current Exp-A dataset</div>
+        </div>
+      </div>
+
+      <div class="docs-cols" style="margin-top:14px">
+        <div>
+          <p class="docs-p"><strong>6-feature engineered input space</strong></p>
+          <p class="docs-p">
+            Metal fraction (%), Ligand fraction (%), Total concentration (mg&thinsp;mL<sup>&minus;1</sup>),
+            log(concentration), Metal/Ligand molar ratio, Washing protocol (ethanol = 0, water = 1).
+            BSA% is excluded because Metal + Ligand + BSA = 100 % makes it perfectly collinear with the other two fractions.
+          </p>
+        </div>
+        <div>
+          <p class="docs-p"><strong>Regression targets &amp; confidence</strong></p>
+          <p class="docs-p">
+            Encapsulation efficiency, crystallinity, loading capacity, and ATR-IR bands ratio
+            are interpolated with <em>k</em>&thinsp;=&thinsp;9 nearest-neighbour regression
+            (LOO-CV optimal). Each prediction carries a <strong>distance confidence band</strong>:
+            <em>Near</em> (&lt;&thinsp;p33), <em>Moderate</em> (p33&ndash;p75), or <em>Far</em>
+            (&gt;&thinsp;p75) from the nearest training point. Predictions are restricted to the
+            convex hull of the training data to prevent extrapolation.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive features -->
+    <section class="docs-section">
+      <h3 class="docs-section-heading">Explorer Features</h3>
+      <div class="docs-features">
+        <div class="docs-feature">
+          <div class="docs-feature-icon"><i data-lucide="boxes"></i></div>
+          <div>
+            <div class="docs-feature-title">3D Stacked View</div>
+            <div class="docs-feature-desc">All five concentration layers rendered simultaneously as a three-dimensional stack, revealing phase evolution across the concentration axis.</div>
+          </div>
+        </div>
+        <div class="docs-feature">
+          <div class="docs-feature-icon"><i data-lucide="triangle"></i></div>
+          <div>
+            <div class="docs-feature-title">2D Ternary View</div>
+            <div class="docs-feature-desc">Isolates one concentration layer for precise composition–phase analysis without inter-layer visual overlap.</div>
+          </div>
+        </div>
+        <div class="docs-feature">
+          <div class="docs-feature-icon"><i data-lucide="palette"></i></div>
+          <div>
+            <div class="docs-feature-title">Flexible Coloring</div>
+            <div class="docs-feature-desc">Color markers by dominant phase, crystallinity, encapsulation efficiency, ATR-IR bands ratio, loading capacity, or individual phase probability.</div>
+          </div>
+        </div>
+        <div class="docs-feature">
+          <div class="docs-feature-icon"><i data-lucide="funnel"></i></div>
+          <div>
+            <div class="docs-feature-title">Advanced Filtering</div>
+            <div class="docs-feature-desc">Filter by minimum crystallinity, EE threshold, ATR-IR ratio, phase probability minimums, and composition slices through the ternary space.</div>
+          </div>
+        </div>
+        <div class="docs-feature">
+          <div class="docs-feature-icon"><i data-lucide="scan-search"></i></div>
+          <div>
+            <div class="docs-feature-title">Sample Inspector</div>
+            <div class="docs-feature-desc">Click any measured point to open its full record: composition, crystallinity, phase fractions, EE, ATR-IR spectrum, and repeated XRD experiments with CSV download.</div>
+          </div>
+        </div>
+        <div class="docs-feature">
+          <div class="docs-feature-icon"><i data-lucide="search-code"></i></div>
+          <div>
+            <div class="docs-feature-title">Search &amp; Predict</div>
+            <div class="docs-feature-desc">Place a custom composition marker anywhere in the diagram and query the ML ensemble for phase probability estimates at that formulation.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Citation -->
+    <div class="docs-citation">
+      <i data-lucide="library"></i>
+      <span>
+        Digitalisation &amp; visualisation by <strong>Ass. Prof. Aleksandar Kondinski</strong>, CheMIn Group, TU Graz.
+        Experimental data by <strong>Ms. Xue Chen</strong> under
+        <a href="https://www.tugraz.at/institute/ptc/research/the-falcaro-group"
+           target="_blank" rel="noopener noreferrer">Prof. Falcaro</a>
+        &amp; <a href="https://www.tugraz.at/institute/ptc/research/the-carraro-group/francesco-carraro"
+              target="_blank" rel="noopener noreferrer">Ass. Prof. Francesco Carraro</a>,
+        Institute of Physical and Theoretical Chemistry, Graz University of Technology.
+        &ensp;&mdash;&ensp;
+        <button type="button" id="replayTourBtn" class="docs-replay-btn">Replay feature tour</button>
+      </span>
+    </div>
+
+  </div><!-- /docs-body -->
+</div><!-- /docs-inner -->
+</dialog>

@@ -102,7 +102,8 @@ export function extractInspectorSummary(point) {
 
     lcPercent: firstDefinedNumeric(
       point?.LC_percent,
-      point?.lc_percent
+      point?.lc_percent,
+      point?.lc_data?.lc_percent
     ),
 
     ratio: firstDefinedNumeric(

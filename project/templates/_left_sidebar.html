@@ -38,17 +38,13 @@
         </span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">Switch between Exp-A, the manually curated Exp-M dataset, prediction-only points generated inside the experimentally supported domain, or the measured data together with predictions.</span>
+          <span class="info-tip-popover">A single experimentally collected dataset, automatically processed through the CheMIn workflow. Prediction generates phase estimates from the ML ensemble across the covered composition domain. Both overlays measured and predicted points simultaneously.</span>
         </span>
       </div>
       <div class="segmented-control" id="dataLayerGroup">
         <label class="seg-chip">
           <input type="radio" name="dataLayer" value="experimental" checked>
-          <span>Exp-A</span>
-        </label>
-        <label class="seg-chip">
-          <input type="radio" name="dataLayer" value="experimental_xue">
-          <span>Exp-M</span>
+          <span>Experimental</span>
         </label>
         <label class="seg-chip">
           <input type="radio" name="dataLayer" value="predicted">
@@ -108,7 +104,7 @@
         </span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">Change the marker coloring to emphasize phase identity, phase-presence probability, crystallinity, encapsulation efficiency, the ATR-IR bands ratio, or the uncertainty in EE and crystallinity assignment. In prediction views, probability means the likelihood of finding that phase contribution there, not necessarily a phase-pure material.</span>
+          <span class="info-tip-popover">Color markers by dominant phase identity, per-phase probability, crystallinity, encapsulation efficiency (EE), loading capacity, ATR-IR bands ratio, or the standard deviation of EE and crystallinity. In prediction views, phase probability means the likelihood of finding that phase contribution at a location — not the probability of a phase-pure material.</span>
         </span>
       </label>
       <select id="colourBy">
@@ -167,7 +163,7 @@
         <span>ATR-IR bands ratio minimum</span>
         <span class="info-tip" tabindex="0">
           <span class="info-tip-button">?</span>
-          <span class="info-tip-popover">This threshold filters samples by the ATR-IR bands ratio used here as a compositional indicator. Higher values keep only samples above the selected ratio.</span>
+          <span class="info-tip-popover">The ATR-IR bands ratio compares the protein Amide I band (≈1647 cm⁻¹) with the ZIF framework Zn–N stretching band (≈421 cm⁻¹). A higher value indicates more protein retained relative to the framework. Raise this threshold to focus on protein-rich composites.</span>
         </span>
       </legend>
       <div class="single-slider-readout"><span id="proteinThresholdVal">0</span></div>

@@ -145,7 +145,15 @@ export function renderPlot3D(
       preserveExistingCamera,
       theme: options.theme
     }),
-    { responsive: true, displaylogo: false }
+    {
+      responsive: true,
+      displaylogo: false,
+      toImageButtonOptions: {
+        format: "png",
+        filename: "ZIF_3D_ternary",
+        scale: 2
+      }
+    }
   );
 
   updateTernaryInset();
