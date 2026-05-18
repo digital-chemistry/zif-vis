@@ -25,3 +25,15 @@ docs/offline_ml_prototype/*.json
 
 # One-off scripts not needed in production
 scripts/sanitize_phase_units.py
+
+# Root-level screenshot exports
+/*.png
+/*.svg
+
+# Archives and external proposals
+*.zip
+kimi_proposal/
+
+# Offline ML research runs (local-only artefacts)
+docs/ml_predictivity_runs/
+docs/offline_ml_prototype/

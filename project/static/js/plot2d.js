@@ -626,10 +626,10 @@ function renderPlot2DFallback(
     annotations: [
       /* Layer title */
       { x: 0.5, y: 1.05, xref: "paper", yref: "paper", text: `Layer ${layer}`, showarrow: false, font: { size: 17, color: theme.text } },
-      /* Vertex labels — data-space anchored exactly at each triangle corner */
-      { x: 0.5,  y: H2D + 0.06, xref: "x", yref: "y", text: "<b>BSA</b>",    showarrow: false, font: { size: 14, color: theme.text }, xanchor: "center", yanchor: "bottom" },
-      { x: 0.0,  y: -0.07,      xref: "x", yref: "y", text: "<b>Metal</b>",  showarrow: false, font: { size: 14, color: theme.text }, xanchor: "center", yanchor: "top"    },
-      { x: 1.0,  y: -0.07,      xref: "x", yref: "y", text: "<b>Ligand</b>", showarrow: false, font: { size: 14, color: theme.text }, xanchor: "center", yanchor: "top"    },
+      /* Axis labels — edge-midpoint style, matching the 3D diagram */
+      { x: 0.135, y: H2D / 2 + 0.005, xref: "x", yref: "y", text: "<b>Metal</b>",  showarrow: false, font: { size: 14, color: theme.text }, xanchor: "right",  yanchor: "middle" },
+      { x: 0.5,   y: -0.085,           xref: "x", yref: "y", text: "<b>Ligand</b>", showarrow: false, font: { size: 14, color: theme.text }, xanchor: "center", yanchor: "top"    },
+      { x: 0.865, y: H2D / 2 + 0.005, xref: "x", yref: "y", text: "<b>BSA</b>",    showarrow: false, font: { size: 14, color: theme.text }, xanchor: "left",   yanchor: "middle" },
       ...tickAnnotations
     ],
     xaxis: { visible: false, range: [-0.20, 1.20] },

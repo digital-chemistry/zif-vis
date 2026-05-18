@@ -114,10 +114,26 @@ function buildPlotExportFilename() {
   return `zif-biocomposite-plot-${stamp}`;
 }
 
+function waitForNextFrame() {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => resolve());
+  });
+}
+
+function downloadDataUrl(dataUrl, filename) {
+  if (!dataUrl) return;
+  const anchor = document.createElement("a");
+  anchor.href = dataUrl;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
 async function exportCurrentPlotPng() {
   const button = $("exportPlotBtn");
   const plotDiv = $("plot");
-  if (!plotDiv?.data?.length || typeof Plotly?.downloadImage !== "function") {
+  if (!plotDiv?.data?.length || typeof Plotly?.toImage !== "function") {
     return;
   }
 
@@ -132,7 +148,10 @@ async function exportCurrentPlotPng() {
   );
   const exportWidth = Math.max(640, liveLayoutWidth);
   const exportHeight = Math.max(480, liveLayoutHeight);
-  const exportScale = exportWidth < 1000 ? 4 : 3;
+  const exportScale = is3DScene ? 10 : 1;
+  const liveCamera = is3DScene
+    ? cloneCamera(plotDiv?._fullLayout?.scene?.camera || viewerState.camera3D)
+    : null;
 
   if (button) {
     button.disabled = true;
@@ -142,14 +161,33 @@ async function exportCurrentPlotPng() {
   }
 
   try {
-    await Plotly.downloadImage(plotDiv, {
+    if (is3DScene && liveCamera) {
+      plotDiv.__zif3DSuppressCameraEvents =
+        Number(plotDiv.__zif3DSuppressCameraEvents || 0) + 1;
+      try {
+        await Plotly.relayout(plotDiv, { "scene.camera": liveCamera });
+        await waitForNextFrame();
+        await waitForNextFrame();
+      } finally {
+        plotDiv.__zif3DSuppressCameraEvents = Math.max(
+          0,
+          Number(plotDiv.__zif3DSuppressCameraEvents || 1) - 1
+        );
+      }
+    }
+
+    const imageUrl = await Plotly.toImage(plotDiv, {
       format: exportFormat,
-      filename: buildPlotExportFilename(),
       // Keep the current on-screen geometry. Use pixel scaling only for raster export.
       width: exportWidth,
       height: exportHeight,
-      scale: exportFormat === "svg" ? 1 : exportScale
+      scale: exportScale
     });
+
+    downloadDataUrl(
+      imageUrl,
+      `${buildPlotExportFilename()}.${exportFormat}`
+    );
   } catch (error) {
     console.error("exportCurrentPlotPng failed:", error);
   } finally {

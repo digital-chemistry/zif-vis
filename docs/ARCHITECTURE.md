@@ -14,7 +14,6 @@ Main user-facing goals:
 - compare encapsulation efficiency and an ATR-derived estimated ratio
 - open sample-specific ATR-IR and repeated XRD measurements in the inspector
 - optionally compare measured data with a predicted composition grid
-- optionally switch between the `Exp-A` and `Exp-M` experimental summary datasets
 
 ## 2. Runtime flow
 
@@ -41,7 +40,7 @@ The runtime is intentionally simple:
 ## 3. Backend file map
 
 - `project/app.py`
-  Flask app factory and local dev entry point. It now loads both the `Exp-A` and `Exp-M` summary datasets when available.
+  Flask app factory and local dev entry point. Loads the `Exp-A` summary dataset and registers all routes.
 - `project/wsgi.py`
   Production WSGI entry point used by Docker and Gunicorn. Mounts the explorer at `/zif`.
 - `project/routes.py`
@@ -179,22 +178,6 @@ These are not accidental. They were chosen deliberately during the recent UI cle
   Overlays measured and prediction-grid points.
 
 Prediction-grid points are intentionally restricted to the experimentally covered composition domain. The app should not predict outside the physical/input region represented in the measured dataset.
-
-### Experimental source
-
-The left sidebar can now switch between:
-
-- `Exp-A`
-- `Exp-M`
-
-where `Exp-A` maps to `project/Exp-A.json` and `Exp-M` maps to `project/Exp-M.json`.
-
-This source selection affects:
-
-- measured points
-- inspector sample payloads
-- predictor inputs
-- predicted grid generation
 
 ### Prediction probability semantics
 
