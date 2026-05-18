@@ -1,6 +1,6 @@
 # Architecture And Handoff Notes
 
-This document is a practical map of the app for the next person working on it. It is written to reduce re-discovery time for both human collaborators and future Codex sessions.
+This document is a practical map of the app for the next person working on it. It is written to reduce re-discovery time for future contributors and maintenance sessions.
 
 ## 1. Purpose
 
@@ -295,9 +295,9 @@ Reasonable future work items:
 - add tests for data loading and endpoint behavior
 - add smoke tests for `/zif/` deployment behavior and static asset URLs
 
-## 10. Suggested starting points for a future Codex session
+## 10. Suggested starting points for future maintenance
 
-If a future session needs to make UI changes, start by reading:
+If future maintenance work needs to make UI changes, start by reading:
 
 1. `README.md`
 2. `docs/ARCHITECTURE.md`

@@ -1,6 +1,16 @@
 # ZIF Biocomposite Explorer
 
-Interactive Flask app for exploring ZIF biocomposite formulations across composition, concentration, phase assignment, crystallinity, encapsulation efficiency, and experiment-level spectra.
+**Author and maintainer:** Aleksandar Kondinski, Graz University of Technology
+
+Interactive Flask app for exploring ZIF biocomposite formulations across ternary composition, concentration, phase assignment, crystallinity, encapsulation efficiency, ATR-IR and XRD spectra, and model-derived prediction overlays.
+
+## Scientific role of this software
+
+This repository provides the interactive visualisation and exploration layer for ZIF biocomposite datasets. The app enables inspection of measured and model-derived synthesis points across ternary composition space, concentration layers, phase assignment, crystallinity, encapsulation efficiency, ATR-IR descriptors, and repeated XRD measurements.
+
+The interface links structured dataset outputs to visual exploration, allowing users to inspect individual synthesis points, compare experimental and model-derived regions, and access experiment-level spectra through a browser-based dashboard. In this role, the app serves as a presentation, inspection, and exploratory-analysis layer for ZIF biocomposite synthesis–structure–property datasets.
+
+The app is designed to support both domain experts and first-time visitors by combining compact visual summaries with detailed inspector panels, help popovers, and direct access to spectra and downloadable CSV data where available.
 
 ## What this app shows
 
@@ -16,10 +26,10 @@ The interface is intentionally usable for both domain experts and first-time vis
 The explorer also now supports a prediction layer:
 
 - `Experimental` shows only measured samples.
-- `Prediction` shows machine-learned grid points only within the experimentally supported composition domain.
+- `Prediction` shows model-derived grid points only within the experimentally supported composition domain.
 - `Both` overlays measured and predicted points together.
 
-Prediction phase-probability views should be interpreted as the likelihood of finding that phase contribution at a location, not necessarily the likelihood of a phase-pure material.
+Prediction phase-probability views should be interpreted as model-derived likelihoods of phase contribution at a location, not as confirmed experimental measurements or as probabilities of phase-pure materials.
 
 ## Quick start
 
@@ -137,8 +147,8 @@ At runtime the flow is:
 These decisions are intentional and should generally be preserved unless the visualization strategy changes:
 
 - `Color by = Phase` uses a two-layer marker model in 3D so amorphous content remains visible beneath the phase-colored core.
-- Prediction grids are restricted to the experimentally covered composition domain rather than the full ternary simplex.
-- Probability-like prediction views are displayed on a fixed `0..1` scale.
+- Model-derived prediction grids are restricted to the experimentally covered composition domain rather than the full ternary simplex.
+- Probability-like model-derived prediction views are displayed on a fixed `0..1` scale.
 - `Crystallinity`, `Encapsulation efficiency`, `Estimated ATR ratio`, and `None` use single full-size colored markers instead of the two-layer phase encoding.
 - Hover cards are kept compact and composition-focused. Detailed metrics belong in the right inspector.
 - Help popovers are used for novice-facing controls and scientific terms.
@@ -150,4 +160,4 @@ These decisions are intentional and should generally be preserved unless the vis
 - Production Docker runs through `gunicorn` with the WSGI app mounted at `/zif`.
 - The frontend is intentionally modular; avoid moving styling back into inline template `<style>` blocks.
 - Be careful with file encoding when rewriting templates or static assets. A UTF-8 BOM at the start of an included template can visibly break the layout.
-- If you are extending the app, start with [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). It documents the data model, module map, and the main extension points for future Codex or human contributors.
+- If you are extending the app, start with [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). It documents the data model, module map, and the main extension points for future contributors.

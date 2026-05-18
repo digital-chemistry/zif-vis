@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+title: "ZIF Biocomposite Explorer"
+abstract: "Interactive Flask application for exploring ZIF biocomposite datasets across ternary composition, concentration, phase assignment, crystallinity, encapsulation efficiency, ATR-IR and XRD spectra, and model-derived prediction overlays."
+message: "If you use this software, please cite it and acknowledge the software author."
+type: software
+version: "1.0.0"
+date-released: "2026-05-18"
+authors:
+  - family-names: Kondinski
+    given-names: Aleksandar
+    affiliation: Graz University of Technology
+repository-code: "https://github.com/digital-chemistry/zif-vis"
+keywords:
+  - zif
+  - biocomposites
+  - visualisation
+  - visualization
+  - ternary-plot
+  - flask
+  - dashboard
+  - materials-informatics
+  - scientific-software
+  - xrd
+  - atr-ir
+  - prediction
+  - model-derived-prediction
