@@ -31,6 +31,8 @@ The explorer also now supports a prediction layer:
 
 Prediction phase-probability views should be interpreted as model-derived likelihoods of phase contribution at a location, not as confirmed experimental measurements or as probabilities of phase-pure materials.
 
+For details of the feature engineering, classifier, nearest-neighbour regression, and trust-band logic used by the prediction layer, see [`docs/PREDICTION_METHOD.md`](docs/PREDICTION_METHOD.md).
+
 ## Quick start
 
 1. Create a virtual environment:

@@ -179,6 +179,8 @@ These are not accidental. They were chosen deliberately during the recent UI cle
 
 Prediction-grid points are intentionally restricted to the experimentally covered composition domain. The app should not predict outside the physical/input region represented in the measured dataset.
 
+Prediction-method details are documented in [`PREDICTION_METHOD.md`](PREDICTION_METHOD.md).
+
 ### Prediction probability semantics
 
 The prediction probability color modes are intended as contribution-presence maps:
