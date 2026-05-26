@@ -268,33 +268,35 @@
     <section class="docs-section">
       <h3 class="docs-section-heading">Machine Learning Predictor</h3>
       <p class="docs-p">
-        The <strong>Prediction</strong> data layer is driven by a soft-voting ensemble of
-        Random Forest (RF) and Extra Trees (ET) classifiers trained on the full experimental
-        dataset (~360 samples, 5 observed phase classes in the current Exp-A training set).
+        The <strong>Prediction</strong> data layer uses, when scikit-learn is available,
+        a soft-voting ensemble of Random Forest (RF) and Extra Trees (ET) classifiers
+        trained on the full current Exp-A dataset (~360 samples, 5 observed phase classes).
         Both models use 300 estimators, balanced class weights, and
-        <em>max_features = sqrt(p)</em>. The current benchmark uses 7-fold stratified
-        cross-validation, set by the smallest class count in the current Exp-A dataset.
+        <em>max_features = sqrt(p)</em>. The figures below reflect a local benchmark on the
+        current Exp-A dataset run on 26 May 2026 using 7-fold stratified cross-validation,
+        set by the smallest class count. If scikit-learn is unavailable, the app falls back
+        to a nearest-neighbour phase-classification prototype.
       </p>
 
       <!-- Model comparison cards -->
       <div class="docs-model-grid">
         <div class="docs-model-card">
           <div class="docs-model-label">Random Forest</div>
-          <div class="docs-model-acc">87.5<span class="docs-model-unit">%</span></div>
-          <div class="docs-model-ci">&plusmn; 4.4 pp &nbsp;(7-fold CV)</div>
+          <div class="docs-model-acc">84.7<span class="docs-model-unit">%</span></div>
+          <div class="docs-model-ci">&plusmn; 5.8 pp &nbsp;(7-fold CV)</div>
           <div class="docs-model-note">n_estimators = 300 &middot; class_weight = balanced</div>
         </div>
         <div class="docs-model-card">
           <div class="docs-model-label">Extra Trees</div>
-          <div class="docs-model-acc">86.4<span class="docs-model-unit">%</span></div>
-          <div class="docs-model-ci">&plusmn; 3.6 pp &nbsp;(7-fold CV)</div>
+          <div class="docs-model-acc">84.1<span class="docs-model-unit">%</span></div>
+          <div class="docs-model-ci">&plusmn; 7.2 pp &nbsp;(7-fold CV)</div>
           <div class="docs-model-note">n_estimators = 300 &middot; class_weight = balanced</div>
         </div>
         <div class="docs-model-card docs-model-card--deployed">
           <div class="docs-model-label">RF + ET Ensemble <span class="docs-model-badge">Deployed</span></div>
-          <div class="docs-model-acc">87.2<span class="docs-model-unit">%</span></div>
-          <div class="docs-model-ci">&plusmn; 4.9 pp &nbsp;(7-fold CV)</div>
-          <div class="docs-model-note">Soft-vote &middot; averaged class probabilities &middot; trained on the current Exp-A dataset</div>
+          <div class="docs-model-acc">84.4<span class="docs-model-unit">%</span></div>
+          <div class="docs-model-ci">&plusmn; 7.9 pp &nbsp;(7-fold CV)</div>
+          <div class="docs-model-note">Soft-vote &middot; averaged class probabilities &middot; latest local benchmark on the current Exp-A dataset</div>
         </div>
       </div>
 
@@ -303,7 +305,7 @@
           <p class="docs-p"><strong>6-feature engineered input space</strong></p>
           <p class="docs-p">
             Metal fraction (%), Ligand fraction (%), Total concentration (mg&thinsp;mL<sup>&minus;1</sup>),
-            log(concentration), Metal/Ligand molar ratio, Washing protocol (ethanol = 0, water = 1).
+            log(concentration), Metal/Ligand molar ratio, Washing protocol (ethanol = 1, water = 0).
             BSA% is excluded because Metal + Ligand + BSA = 100 % makes it perfectly collinear with the other two fractions.
           </p>
         </div>
@@ -315,7 +317,7 @@
             (LOO-CV optimal). Each prediction carries a <strong>distance confidence band</strong>:
             <em>Near</em> (&lt;&thinsp;p33), <em>Moderate</em> (p33&ndash;p75), or <em>Far</em>
             (&gt;&thinsp;p75) from the nearest training point. Predictions are restricted to the
-            convex hull of the training data to prevent extrapolation.
+            experimentally supported component and concentration ranges.
           </p>
         </div>
       </div>

@@ -11,7 +11,7 @@ The prediction model uses synthesis descriptors derived from the loaded experime
 - metal precursor percentage
 - ligand percentage
 - synthesis concentration
-- washing condition encoded as ethanol or water
+- washing condition encoded as ethanol = 1 and water = 0
 - metal-to-ligand ratio
 - log-transformed concentration
 
@@ -25,6 +25,8 @@ The ensemble returns phase-probability-like scores for the supported ZIF phase l
 
 If scikit-learn is unavailable, the app falls back to a nearest-neighbour phase-classification prototype.
 
+For the current `Exp-A.json` dataset, a local benchmark run on May 26, 2026 used 7-fold stratified cross-validation and produced mean phase-classification accuracies of 84.7% for Random Forest, 84.1% for Extra Trees, and 84.4% for the deployed RF+ET soft-voting ensemble.
+
 ## Continuous-property prediction
 
 Continuous properties are estimated using inverse-distance weighted nearest-neighbour regression. This is used for encapsulation efficiency, loading capacity, crystalline fraction, amorphous fraction, and ATR-ratio descriptors where values are available.
@@ -33,7 +35,7 @@ This local regression strategy was chosen because the dataset is small and some 
 
 ## Trust and domain handling
 
-Predictions are restricted to the experimentally supported composition and concentration ranges. Queries outside this supported domain are rejected.
+Predictions are restricted to the experimentally supported component and concentration ranges. Queries outside this supported domain are rejected.
 
 The app reports a distance-based trust band calculated from nearest-neighbour distances in the scaled feature space. Distances are grouped into near known data, moderate extrapolation, and far from measured data using thresholds calibrated from the training dataset.
 
